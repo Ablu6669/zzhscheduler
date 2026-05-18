@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>自动排课系统</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f0f2f5;
+    --card: #fff;
+    --primary: #4f6ef7;
+    --primary-light: #eef0fe;
+    --danger: #ef4444;
+    --danger-light: #fee2e2;
+    --success: #22c55e;
+    --success-light: #dcfce7;
+    --warning: #f59e0b;
+    --warning-light: #fef3c7;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --radius: 12px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+
+  body {
+    font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── Auth screen ── */
+  #authScreen {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #4f6ef7 0%, #6c63ff 100%);
+    padding: 20px;
+  }
+
+  .auth-box {
+    background: var(--card);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    padding: 40px 36px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+  }
+
+  .auth-logo {
+    font-size: 3rem;
+    margin-bottom: 8px;
+  }
+
+  .auth-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .auth-subtitle {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 28px;
+  }
+
+  .auth-tabs {
+    display: flex;
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 24px;
+  }
+
+  .auth-tab {
+    flex: 1;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+  }
+
+  .auth-tab.active {
+    background: var(--card);
+    color: var(--primary);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+
+  .auth-panel { display: none; }
+  .auth-panel.active { display: block; }
+
+  .form-group {
+    margin-bottom: 16px;
+    text-align: left;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+
+  .form-group input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 9px;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+    text-align: left;
+  }
+
+  .form-group input:focus { border-color: var(--primary); }
+
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.18s;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: #3a57e0; }
+
+  .btn-outline { background: transparent; color: var(--primary); border: 1.5px solid var(--primary); }
+  .btn-outline:hover { background: var(--primary-light); }
+
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #dc2626; }
+
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-success:hover { background: #16a34a; }
+
+  .btn-sm { padding: 6px 12px; font-size: 0.8rem; width: auto; }
+
+  .auth-error {
+    color: var(--danger);
+    font-size: 0.8rem;
+    margin-top: -8px;
+    margin-bottom: 10px;
+    text-align: left;
+    min-height: 18px;
+  }
+
+  .auth-link {
+    color: var(--primary);
+    font-size: 0.82rem;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+
+  /* Admin accounts panel */
+  .accounts-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1.5px solid var(--border);
+    border-radius: 9px;
+    margin-bottom: 12px;
+  }
+
+  .account-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.82rem;
+  }
+
+  .account-item:last-child { border-bottom: none; }
+
+  .account-info { text-align: left; }
+  .account-user { font-weight: 600; color: var(--text); }
+  .account-exp { font-size: 0.75rem; color: var(--text-muted); }
+  .account-exp.expired { color: var(--danger); }
+  .account-exp.active { color: var(--success); }
+
+  .btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background 0.15s;
+  }
+
+  .btn-icon:hover { background: var(--danger-light); }
+
+  /* ── Main app (hidden by default) ── */
+  #mainApp { display: none; width: 100%; }
+
+  h1 {
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--primary);
+    letter-spacing: -0.5px;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 28px;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 768px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+  }
+
+  .panel-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: space-between;
+  }
+
+  .panel-title .icon { font-size: 1.1rem; }
+
+  /* Course input */
+  .course-input {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .course-input input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+    text-transform: uppercase;
+  }
+
+  .course-input input:focus { border-color: var(--primary); }
+
+  /* Section input */
+  .section-input-area {
+    background: var(--primary-light);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 16px;
+    border: 1.5px solid #dde0fc;
+  }
+
+  .section-input-area.hidden { display: none; }
+
+  .section-input-area h4 {
+    font-size: 0.85rem;
+    color: var(--primary);
+    margin-bottom: 10px;
+  }
+
+  .section-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .section-row input {
+    padding: 6px 8px;
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    font-size: 0.82rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .section-row input:focus { border-color: var(--primary); }
+  .section-row input[type="text"] { flex: 1; }
+  .section-row input.w60 { width: 60px; }
+  .section-row input.w50 { width: 50px; }
+
+  .hint {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    display: block;
+  }
+
+  .days-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .day-check {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    user-select: none;
+    padding: 3px 6px;
+    border-radius: 5px;
+    border: 1.5px solid var(--border);
+    transition: all 0.15s;
+  }
+
+  .day-check input { display: none; }
+
+  .day-check.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+
+  /* Course list */
+  .course-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .course-card {
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    background: var(--card);
+  }
+
+  .course-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .course-code { font-weight: 700; font-size: 0.95rem; color: var(--primary); }
+
+  .course-card .section-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    border-top: 1px solid var(--border);
+    font-size: 0.82rem;
+  }
+
+  .course-card .section-item span { color: var(--text-muted); }
+
+  .section-id-tag {
+    font-size: 0.72rem;
+    background: var(--primary-light);
+    color: var(--primary);
+    padding: 1px 5px;
+    border-radius: 4px;
+    margin-right: 4px;
+  }
+
+  /* Filters */
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .filter-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .toggle {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+
+  .toggle input { opacity: 0; width: 0; height: 0; }
+
+  .toggle .slider {
+    position: absolute;
+    inset: 0;
+    background: var(--border);
+    border-radius: 22px;
+    cursor: pointer;
+    transition: 0.25s;
+  }
+
+  .toggle .slider::before {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    left: 3px;
+    top: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.25s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+
+  .toggle input:checked + .slider { background: var(--primary); }
+  .toggle input:checked + .slider::before { transform: translateX(18px); }
+
+  .filter-label { font-size: 0.88rem; color: var(--text); flex: 1; }
+  .filter-label span { color: var(--text-muted); font-size: 0.78rem; display: block; margin-top: 1px; }
+
+  .filter-row + .filter-row {
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  .max-display-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.88rem;
+  }
+
+  .max-display-row input {
+    width: 70px;
+    padding: 6px 10px;
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    font-size: 0.88rem;
+    outline: none;
+  }
+
+  .max-display-row input:focus { border-color: var(--primary); }
+
+  .loc-ref {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    background: #f8fafc;
+    border-radius: 7px;
+    padding: 8px 10px;
+    margin-bottom: 14px;
+    line-height: 1.6;
+  }
+
+  .loc-ref strong { color: var(--text); }
+
+  /* Results */
+  .results-area { overflow-y: auto; max-height: calc(100vh - 120px); }
+
+  .results-summary {
+    padding: 10px 14px;
+    background: var(--primary-light);
+    border-radius: 8px;
+    font-size: 0.88rem;
+    color: var(--primary);
+    margin-bottom: 16px;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  .results-summary.empty { background: var(--danger-light); color: var(--danger); }
+
+  .plan-card {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 14px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+
+  .plan-card:hover { box-shadow: 0 4px 16px rgba(79,110,247,0.15); }
+
+  .plan-header {
+    background: var(--primary);
+    color: #fff;
+    padding: 10px 16px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .plan-scores { font-size: 0.78rem; opacity: 0.85; font-weight: 400; }
+  .plan-summary { padding: 6px 16px 10px; font-size: 0.92rem; font-weight: 600; color: var(--text); border-bottom: 1px solid var(--border); line-height: 1.8; }
+  .plan-tag { background: var(--primary-light); color: var(--primary); padding: 2px 10px; border-radius: 6px; font-weight: 700; }
+
+  .plan-body { padding: 12px 16px; }
+
+  .plan-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.86rem;
+  }
+
+  .plan-row:last-child { border-bottom: none; }
+  .plan-code { font-weight: 600; color: var(--primary); min-width: 80px; }
+  .plan-day { background: var(--primary-light); color: var(--primary); padding: 2px 7px; border-radius: 5px; font-size: 0.75rem; font-weight: 600; }
+  .plan-time { color: var(--text-muted); font-size: 0.82rem; }
+  .plan-loc { margin-left: auto; font-weight: 600; font-size: 0.88rem; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+  .empty-state .emoji { font-size: 3rem; margin-bottom: 10px; }
+
+  .actions { display: flex; gap: 8px; margin-bottom: 16px; }
+
+  .section-btn-group { display: flex; gap: 6px; margin-top: 8px; }
+
+  /* top bar */
+  .topbar {
+    background: var(--card);
+    box-shadow: var(--shadow);
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .topbar-title { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
+  .topbar-info { font-size: 0.82rem; color: var(--text-muted); }
+  .topbar-info span { font-weight: 600; color: var(--primary); }
+
+  .user-mode-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    margin-right: 8px;
+  }
+
+  .badge-admin { background: var(--warning-light); color: var(--warning); }
+  .badge-user { background: var(--primary-light); color: var(--primary); }
+
+  .admin-tools {
+    background: var(--warning-light);
+    border: 1.5px solid #fde68a;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+
+  .admin-tools h4 {
+    font-size: 0.85rem;
+    color: var(--warning);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .form-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .form-row .form-group { margin-bottom: 0; flex: 1; }
+  .form-row input { width: 100%; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.85rem; outline: none; }
+  .form-row input:focus { border-color: var(--primary); }
+
+  .accounts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .accounts-header span { font-size: 0.8rem; color: var(--text-muted); }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     AUTH SCREEN
+════════════════════════════════════════ -->
+<div id="authScreen">
+  <div class="auth-box">
+    <div class="auth-logo">📚</div>
+    <div class="auth-title">自动排课系统</div>
+    <div class="auth-subtitle">智能排课 · 安全访问</div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabUser" onclick="switchTab('user')">用户登录</button>
+      <button class="auth-tab" id="tabAdmin" onclick="switchTab('admin')">管理员入口</button>
+    </div>
+
+    <!-- User login panel -->
+    <div class="auth-panel active" id="panelUser">
+      <div class="form-group">
+        <label>账号</label>
+        <input type="text" id="loginUsername" placeholder="请输入账号" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>密码</label>
+        <input type="password" id="loginPassword" placeholder="请输入密码" onkeydown="if(event.key==='Enter')doUserLogin()">
+      </div>
+      <div class="auth-error" id="loginError"></div>
+      <button class="btn btn-primary" onclick="doUserLogin()">登录</button>
+      <div class="auth-link" onclick="switchTab('admin')">管理员入口 →</div>
+    </div>
+
+    <!-- Admin panel -->
+    <div class="auth-panel" id="panelAdmin">
+      <div class="form-group">
+        <label>管理员密钥</label>
+        <input type="password" id="adminKey" placeholder="请输入管理员密钥" onkeydown="if(event.key==='Enter')doAdminLogin()">
+      </div>
+      <div class="auth-error" id="adminError"></div>
+      <button class="btn btn-primary" onclick="doAdminLogin()">进入管理后台</button>
+      <div class="auth-link" onclick="switchTab('user')">← 用户登录</div>
+    </div>
+
+    <!-- Admin dashboard (hidden initially) -->
+    <div class="auth-panel" id="panelAdminDash">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div style="font-weight:700;font-size:1rem;">管理员后台</div>
+        <button class="btn btn-outline btn-sm" onclick="doLogout()">退出</button>
+      </div>
+
+      <div class="admin-tools">
+        <h4>🔑 创建账号</h4>
+        <div class="form-row">
+          <div class="form-group"><label>账号</label><input type="text" id="newUsername" placeholder="用户名"></div>
+          <div class="form-group"><label>密码</label><input type="text" id="newPassword" placeholder="密码"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>过期日期</label>
+            <input type="date" id="expireDate">
+          </div>
+          <div class="form-group" style="display:flex;align-items:flex-end;">
+            <button class="btn btn-success btn-sm" onclick="createAccount()" style="width:100%;margin:0;">生成账号</button>
+          </div>
+        </div>
+        <div class="auth-error" id="createError" style="margin-top:4px;"></div>
+      </div>
+
+      <div class="accounts-header">
+        <span>已创建账号</span>
+        <span id="accountCount"></span>
+      </div>
+      <div class="accounts-list" id="accountsList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     MAIN APP
+════════════════════════════════════════ -->
+<div id="mainApp">
+  <div class="topbar">
+    <div class="topbar-title">📚 自动排课系统</div>
+    <div class="topbar-info">
+      <span class="user-mode-badge" id="modeBadge"></span>
+      欢迎，<span id="welcomeUser"></span>
+      <button class="btn btn-outline btn-sm" onclick="doLogout()" style="margin-left:12px;width:auto;">退出登录</button>
+    </div>
+  </div>
+
+  <div class="layout" style="padding:0 24px 24px;">
+    <!-- Left -->
+    <div class="left-col">
+      <!-- Admin tools (only in admin mode) -->
+      <div class="panel" id="adminPanel" style="display:none;margin-bottom:16px;">
+        <div class="panel-title"><span class="icon">🔑</span>账号管理</div>
+        <div class="admin-tools">
+          <h4>创建账号</h4>
+          <div class="form-row">
+            <div class="form-group"><label>账号</label><input type="text" id="newUsername2" placeholder="用户名"></div>
+            <div class="form-group"><label>密码</label><input type="text" id="newPassword2" placeholder="密码"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>过期日期</label>
+              <input type="date" id="expireDate2">
+            </div>
+            <div class="form-group" style="display:flex;align-items:flex-end;">
+              <button class="btn btn-success btn-sm" onclick="createAccountInApp()" style="width:100%;margin:0;">生成</button>
+            </div>
+          </div>
+          <div class="auth-error" id="createError2" style="margin-top:4px;"></div>
+          <div class="accounts-header" style="margin-top:8px;">
+            <span>已创建账号</span>
+            <span id="accountCount2"></span>
+          </div>
+          <div class="accounts-list" id="accountsList2" style="max-height:140px;"></div>
+        </div>
+      </div>
+
+      <!-- Course management -->
+      <div class="panel">
+        <div class="panel-title"><span class="icon">📚</span>课程管理</div>
+        <div class="course-input">
+          <input type="text" id="courseCodeInput" placeholder="课程代号，如 MAT1001" maxlength="20">
+          <button class="btn btn-primary" onclick="addCourse()">添加</button>
+        </div>
+        <div class="course-list" id="courseList">
+          <div class="empty-state" id="courseEmpty">
+            <div class="emoji">📋</div>暂无课程<br><small>请在上方添加课程</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="panel" style="margin-top:16px;">
+        <div class="panel-title"><span class="icon">⚙️</span>筛选与排序</div>
+        <div class="filter-group">
+          <div class="filter-row">
+            <label class="toggle">
+              <input type="checkbox" id="noEarly" onchange="runSchedule()">
+              <span class="slider"></span>
+            </label>
+            <div class="filter-label">不上早八<span>排除 08:30 开始的课程</span></div>
+          </div>
+          <div class="filter-row">
+            <label class="toggle">
+              <input type="checkbox" id="noNoon" onchange="runSchedule()">
+              <span class="slider"></span>
+            </label>
+            <div class="filter-label">不上午一<span>排除 13:30 开始的课程</span></div>
+          </div>
+          <div class="filter-row">
+            <label class="toggle">
+              <input type="checkbox" id="timePriority" onchange="runSchedule()">
+              <span class="slider"></span>
+            </label>
+            <div class="filter-label">时间优先排序<span>早八/午一越少越靠前</span></div>
+          </div>
+          <div class="filter-row">
+            <label class="toggle">
+              <input type="checkbox" id="locPriority" onchange="runSchedule()">
+              <span class="slider"></span>
+            </label>
+            <div class="filter-label">地点优先排序<span>相邻课程地点越近越靠前</span></div>
+          </div>
+          <div class="max-display-row">
+            <label>最多显示</label>
+            <input type="number" id="maxDisplay" value="20" min="1" max="999" onchange="runSchedule()">
+            <span>个方案</span>
+          </div>
+        </div>
+        <div class="loc-ref">
+          <strong>地点顺序：</strong>TXA — TXB — TXC — TA — TB — TC — TD — ZX<br>
+          相邻距离 = 1，每多隔一个 +1
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="runSchedule()" style="flex:1">🚀 计算排课方案</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Results -->
+    <div class="panel results-area">
+      <div class="panel-title"><span class="icon">📊</span>排课结果</div>
+      <div id="resultsContent">
+        <div class="empty-state">
+          <div class="emoji">🔍</div>点击「计算排课方案」查看结果
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+//  AUTH SYSTEM
+// ══════════════════════════════════════
+
+const ADMIN_KEY = "ZZH6669ABLU";
+const ACCOUNTS_KEY = "wb_scheduler_accounts";
+const SESSION_KEY  = "wb_scheduler_session";
+const COURSES_KEY  = "wb_scheduler_courses";
+
+let accounts = [];
+let session = null;   // { type:'admin'|'user', username, expire }
+
+function sha256(s) {
+  const enc = new TextEncoder();
+  const data = enc.encode(s);
+  return crypto.subtle.digest('SHA-256', data).then(buf => {
+    return Array.from(new Uint8Array(buf)).map(b=>('0'+b.toString(16)).slice(-2)).join('');
+  });
+}
+
+function loadAccounts() {
+  const raw = localStorage.getItem(ACCOUNTS_KEY);
+  accounts = raw ? JSON.parse(raw) : [];
+}
+
+function saveAccounts() {
+  localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+}
+
+function getExpireStatus(expireStr) {
+  if (!expireStr) return { label: "永不过期", cls: "active" };
+  const exp = new Date(expireStr).getTime();
+  const now = Date.now();
+  if (exp < now) return { label: `已过期 ${expireStr}`, cls: "expired" };
+  const left = Math.ceil((exp - now) / 86400000);
+  return { label: `剩余 ${left} 天（${expireStr}）`, cls: "active" };
+}
+
+function isAccountValid(username, password) {
+  return new Promise(async (resolve) => {
+    const raw = localStorage.getItem(ACCOUNTS_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    const now = Date.now();
+    const match = list.find(a =>
+      a.username === username &&
+      a.password === password &&
+      (!a.expire || new Date(a.expire).getTime() > now)
+    );
+    resolve(!!match);
+  });
+}
+
+function switchTab(tab) {
+  document.getElementById("tabUser").classList.toggle("active", tab==="user");
+  document.getElementById("tabAdmin").classList.toggle("active", tab==="admin");
+  document.getElementById("panelUser").classList.toggle("active", tab==="user");
+  document.getElementById("panelAdmin").classList.toggle("active", tab==="admin");
+  document.getElementById("panelAdminDash").classList.toggle("active", false);
+  if (tab !== "admin") {
+    document.getElementById("adminKey").value = "";
+    document.getElementById("adminError").textContent = "";
+  }
+}
+
+function switchTo(tab) {
+  document.getElementById("tabUser").classList.toggle("active", tab==="user");
+  document.getElementById("tabAdmin").classList.toggle("active", tab==="admin");
+  document.getElementById("panelUser").classList.toggle("active", tab==="user");
+  document.getElementById("panelAdmin").classList.toggle("active", tab==="admin");
+  document.getElementById("panelAdminDash").classList.toggle("active", tab==="adminDash");
+}
+
+async function doUserLogin() {
+  const u = document.getElementById("loginUsername").value.trim();
+  const p = document.getElementById("loginPassword").value;
+  if (!u || !p) { document.getElementById("loginError").textContent = "请输入账号和密码"; return; }
+  const valid = await isAccountValid(u, p);
+  if (!valid) {
+    document.getElementById("loginError").textContent = "账号或密码错误，或账号已过期";
+    return;
+  }
+  session = { type: "user", username: u };
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  document.getElementById("loginUsername").value = "";
+  document.getElementById("loginPassword").value = "";
+  document.getElementById("loginError").textContent = "";
+  enterMainApp();
+}
+
+async function doAdminLogin() {
+  const key = document.getElementById("adminKey").value.trim();
+  if (!key) { document.getElementById("adminError").textContent = "请输入密钥"; return; }
+  if (key !== ADMIN_KEY) {
+    document.getElementById("adminError").textContent = "密钥错误";
+    return;
+  }
+  session = { type: "admin", username: "管理员" };
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  document.getElementById("adminKey").value = "";
+  document.getElementById("adminError").textContent = "";
+  switchTo("adminDash");
+  renderAdminDash();
+  enterMainApp();
+}
+
+function doLogout() {
+  session = null;
+  localStorage.removeItem(SESSION_KEY);
+  document.getElementById("authScreen").style.display = "flex";
+  document.getElementById("mainApp").style.display = "none";
+  switchTab("user");
+  // clear credentials
+  document.getElementById("loginUsername").value = "";
+  document.getElementById("loginPassword").value = "";
+}
+
+function enterMainApp() {
+  document.getElementById("authScreen").style.display = "none";
+  document.getElementById("mainApp").style.display = "block";
+  if (session.type === "admin") {
+    document.getElementById("modeBadge").className = "user-mode-badge badge-admin";
+    document.getElementById("modeBadge").textContent = "管理员";
+    document.getElementById("adminPanel").style.display = "block";
+    renderAdminDash2();
+  } else {
+    document.getElementById("modeBadge").className = "user-mode-badge badge-user";
+    document.getElementById("modeBadge").textContent = "用户";
+    document.getElementById("adminPanel").style.display = "none";
+  }
+  document.getElementById("welcomeUser").textContent = session.username;
+  loadCourses();
+  renderCourseList();
+  runSchedule();
+}
+
+function renderAccountList(containerId, countId) {
+  const el = document.getElementById(containerId);
+  const cnt = document.getElementById(countId);
+  if (!el) return;
+  loadAccounts();
+  cnt.textContent = `${accounts.length} 个`;
+  if (!accounts.length) {
+    el.innerHTML = `<div style="padding:14px;color:#94a3b8;font-size:0.82rem;text-align:center;">暂无账号</div>`;
+    return;
+  }
+  el.innerHTML = accounts.map((a,i) => {
+    const st = getExpireStatus(a.expire);
+    return `<div class="account-item">
+      <div class="account-info">
+        <div class="account-user">${a.username}</div>
+        <div class="account-exp ${st.cls}">${st.label} &nbsp;|&nbsp; 密码：${a.password}</div>
+      </div>
+      <button class="btn-icon" onclick="deleteAccount(${i})" title="删除">🗑️</button>
+    </div>`;
+  }).join("");
+}
+
+function renderAdminDash() { renderAccountList("accountsList", "accountCount"); }
+function renderAdminDash2() { renderAccountList("accountsList2", "accountCount2"); }
+
+function createAccount() { createAccountCore("newUsername", "newPassword", "expireDate", "createError", renderAdminDash); }
+function createAccountInApp() { createAccountCore("newUsername2", "newPassword2", "expireDate2", "createError2", renderAdminDash2); }
+
+function createAccountCore(uId, pId, eId, errId, renderFn) {
+  const u = document.getElementById(uId).value.trim();
+  const p = document.getElementById(pId).value;
+  const e = document.getElementById(eId).value;
+  const err = document.getElementById(errId);
+  if (!u) { err.textContent = "请输入账号"; return; }
+  if (!p) { err.textContent = "请输入密码"; return; }
+  if (accounts.some(a=>a.username===u)) { err.textContent = "账号已存在"; return; }
+  accounts.push({ username: u, password: p, expire: e || null });
+  saveAccounts();
+  document.getElementById(uId).value = "";
+  document.getElementById(pId).value = "";
+  document.getElementById(eId).value = "";
+  err.textContent = "";
+  err.style.color = "var(--success)";
+  err.textContent = "账号创建成功 ✓";
+  setTimeout(()=>{ err.textContent = ""; }, 2000);
+  renderFn();
+}
+
+function deleteAccount(idx) {
+  if (!confirm("确定删除该账号？")) return;
+  accounts.splice(idx, 1);
+  saveAccounts();
+  renderAccountList("accountsList", "accountCount");
+  renderAccountList("accountsList2", "accountCount2");
+}
+
+// ══════════════════════════════════════
+//  COURSE SCHEDULER (integrated)
+// ══════════════════════════════════════
+
+const LOCATIONS = ["TXA","TXB","TXC","TA","TB","TC","TD","ZX"];
+const LOC_INDEX = Object.fromEntries(LOCATIONS.map((l,i)=>[l,i]));
+const DAY_NAMES = {1:"Mo",2:"Tu",3:"We",4:"Th",5:"Fr",6:"St",7:"Su"};
+
+let courses = {};
+let sectionCounter = {};
+let currentPlans = [];
+
+class Section {
+  constructor(courseCode, sectionId, weekdays, startRaw, endRaw, location) {
+    this.courseCode = courseCode;
+    this.sectionId = sectionId;
+    this.weekdays = weekdays.slice().sort((a,b)=>a-b);
+    this.start = this._toMin(startRaw);
+    this.end = this._toMin(endRaw);
+    this.location = location.toUpperCase();
+    this.startStr = this._norm(startRaw);
+    this.endStr = this._norm(endRaw);
+  }
+  _toMin(t) {
+    const parts = t.trim().replace(/[：﹕]/g,":").split(":");
+    if(parts.length!==2) throw new Error("时间需用冒号分隔，如 14:00");
+    const h=Number(parts[0]), m=Number(parts[1]);
+    if(!Number.isFinite(h)||!Number.isFinite(m)||h<0||h>23||m<0||m>59) throw new Error("时间格式应为 HH:MM（00~23:00~59）");
+    return h*60+m;
+  }
+  _norm(t) {
+    const parts = t.trim().replace(/[：﹕]/g,":").split(":");
+    if(parts.length!==2) throw new Error("时间需用冒号分隔，如 14:00");
+    const h=Number(parts[0]), m=Number(parts[1]);
+    if(!Number.isFinite(h)||!Number.isFinite(m)||h<0||h>23||m<0||m>59) throw new Error("时间格式应为 HH:MM（00~23:00~59）");
+    return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+  }
+  isEarlyMorning() { return this.start === 8*60+30; }
+  isAfternoonFirst() { return this.start === 13*60+30; }
+  conflictsWith(other) { const c=this.weekdays.filter(d=>other.weekdays.includes(d)); return !!c.length && this.start<other.end&&other.start<this.end; }
+  daysStr() { return this.weekdays.map(d=>DAY_NAMES[d]).join(" "); }
+  toRowHTML() {
+    const days=this.weekdays.map(d=>`<span class="plan-day">${DAY_NAMES[d]}</span>`).join("");
+    return `<div class="plan-row"><span class="plan-code">${this.courseCode}</span>${days}<span class="plan-time">${this.startStr}-${this.endStr}</span><span class="plan-loc">${this.location}</span></div>`;
+  }
+  toListHTML() {
+    return `<div class="section-item"><span>${this.daysStr()} &nbsp;${this.startStr}-${this.endStr} &nbsp;${this.location}</span><button class="btn btn-danger btn-sm" onclick="delSection('${this.courseCode}','${this.sectionId}')">×</button></div>`;
+  }
+}
+
+function locDist(a,b){ const i=LOC_INDEX[a],j=LOC_INDEX[b]; return (i==null||j==null)?0:Math.abs(i-j); }
+
+function timeScore(plan){ let s=0; plan.forEach(x=>{ if(x.isEarlyMorning()) s-=0.5; if(x.isAfternoonFirst()) s-=1; }); return s; }
+
+function locScore(plan){
+  let total=0;
+  const byDay={};
+  plan.forEach(s=>s.weekdays.forEach(d=>{ byDay[d]=byDay[d]||[]; byDay[d].push({t:s.start,l:s.location}); }));
+  Object.values(byDay).forEach(ev=>{ ev.sort((a,b)=>a.t-b.t); for(let i=0;i<ev.length-1;i++) total+=locDist(ev[i].l,ev[i+1].l); });
+  return total;
+}
+
+function score(plan,tp,lp){ return [tp?timeScore(plan):0, lp?locScore(plan):0]; }
+
+function noConflict(plan){ for(let i=0;i<plan.length;i++) for(let j=i+1;j<plan.length;j++) if(plan[i].conflictsWith(plan[j])) return false; return true; }
+
+function schedule(){
+  const noEarly=document.getElementById("noEarly").checked;
+  const noNoon=document.getElementById("noNoon").checked;
+  const tp=document.getElementById("timePriority").checked;
+  const lp=document.getElementById("locPriority").checked;
+  const codes=Object.keys(courses);
+  const lists=codes.map(c=>courses[c]);
+  const filtered=lists.map(list=>list.filter(s=>!(noEarly&&s.isEarlyMorning())&&!(noNoon&&s.isAfternoonFirst())));
+  const plans=[];
+  function cartesian(idx,cur){
+    if(idx===filtered.length){ if(cur.length===codes.length&&noConflict(cur)) plans.push([...cur]); return; }
+    for(const s of filtered[idx]){ cur.push(s); cartesian(idx+1,cur); cur.pop(); }
+  }
+  cartesian(0,[]);
+  plans.sort((a,b)=>{ const sa=score(a,tp,lp),sb=score(b,tp,lp); if(sa[0]!==sb[0]) return sa[0]-sb[0]; return sa[1]-sb[1]; });
+  return plans;
+}
+
+function renderCourseList(){
+  const el=document.getElementById("courseList");
+  const codes=Object.keys(courses);
+  if(!codes.length){ el.innerHTML=`<div class="empty-state" id="courseEmpty"><div class="emoji">📋</div>暂无课程<br><small>请在上方添加课程</small></div>`; return; }
+  el.innerHTML=codes.map(code=>`
+    <div class="course-card">
+      <div class="course-card-header">
+        <span class="course-code">${code}</span>
+        <div>
+          <button class="btn btn-outline btn-sm" onclick="showSectionInput('${code}')">+ 时段</button>
+          <button class="btn btn-danger btn-sm" onclick="delCourse('${code}')">删除</button>
+        </div>
+      </div>
+      <div id="sec-inp-${code}" class="section-input-area hidden">
+        <h4>添加时段 → ${code}</h4>
+        <div class="section-row" style="flex-direction:column;align-items:stretch;gap:6px;">
+          <div class="hint">上课日（必选1~7个）</div>
+          <div class="days-group" id="days-${code}">
+            ${[1,2,3,4,5,6,7].map(d=>`<label class="day-check" id="dc-${code}-${d}"><input type="checkbox" value="${d}" class="day-cb" data-code="${code}" onchange="updateDayCheck('${code}',${d})">${DAY_NAMES[d]}</label>`).join("")}
+          </div>
+        </div>
+        <div class="section-row" style="margin-top:8px;">
+          <div style="flex:1"><div class="hint">开始</div><input type="text" id="tstart-${code}" class="w60" placeholder="08:30"></div>
+          <div style="flex:1"><div class="hint">结束</div><input type="text" id="tend-${code}" class="w60" placeholder="10:20"></div>
+          <div style="flex:1"><div class="hint">地点</div><input type="text" id="tloc-${code}" class="w50" placeholder="TA" maxlength="3"></div>
+        </div>
+        <div class="section-btn-group">
+          <button class="btn btn-primary btn-sm" onclick="addSection('${code}')">确认</button>
+          <button class="btn btn-outline btn-sm" onclick="hideSectionInput('${code}')">取消</button>
+        </div>
+      </div>
+      <div>${courses[code].map(s=>s.toListHTML()).join("")}</div>
+      ${!courses[code].length?"<div style='font-size:0.8rem;color:#94a3b8;padding:4px 0;'>暂无时段</div>":""}
+    </div>`).join("");
+}
+
+function renderResults(plans){
+  const el=document.getElementById("resultsContent");
+  const max=parseInt(document.getElementById("maxDisplay").value)||999;
+  const tp=document.getElementById("timePriority").checked;
+  const lp=document.getElementById("locPriority").checked;
+  const display=plans.slice(0,max);
+  if(!plans.length){ el.innerHTML=`<div class="results-summary empty">无满足条件的方案</div><div class="empty-state"><div class="emoji">😔</div>没有找到可行方案<br><small>尝试放宽筛选条件或增加时段</small></div>`; return; }
+  const showScores=tp||lp;
+  el.innerHTML=`<div class="results-summary">共找到 ${plans.length} 个可行方案${plans.length>max?"，显示前 "+max+" 个":""}</div>
+    ${display.map((plan,i)=>`<div class="plan-card"><div class="plan-header"><span>方案 ${i+1}</span>${showScores?`<span class="plan-scores">${tp?"时间分="+timeScore(plan).toFixed(1):""}${tp&&lp?" | ":""}${lp?"地点分="+locScore(plan):""}</span>`:""}</div>
+    <div class="plan-summary">${plan.map(s=>`<span class="plan-tag">${s.courseCode} ${s.sectionId}</span>`).join(" <span style='color:#475569;font-weight:bold'>+</span> ")}</div>
+    <div class="plan-body">${plan.map(s=>s.toRowHTML()).join("")}</div></div>`).join("")}
+    ${plans.length>max?`<div style="text-align:center;color:#94a3b8;font-size:0.85rem;padding:8px">... 还有 ${plans.length-max} 个方案</div>`:""}`;
+}
+
+function addCourse(){
+  const code=document.getElementById("courseCodeInput").value.trim().toUpperCase();
+  if(!code){ alert("请输入课程代号"); return; }
+  if(courses[code]){ alert("课程 ["+code+"] 已存在"); return; }
+  courses[code]=[];
+  sectionCounter[code]=0;
+  document.getElementById("courseCodeInput").value="";
+  renderCourseList();
+  saveCourses();
+}
+
+function delCourse(code){
+  if(!confirm("删除课程 ["+code+"] 及其全部时段？")) return;
+  delete courses[code];
+  delete sectionCounter[code];
+  renderCourseList();
+  saveCourses();
+  runSchedule();
+}
+
+function showSectionInput(code){ document.getElementById("sec-inp-"+code).classList.remove("hidden"); }
+
+function hideSectionInput(code){
+  document.getElementById("sec-inp-"+code).classList.add("hidden");
+  document.getElementById("tstart-"+code).value="";
+  document.getElementById("tend-"+code).value="";
+  document.getElementById("tloc-"+code).value="";
+  document.querySelectorAll(`#days-${code} input`).forEach(cb=>cb.checked=false);
+  document.querySelectorAll(`#days-${code} label`).forEach(lb=>lb.classList.remove("active"));
+}
+
+function updateDayCheck(code,day){
+  const label=document.getElementById("dc-"+code+"-"+day);
+  const cb=label.querySelector("input");
+  label.classList.toggle("active",cb.checked);
+}
+
+function addSection(code){
+  const tstart=document.getElementById("tstart-"+code).value.trim();
+  const tend=document.getElementById("tend-"+code).value.trim();
+  const tloc=document.getElementById("tloc-"+code).value.trim().toUpperCase();
+  const checkedDays=[...document.querySelectorAll(`#days-${code} input:checked`)].map(cb=>parseInt(cb.value));
+  if(!checkedDays.length){ alert("请选择至少一个上课日"); return; }
+  if(!tstart||!tend){ alert("请填写开始和结束时间"); return; }
+  if(!tloc){ alert("请填写上课地点"); return; }
+  const idx=sectionCounter[code]||0;
+  const id=`${code}-${String.fromCharCode(65+idx)}`;
+  sectionCounter[code]=idx+1;
+  try{
+    const sec=new Section(code,id,checkedDays,tstart,tend,tloc);
+    courses[code].push(sec);
+    hideSectionInput(code);
+    renderCourseList();
+    saveCourses();
+    runSchedule();
+  }catch(e){ alert("添加失败：" + (e.message || e)); }
+}
+
+function delSection(code,sectionId){
+  courses[code]=courses[code].filter(s=>s.sectionId!==sectionId);
+  renderCourseList();
+  saveCourses();
+  runSchedule();
+}
+
+function runSchedule(){
+  currentPlans=schedule();
+  renderResults(currentPlans);
+}
+
+function saveCourses(){
+  const data={courses:Object.fromEntries(Object.entries(courses).map(([k,v])=>[k,v.map(s=>({courseCode:s.courseCode,sectionId:s.sectionId,weekdays:s.weekdays,startStr:s.startStr,endStr:s.endStr,location:s.location}))])),sectionCounter};
+  localStorage.setItem(COURSES_KEY,JSON.stringify(data));
+}
+
+function loadCourses(){
+  const raw=localStorage.getItem(COURSES_KEY);
+  if(!raw) return;
+  try{
+    const data=JSON.parse(raw);
+    courses=Object.fromEntries(Object.entries(data.courses).map(([k,list])=>[k,list.map(s=>new Section(s.courseCode,s.sectionId,s.weekdays,s.startStr,s.endStr,s.location))]));
+    sectionCounter=data.sectionCounter||{};
+  }catch(e){}
+}
+
+// ══════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════
+
+(function init(){
+  loadAccounts();
+  const raw=localStorage.getItem(SESSION_KEY);
+  if(raw){
+    try{
+      session=JSON.parse(raw);
+      if(session.type==="admin"){
+        switchTo("adminDash");
+        renderAdminDash();
+      }
+      enterMainApp();
+    }catch(e){
+      localStorage.removeItem(SESSION_KEY);
+    }
+  }
+})();
+</script>
+</body>
+</html>

@@ -1228,6 +1228,11 @@ function loadCourses(){
 
 (function init(){
   loadAccounts();
+  // 如果本地还没有账号，预设 NC1 账号（7天有效期：2026-05-25）
+  if(!accounts.length){
+    accounts.push({ username:"NC1", password:"NC1", expire:"2026-05-25" });
+    saveAccounts();
+  }
   const raw=localStorage.getItem(SESSION_KEY);
   if(raw){
     try{

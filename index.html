@@ -1,4 +1,6 @@
-<html lang="zh"><head>
+<!DOCTYPE html>
+<html lang="zh">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>自动排课系统</title>
@@ -1044,19 +1046,19 @@
 <!-- ═══════════════════════════════════════
      AUTH SCREEN
 ════════════════════════════════════════ -->
-<div id="authScreen" style="display: none;">
+<div id="authScreen">
   <div class="auth-box">
     <div class="auth-logo">📚</div>
     <div class="auth-title">自动排课系统</div>
     <div class="auth-subtitle">智能排课 · 安全访问</div>
 
     <div class="auth-tabs">
-      <button class="auth-tab" id="tabUser" onclick="switchTab('user')">用户登录</button>
+      <button class="auth-tab active" id="tabUser" onclick="switchTab('user')">用户登录</button>
       <button class="auth-tab" id="tabAdmin" onclick="switchTab('admin')">管理员入口</button>
     </div>
 
     <!-- User login panel -->
-    <div class="auth-panel" id="panelUser">
+    <div class="auth-panel active" id="panelUser">
       <div class="form-group">
         <label>账号</label>
         <input type="text" id="loginUsername" placeholder="请输入账号" autocomplete="off">
@@ -1082,7 +1084,7 @@
     </div>
 
     <!-- Admin dashboard (hidden initially) -->
-    <div class="auth-panel active" id="panelAdminDash">
+    <div class="auth-panel" id="panelAdminDash">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
         <div style="font-weight:700;font-size:1rem;">管理员后台</div>
         <div style="display:flex;gap:8px;">
@@ -1117,19 +1119,9 @@
 
       <div class="accounts-header">
         <span>已创建账号</span>
-        <span id="accountCount">1 个</span>
+        <span id="accountCount"></span>
       </div>
-      <div class="accounts-list" id="accountsList"><div class="account-item">
-      <div class="account-info">
-        <div class="account-user">NC1</div>
-        <div class="account-exp active">剩余 6 天（2026-05-25） &nbsp;|&nbsp; 密码：NC1</div>
-        <div class="account-quota quota-ok">📊 额度：无限</div>
-      </div>
-      <div class="account-actions">
-        <button class="btn-icon" onclick="editAccount(0)" title="编辑">✏️</button>
-        <button class="btn-icon" onclick="deleteAccount(0)" title="删除">🗑️</button>
-      </div>
-    </div></div>
+      <div class="accounts-list" id="accountsList"></div>
     </div>
   </div>
 </div>
@@ -1137,58 +1129,30 @@
 <!-- ═══════════════════════════════════════
      MAIN APP
 ════════════════════════════════════════ -->
-<div id="mainApp" style="display: block;">
+<div id="mainApp">
   <div class="topbar">
     <div class="topbar-title">📚 自动排课系统</div>
     <div class="topbar-info">
       <span id="quotaDisplay"></span>
       <button class="notif-btn" id="notifBtn" onclick="toggleNotifPage()">
-        🔔 公告栏 <span id="notifBadge" style="display: none;">2</span>
+        🔔 公告栏 <span id="notifBadge" style="display:none;"></span>
       </button>
-      <button class="btn btn-primary btn-sm" id="topbarExportBtn" onclick="exportUpdatedIndex()" style="display: inline-block; margin-left: 8px;" title="将当前账号/通知数据写入代码并下载最新 index.html">📥 导出 index.html</button>
-      <span class="user-mode-badge badge-admin" id="modeBadge">管理员</span>
-      欢迎，<span id="welcomeUser">管理员</span>
+      <button class="btn btn-primary btn-sm" id="topbarExportBtn" onclick="exportUpdatedIndex()" style="display:none;margin-left:8px;" title="将当前账号/通知数据写入代码并下载最新 index.html">📥 导出 index.html</button>
+      <span class="user-mode-badge" id="modeBadge"></span>
+      欢迎，<span id="welcomeUser"></span>
       <button class="btn btn-outline btn-sm" onclick="doLogout()" style="margin-left:12px;width:auto;">退出登录</button>
     </div>
   </div>
 
   <!-- 通知页面面板 -->
-  <div id="notifPage" class="notif-page" style="display: none;">
+  <div id="notifPage" class="notif-page" style="display:none;">
     <div class="notif-page-header">
       <div class="notif-page-title">📬 我的通知</div>
       <button class="notif-page-close" onclick="toggleNotifPage()">✕</button>
     </div>
-    <div id="notifPageContent" class="notif-page-content">
-    
-      <div class="notif-page-card">
-        <div class="notif-page-card-header">
-          <div class="notif-page-card-title">
-            第一轮内测反馈
-          </div>
-          <div class="notif-page-card-time">刚刚</div>
-        </div>
-        <div class="notif-page-card-body">欢迎各位内测用户向开发者反馈bug或优化建议!所有反馈一经采纳将获得公测高级账号(超长时间超高额度^^)!反馈方式:微信号Ablu6669</div>
-      </div>
-    
-      <div class="notif-page-card">
-        <div class="notif-page-card-header">
-          <div class="notif-page-card-title">
-            1.7版本更新
-          </div>
-          <div class="notif-page-card-time">刚刚</div>
-        </div>
-        <div class="notif-page-card-body">为优化用户体验和长久发展，本系统进行1.7版本更新，更新内容如下：
-1.新增公告栏：用户可以查看更新公告等信息；
-2.新增子课程选项：用户可以在新建完某一课程后在任一时段后链接子课程（如Lec&amp;tut）,排课会考虑到链接课程，增加排课合理性；
-3.优化时间地点选择方式：新增时段时将时间选择优化为滚轮滑动或手动输入，将地点选择优化为直接点击（校内）或手动输入（供校外自定义）；
-4.地点选项增加：新增ABE地点，地点优先排序时其计算与TA同理，但本身与TA距离为1；
-5.新增自定义排除选项：用户可以自定义不想上的时间或地点进行筛选；
-6.优化页面布局：优化不同窗口比例，使布局更加合理；
-7.新增使用额度：为避免同一账号多人使用，新增使用额度，每次计算方案会消耗一次使用额度，额度耗尽请联系管理员。</div>
-      </div>
-    </div>
+    <div id="notifPageContent" class="notif-page-content"></div>
   </div>
-  <div id="notifPageOverlay" class="notif-page-overlay" style="display: none;" onclick="toggleNotifPage()"></div>
+  <div id="notifPageOverlay" class="notif-page-overlay" style="display:none;" onclick="toggleNotifPage()"></div>
 
   <!-- 编辑账号弹窗 -->
   <div id="editAccountModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;justify-content:center;align-items:center;">
@@ -1196,7 +1160,7 @@
       <div style="font-weight:700;font-size:1rem;margin-bottom:16px;">✏️ 编辑账号</div>
       <div class="form-group" style="margin-bottom:12px;">
         <label>账号</label>
-        <input type="text" id="editAccUsername" disabled="" style="background:#f1f5f9;color:#94a3b8;">
+        <input type="text" id="editAccUsername" disabled style="background:#f1f5f9;color:#94a3b8;">
       </div>
       <div class="form-group" style="margin-bottom:12px;">
         <label>过期日期</label>
@@ -1215,58 +1179,14 @@
 
   <!-- 通知显示区已移除，改为通知页面 -->
 
-  <div class="layout admin-mode" id="mainLayout" style="padding:0 24px 24px;">
+  <div class="layout" id="mainLayout" style="padding:0 24px 24px;">
 
     <!-- 左侧栏：通知管理 + 账号管理 -->
     <div id="leftPanel">
-      <div id="adminLeftContent" style="display: flex;">
+      <div id="adminLeftContent" style="display:none;">
         <div class="panel">
           <div class="panel-title" style="margin-bottom:10px;"><span class="icon">🔔</span>通知管理</div>
-          <div id="notifAdminArea">
-    <div style="font-size:.78rem;color:var(--text-muted);line-height:1.6;margin-bottom:10px;padding:8px 10px;background:var(--primary-light);border-radius:8px;">
-      💡 <b>全端通知</b>：在此编辑/删除，然后点击顶部「📥 导出 index.html」生成新文件并上传 GitHub，所有用户同步更新。
-    </div>
-    <div style="font-weight:600;font-size:.82rem;color:var(--text-muted);margin-bottom:6px;">全端通知（所有用户可见）</div>
-    <div class="notif-list" style="margin-bottom:12px;">
-    <div class="notif-record" style="border-color:var(--primary);">
-      <span class="rec-icon">🔔</span>
-      <span class="rec-title">1.7版本更新 <span style="font-size:.7rem;color:var(--primary);">[全端]</span></span>
-      <div class="rec-actions" onclick="event.stopPropagation()">
-        <button class="btn-edit" onclick="editBuiltinNotif('n_mpd2yjmolzhn')" title="编辑">✏️</button>
-        <button class="btn-del" onclick="deleteBuiltinNotif('n_mpd2yjmolzhn')" title="删除">🗑️</button>
-      </div>
-    </div>
-  
-    <div class="notif-record" style="border-color:var(--primary);">
-      <span class="rec-icon">🔔</span>
-      <span class="rec-title">第一轮内测反馈 <span style="font-size:.7rem;color:var(--primary);">[全端]</span></span>
-      <div class="rec-actions" onclick="event.stopPropagation()">
-        <button class="btn-edit" onclick="editBuiltinNotif('n_mpd2z70vx6st')" title="编辑">✏️</button>
-        <button class="btn-del" onclick="deleteBuiltinNotif('n_mpd2z70vx6st')" title="删除">🗑️</button>
-      </div>
-    </div>
-  </div>
-    <!-- 全端通知编辑弹窗 -->
-    <div id="editBuiltinNotifModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;justify-content:center;align-items:center;">
-      <div style="background:#fff;border-radius:12px;padding:24px;width:400px;max-width:90%;">
-        <div style="font-weight:700;font-size:1rem;margin-bottom:16px;">✏️ 编辑全端通知</div>
-        <input type="text" id="editBuiltinTitle" placeholder="通知标题（可选）" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;margin-bottom:12px;font-size:.85rem;">
-        <textarea id="editBuiltinContent" placeholder="通知内容（必填）" style="width:100%;min-height:80px;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem;resize:vertical;margin-bottom:16px;"></textarea>
-        <div style="display:flex;gap:8px;">
-          <button class="btn btn-primary" onclick="saveBuiltinNotifEdit()" style="flex:1;">保存</button>
-          <button class="btn btn-outline" onclick="closeBuiltinNotifEdit()" style="flex:1;">取消</button>
-        </div>
-      </div>
-    </div>
-    <div class="notif-add-form">
-      <div style="font-size:.8rem;font-weight:600;color:var(--text-muted);margin-bottom:4px;">+ 发布全端通知</div>
-      <input type="text" id="newBuiltinNotifTitle" placeholder="通知标题（可选）" maxlength="50">
-      <textarea id="newBuiltinNotifContent" placeholder="通知内容（必填）" style="min-height:50px;resize:none;font-size:.82rem;padding:6px 8px;" maxlength="500"></textarea>
-      <button class="btn btn-primary" onclick="addBuiltinNotif()" style="width:100%;margin:0;">发布到全端</button>
-    </div>
-    <hr style="margin:16px 0;border:none;border-top:1px solid var(--border);">
-    <div id="localNotifList"><div class="notif-empty" style="font-size:.78rem;">暂无本机通知</div></div>
-  </div>
+          <div id="notifAdminArea"></div>
         </div>
         <div class="panel" style="margin-top:0;">
           <div class="panel-title" style="margin-bottom:10px;"><span class="icon">🔑</span>账号管理</div>
@@ -1294,24 +1214,14 @@
             <div class="auth-error" id="createError2" style="margin-top:4px;"></div>
             <div class="accounts-header" style="margin-top:8px;">
               <span>已创建账号</span>
-              <span id="accountCount2">1 个</span>
+              <span id="accountCount2"></span>
             </div>
-            <div class="accounts-list" id="accountsList2" style="max-height:200px;"><div class="account-item">
-      <div class="account-info">
-        <div class="account-user">NC1</div>
-        <div class="account-exp active">剩余 6 天（2026-05-25） &nbsp;|&nbsp; 密码：NC1</div>
-        <div class="account-quota quota-ok">📊 额度：无限</div>
-      </div>
-      <div class="account-actions">
-        <button class="btn-icon" onclick="editAccount(0)" title="编辑">✏️</button>
-        <button class="btn-icon" onclick="deleteAccount(0)" title="删除">🗑️</button>
-      </div>
-    </div></div>
+            <div class="accounts-list" id="accountsList2" style="max-height:200px;"></div>
           </div>
         </div>
       </div>
       <!-- 用户左侧：课程管理+筛选排序（默认显示） -->
-      <div id="userLeftContent" style="display: none;">
+      <div id="userLeftContent">
         <div class="panel">
           <div class="panel-title"><span class="icon">📚</span>课程管理</div>
           <div class="course-input">
@@ -1319,311 +1229,10 @@
             <button class="btn btn-primary" onclick="addCourse()">添加</button>
           </div>
           <div class="course-list" id="courseList">
-    <div class="course-card">
-      <div class="course-card-header">
-        <span class="course-code">MAT3007</span>
-        <div>
-          <button class="btn btn-outline btn-sm" onclick="showSectionInput('MAT3007')">+ 时段</button>
-          <button class="btn btn-danger btn-sm" onclick="delCourse('MAT3007')">删除</button>
-        </div>
-      </div>
-      <div id="sec-inp-MAT3007" class="section-input-area hidden">
-        <h4>添加时段 → MAT3007</h4>
-        <div class="section-row" style="flex-direction:column;align-items:stretch;gap:6px;">
-          <div class="hint">上课日（必选1~7个）</div>
-          <div class="days-group" id="days-MAT3007">
-            <label class="day-check" id="dc-MAT3007-1"><input type="checkbox" value="1" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',1)">Mo</label><label class="day-check" id="dc-MAT3007-2"><input type="checkbox" value="2" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',2)">Tu</label><label class="day-check" id="dc-MAT3007-3"><input type="checkbox" value="3" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',3)">We</label><label class="day-check" id="dc-MAT3007-4"><input type="checkbox" value="4" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',4)">Th</label><label class="day-check" id="dc-MAT3007-5"><input type="checkbox" value="5" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',5)">Fr</label><label class="day-check" id="dc-MAT3007-6"><input type="checkbox" value="6" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',6)">St</label><label class="day-check" id="dc-MAT3007-7"><input type="checkbox" value="7" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',7)">Su</label>
+            <div class="empty-state" id="courseEmpty">
+              <div class="emoji">📋</div>暂无课程<br><small>请在上方添加课程</small>
+            </div>
           </div>
-        </div>
-        <div class="section-row" style="margin-top:8px;align-items:flex-end;">
-          <div style="flex:1"><div class="hint">开始</div><button class="time-picker-btn" id="tstart-MAT3007" onclick="openTimePicker('tstart-MAT3007','开始时间')"><span class="clock-icon">🕐</span><span id="tstart-MAT3007-txt">--:--</span></button></div>
-          <div style="flex:1"><div class="hint">结束</div><button class="time-picker-btn" id="tend-MAT3007" onclick="openTimePicker('tend-MAT3007','结束时间')"><span class="clock-icon">🕑</span><span id="tend-MAT3007-txt">--:--</span></button></div>
-          <div style="flex:1"><div class="hint">地点</div><button class="loc-picker-btn" id="tloc-MAT3007" onclick="openLocPicker('tloc-MAT3007')">--</button></div>
-        </div>
-        <div class="section-btn-group">
-          <button class="btn btn-primary btn-sm" onclick="addSection('MAT3007')">确认</button>
-          <button class="btn btn-outline btn-sm" onclick="hideSectionInput('MAT3007')">取消</button>
-        </div>
-      </div>
-      <div><div class="section-item">
-      <div class="section-item-row">
-        <span><b>A</b> &nbsp;Mo We &nbsp;16:00-18:00 &nbsp;TA</span>
-        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('MAT3007','MAT3007-A')">+ 子课程</button>
-        <button class="btn btn-danger btn-sm" onclick="delSection('MAT3007','MAT3007-A')">×</button>
-      </div>
-      <div class="sub-list">
-        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ TUT <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('MAT3007','MAT3007-A','TUT')">+ 时段</button></div>
-        <div class="sub-item"><span>Mo &nbsp;15:30-16:00 &nbsp;TD</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('MAT3007','MAT3007-A','TUT','MAT3007-A-1')">×</button></div><div class="sub-item"><span>We &nbsp;06:00-07:00 &nbsp;TC</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('MAT3007','MAT3007-A','TUT','MAT3007-A-2')">×</button></div><div class="sub-item"><span>We Th &nbsp;16:00-19:00 &nbsp;TD</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('MAT3007','MAT3007-A','TUT','MAT3007-A-3')">×</button></div>
-        <div id="sub-inp-MAT3007-A-TUT" class="sub-input-area hidden">
-          <h5>新增 TUT 时段</h5>
-    <div style="display:flex;flex-direction:column;gap:6px;">
-      <div class="hint">上课日</div>
-      <div class="days-group" id="sub-days-MAT3007-A-TUT">
-        <label class="day-check" id="sub-dc-MAT3007-A-TUT-1"><input type="checkbox" value="1" onchange="updateSubDayCheck('MAT3007-A','TUT',1)">Mo</label><label class="day-check" id="sub-dc-MAT3007-A-TUT-2"><input type="checkbox" value="2" onchange="updateSubDayCheck('MAT3007-A','TUT',2)">Tu</label><label class="day-check" id="sub-dc-MAT3007-A-TUT-3"><input type="checkbox" value="3" onchange="updateSubDayCheck('MAT3007-A','TUT',3)">We</label><label class="day-check" id="sub-dc-MAT3007-A-TUT-4"><input type="checkbox" value="4" onchange="updateSubDayCheck('MAT3007-A','TUT',4)">Th</label><label class="day-check" id="sub-dc-MAT3007-A-TUT-5"><input type="checkbox" value="5" onchange="updateSubDayCheck('MAT3007-A','TUT',5)">Fr</label><label class="day-check" id="sub-dc-MAT3007-A-TUT-6"><input type="checkbox" value="6" onchange="updateSubDayCheck('MAT3007-A','TUT',6)">St</label><label class="day-check" id="sub-dc-MAT3007-A-TUT-7"><input type="checkbox" value="7" onchange="updateSubDayCheck('MAT3007-A','TUT',7)">Su</label>
-      </div>
-      <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
-        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-MAT3007-A-TUT" onclick="openTimePicker('sub-tstart-MAT3007-A-TUT','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-MAT3007-A-TUT-txt">--:--</span></button></div>
-        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-MAT3007-A-TUT" onclick="openTimePicker('sub-tend-MAT3007-A-TUT','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-MAT3007-A-TUT-txt">--:--</span></button></div>
-        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-MAT3007-A-TUT" onclick="openLocPicker('sub-tloc-MAT3007-A-TUT')">--</button></div>
-      </div>
-      <div class="section-btn-group">
-        <button class="btn btn-success btn-sm" onclick="addSubSection('MAT3007','MAT3007-A','TUT')">确认</button>
-        <button class="btn btn-outline btn-sm" onclick="hideSubInput('MAT3007-A','TUT')">取消</button>
-      </div>
-    </div>
-        </div>
-      </div>
-    </div><div class="section-item">
-      <div class="section-item-row">
-        <span><b>C</b> &nbsp;Mo We &nbsp;15:30-16:20 &nbsp;TXA</span>
-        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('MAT3007','MAT3007-C')">+ 子课程</button>
-        <button class="btn btn-danger btn-sm" onclick="delSection('MAT3007','MAT3007-C')">×</button>
-      </div>
-      <div class="sub-list">
-        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ TUT <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('MAT3007','MAT3007-C','TUT')">+ 时段</button></div>
-        <div class="sub-item"><span>Tu &nbsp;08:30-09:30 &nbsp;TD</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('MAT3007','MAT3007-C','TUT','MAT3007-C-1')">×</button></div>
-        <div id="sub-inp-MAT3007-C-TUT" class="sub-input-area hidden">
-          <h5>新增 TUT 时段</h5>
-    <div style="display:flex;flex-direction:column;gap:6px;">
-      <div class="hint">上课日</div>
-      <div class="days-group" id="sub-days-MAT3007-C-TUT">
-        <label class="day-check" id="sub-dc-MAT3007-C-TUT-1"><input type="checkbox" value="1" onchange="updateSubDayCheck('MAT3007-C','TUT',1)">Mo</label><label class="day-check" id="sub-dc-MAT3007-C-TUT-2"><input type="checkbox" value="2" onchange="updateSubDayCheck('MAT3007-C','TUT',2)">Tu</label><label class="day-check" id="sub-dc-MAT3007-C-TUT-3"><input type="checkbox" value="3" onchange="updateSubDayCheck('MAT3007-C','TUT',3)">We</label><label class="day-check" id="sub-dc-MAT3007-C-TUT-4"><input type="checkbox" value="4" onchange="updateSubDayCheck('MAT3007-C','TUT',4)">Th</label><label class="day-check" id="sub-dc-MAT3007-C-TUT-5"><input type="checkbox" value="5" onchange="updateSubDayCheck('MAT3007-C','TUT',5)">Fr</label><label class="day-check" id="sub-dc-MAT3007-C-TUT-6"><input type="checkbox" value="6" onchange="updateSubDayCheck('MAT3007-C','TUT',6)">St</label><label class="day-check" id="sub-dc-MAT3007-C-TUT-7"><input type="checkbox" value="7" onchange="updateSubDayCheck('MAT3007-C','TUT',7)">Su</label>
-      </div>
-      <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
-        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-MAT3007-C-TUT" onclick="openTimePicker('sub-tstart-MAT3007-C-TUT','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-MAT3007-C-TUT-txt">--:--</span></button></div>
-        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-MAT3007-C-TUT" onclick="openTimePicker('sub-tend-MAT3007-C-TUT','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-MAT3007-C-TUT-txt">--:--</span></button></div>
-        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-MAT3007-C-TUT" onclick="openLocPicker('sub-tloc-MAT3007-C-TUT')">--</button></div>
-      </div>
-      <div class="section-btn-group">
-        <button class="btn btn-success btn-sm" onclick="addSubSection('MAT3007','MAT3007-C','TUT')">确认</button>
-        <button class="btn btn-outline btn-sm" onclick="hideSubInput('MAT3007-C','TUT')">取消</button>
-      </div>
-    </div>
-        </div>
-      </div>
-    </div></div>
-      
-    </div>
-    <div class="course-card">
-      <div class="course-card-header">
-        <span class="course-code">MAT1002</span>
-        <div>
-          <button class="btn btn-outline btn-sm" onclick="showSectionInput('MAT1002')">+ 时段</button>
-          <button class="btn btn-danger btn-sm" onclick="delCourse('MAT1002')">删除</button>
-        </div>
-      </div>
-      <div id="sec-inp-MAT1002" class="section-input-area hidden">
-        <h4>添加时段 → MAT1002</h4>
-        <div class="section-row" style="flex-direction:column;align-items:stretch;gap:6px;">
-          <div class="hint">上课日（必选1~7个）</div>
-          <div class="days-group" id="days-MAT1002">
-            <label class="day-check" id="dc-MAT1002-1"><input type="checkbox" value="1" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',1)">Mo</label><label class="day-check" id="dc-MAT1002-2"><input type="checkbox" value="2" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',2)">Tu</label><label class="day-check" id="dc-MAT1002-3"><input type="checkbox" value="3" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',3)">We</label><label class="day-check" id="dc-MAT1002-4"><input type="checkbox" value="4" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',4)">Th</label><label class="day-check" id="dc-MAT1002-5"><input type="checkbox" value="5" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',5)">Fr</label><label class="day-check" id="dc-MAT1002-6"><input type="checkbox" value="6" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',6)">St</label><label class="day-check" id="dc-MAT1002-7"><input type="checkbox" value="7" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',7)">Su</label>
-          </div>
-        </div>
-        <div class="section-row" style="margin-top:8px;align-items:flex-end;">
-          <div style="flex:1"><div class="hint">开始</div><button class="time-picker-btn" id="tstart-MAT1002" onclick="openTimePicker('tstart-MAT1002','开始时间')"><span class="clock-icon">🕐</span><span id="tstart-MAT1002-txt">--:--</span></button></div>
-          <div style="flex:1"><div class="hint">结束</div><button class="time-picker-btn" id="tend-MAT1002" onclick="openTimePicker('tend-MAT1002','结束时间')"><span class="clock-icon">🕑</span><span id="tend-MAT1002-txt">--:--</span></button></div>
-          <div style="flex:1"><div class="hint">地点</div><button class="loc-picker-btn" id="tloc-MAT1002" onclick="openLocPicker('tloc-MAT1002')">--</button></div>
-        </div>
-        <div class="section-btn-group">
-          <button class="btn btn-primary btn-sm" onclick="addSection('MAT1002')">确认</button>
-          <button class="btn btn-outline btn-sm" onclick="hideSectionInput('MAT1002')">取消</button>
-        </div>
-      </div>
-      <div><div class="section-item">
-      <div class="section-item-row">
-        <span><b>A</b> &nbsp;Tu &nbsp;14:30-15:30 &nbsp;TA</span>
-        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('MAT1002','MAT1002-A')">+ 子课程</button>
-        <button class="btn btn-danger btn-sm" onclick="delSection('MAT1002','MAT1002-A')">×</button>
-      </div>
-      <div class="sub-list">
-        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ tut <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('MAT1002','MAT1002-A','tut')">+ 时段</button></div>
-        <div class="sub-item"><span>We &nbsp;15:30-14:30 &nbsp;TD</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('MAT1002','MAT1002-A','tut','MAT1002-A-1')">×</button></div>
-        <div id="sub-inp-MAT1002-A-tut" class="sub-input-area hidden">
-          <h5>新增 tut 时段</h5>
-    <div style="display:flex;flex-direction:column;gap:6px;">
-      <div class="hint">上课日</div>
-      <div class="days-group" id="sub-days-MAT1002-A-tut">
-        <label class="day-check" id="sub-dc-MAT1002-A-tut-1"><input type="checkbox" value="1" onchange="updateSubDayCheck('MAT1002-A','tut',1)">Mo</label><label class="day-check" id="sub-dc-MAT1002-A-tut-2"><input type="checkbox" value="2" onchange="updateSubDayCheck('MAT1002-A','tut',2)">Tu</label><label class="day-check" id="sub-dc-MAT1002-A-tut-3"><input type="checkbox" value="3" onchange="updateSubDayCheck('MAT1002-A','tut',3)">We</label><label class="day-check" id="sub-dc-MAT1002-A-tut-4"><input type="checkbox" value="4" onchange="updateSubDayCheck('MAT1002-A','tut',4)">Th</label><label class="day-check" id="sub-dc-MAT1002-A-tut-5"><input type="checkbox" value="5" onchange="updateSubDayCheck('MAT1002-A','tut',5)">Fr</label><label class="day-check" id="sub-dc-MAT1002-A-tut-6"><input type="checkbox" value="6" onchange="updateSubDayCheck('MAT1002-A','tut',6)">St</label><label class="day-check" id="sub-dc-MAT1002-A-tut-7"><input type="checkbox" value="7" onchange="updateSubDayCheck('MAT1002-A','tut',7)">Su</label>
-      </div>
-      <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
-        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-MAT1002-A-tut" onclick="openTimePicker('sub-tstart-MAT1002-A-tut','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-MAT1002-A-tut-txt">--:--</span></button></div>
-        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-MAT1002-A-tut" onclick="openTimePicker('sub-tend-MAT1002-A-tut','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-MAT1002-A-tut-txt">--:--</span></button></div>
-        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-MAT1002-A-tut" onclick="openLocPicker('sub-tloc-MAT1002-A-tut')">--</button></div>
-      </div>
-      <div class="section-btn-group">
-        <button class="btn btn-success btn-sm" onclick="addSubSection('MAT1002','MAT1002-A','tut')">确认</button>
-        <button class="btn btn-outline btn-sm" onclick="hideSubInput('MAT1002-A','tut')">取消</button>
-      </div>
-    </div>
-        </div>
-      </div>
-    </div><div class="section-item">
-      <div class="section-item-row">
-        <span><b>B</b> &nbsp;Mo We &nbsp;17:50-19:00 &nbsp;TD</span>
-        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('MAT1002','MAT1002-B')">+ 子课程</button>
-        <button class="btn btn-danger btn-sm" onclick="delSection('MAT1002','MAT1002-B')">×</button>
-      </div>
-      <div class="sub-list">
-        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ TUT <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('MAT1002','MAT1002-B','TUT')">+ 时段</button></div>
-        
-        <div id="sub-inp-MAT1002-B-TUT" class="sub-input-area hidden">
-          <h5>新增 TUT 时段</h5>
-    <div style="display:flex;flex-direction:column;gap:6px;">
-      <div class="hint">上课日</div>
-      <div class="days-group" id="sub-days-MAT1002-B-TUT">
-        <label class="day-check" id="sub-dc-MAT1002-B-TUT-1"><input type="checkbox" value="1" onchange="updateSubDayCheck('MAT1002-B','TUT',1)">Mo</label><label class="day-check" id="sub-dc-MAT1002-B-TUT-2"><input type="checkbox" value="2" onchange="updateSubDayCheck('MAT1002-B','TUT',2)">Tu</label><label class="day-check" id="sub-dc-MAT1002-B-TUT-3"><input type="checkbox" value="3" onchange="updateSubDayCheck('MAT1002-B','TUT',3)">We</label><label class="day-check" id="sub-dc-MAT1002-B-TUT-4"><input type="checkbox" value="4" onchange="updateSubDayCheck('MAT1002-B','TUT',4)">Th</label><label class="day-check" id="sub-dc-MAT1002-B-TUT-5"><input type="checkbox" value="5" onchange="updateSubDayCheck('MAT1002-B','TUT',5)">Fr</label><label class="day-check" id="sub-dc-MAT1002-B-TUT-6"><input type="checkbox" value="6" onchange="updateSubDayCheck('MAT1002-B','TUT',6)">St</label><label class="day-check" id="sub-dc-MAT1002-B-TUT-7"><input type="checkbox" value="7" onchange="updateSubDayCheck('MAT1002-B','TUT',7)">Su</label>
-      </div>
-      <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
-        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-MAT1002-B-TUT" onclick="openTimePicker('sub-tstart-MAT1002-B-TUT','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-MAT1002-B-TUT-txt">--:--</span></button></div>
-        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-MAT1002-B-TUT" onclick="openTimePicker('sub-tend-MAT1002-B-TUT','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-MAT1002-B-TUT-txt">--:--</span></button></div>
-        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-MAT1002-B-TUT" onclick="openLocPicker('sub-tloc-MAT1002-B-TUT')">--</button></div>
-      </div>
-      <div class="section-btn-group">
-        <button class="btn btn-success btn-sm" onclick="addSubSection('MAT1002','MAT1002-B','TUT')">确认</button>
-        <button class="btn btn-outline btn-sm" onclick="hideSubInput('MAT1002-B','TUT')">取消</button>
-      </div>
-    </div>
-        </div>
-      </div>
-    </div></div>
-      
-    </div>
-    <div class="course-card">
-      <div class="course-card-header">
-        <span class="course-code">ECO2011</span>
-        <div>
-          <button class="btn btn-outline btn-sm" onclick="showSectionInput('ECO2011')">+ 时段</button>
-          <button class="btn btn-danger btn-sm" onclick="delCourse('ECO2011')">删除</button>
-        </div>
-      </div>
-      <div id="sec-inp-ECO2011" class="section-input-area hidden">
-        <h4>添加时段 → ECO2011</h4>
-        <div class="section-row" style="flex-direction:column;align-items:stretch;gap:6px;">
-          <div class="hint">上课日（必选1~7个）</div>
-          <div class="days-group" id="days-ECO2011">
-            <label class="day-check" id="dc-ECO2011-1"><input type="checkbox" value="1" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',1)">Mo</label><label class="day-check" id="dc-ECO2011-2"><input type="checkbox" value="2" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',2)">Tu</label><label class="day-check" id="dc-ECO2011-3"><input type="checkbox" value="3" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',3)">We</label><label class="day-check" id="dc-ECO2011-4"><input type="checkbox" value="4" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',4)">Th</label><label class="day-check" id="dc-ECO2011-5"><input type="checkbox" value="5" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',5)">Fr</label><label class="day-check" id="dc-ECO2011-6"><input type="checkbox" value="6" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',6)">St</label><label class="day-check" id="dc-ECO2011-7"><input type="checkbox" value="7" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',7)">Su</label>
-          </div>
-        </div>
-        <div class="section-row" style="margin-top:8px;align-items:flex-end;">
-          <div style="flex:1"><div class="hint">开始</div><button class="time-picker-btn" id="tstart-ECO2011" onclick="openTimePicker('tstart-ECO2011','开始时间')"><span class="clock-icon">🕐</span><span id="tstart-ECO2011-txt">--:--</span></button></div>
-          <div style="flex:1"><div class="hint">结束</div><button class="time-picker-btn" id="tend-ECO2011" onclick="openTimePicker('tend-ECO2011','结束时间')"><span class="clock-icon">🕑</span><span id="tend-ECO2011-txt">--:--</span></button></div>
-          <div style="flex:1"><div class="hint">地点</div><button class="loc-picker-btn" id="tloc-ECO2011" onclick="openLocPicker('tloc-ECO2011')">--</button></div>
-        </div>
-        <div class="section-btn-group">
-          <button class="btn btn-primary btn-sm" onclick="addSection('ECO2011')">确认</button>
-          <button class="btn btn-outline btn-sm" onclick="hideSectionInput('ECO2011')">取消</button>
-        </div>
-      </div>
-      <div><div class="section-item">
-      <div class="section-item-row">
-        <span><b>A</b> &nbsp;Mo We &nbsp;08:30-10:20 &nbsp;TC</span>
-        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('ECO2011','ECO2011-A')">+ 子课程</button>
-        <button class="btn btn-danger btn-sm" onclick="delSection('ECO2011','ECO2011-A')">×</button>
-      </div>
-      <div class="sub-list">
-        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ TUT <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('ECO2011','ECO2011-A','TUT')">+ 时段</button></div>
-        <div class="sub-item"><span>Tu &nbsp;08:30-09:30 &nbsp;TD</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('ECO2011','ECO2011-A','TUT','ECO2011-A-1')">×</button></div>
-        <div id="sub-inp-ECO2011-A-TUT" class="sub-input-area hidden">
-          <h5>新增 TUT 时段</h5>
-    <div style="display:flex;flex-direction:column;gap:6px;">
-      <div class="hint">上课日</div>
-      <div class="days-group" id="sub-days-ECO2011-A-TUT">
-        <label class="day-check" id="sub-dc-ECO2011-A-TUT-1"><input type="checkbox" value="1" onchange="updateSubDayCheck('ECO2011-A','TUT',1)">Mo</label><label class="day-check" id="sub-dc-ECO2011-A-TUT-2"><input type="checkbox" value="2" onchange="updateSubDayCheck('ECO2011-A','TUT',2)">Tu</label><label class="day-check" id="sub-dc-ECO2011-A-TUT-3"><input type="checkbox" value="3" onchange="updateSubDayCheck('ECO2011-A','TUT',3)">We</label><label class="day-check" id="sub-dc-ECO2011-A-TUT-4"><input type="checkbox" value="4" onchange="updateSubDayCheck('ECO2011-A','TUT',4)">Th</label><label class="day-check" id="sub-dc-ECO2011-A-TUT-5"><input type="checkbox" value="5" onchange="updateSubDayCheck('ECO2011-A','TUT',5)">Fr</label><label class="day-check" id="sub-dc-ECO2011-A-TUT-6"><input type="checkbox" value="6" onchange="updateSubDayCheck('ECO2011-A','TUT',6)">St</label><label class="day-check" id="sub-dc-ECO2011-A-TUT-7"><input type="checkbox" value="7" onchange="updateSubDayCheck('ECO2011-A','TUT',7)">Su</label>
-      </div>
-      <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
-        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-ECO2011-A-TUT" onclick="openTimePicker('sub-tstart-ECO2011-A-TUT','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-ECO2011-A-TUT-txt">--:--</span></button></div>
-        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-ECO2011-A-TUT" onclick="openTimePicker('sub-tend-ECO2011-A-TUT','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-ECO2011-A-TUT-txt">--:--</span></button></div>
-        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-ECO2011-A-TUT" onclick="openLocPicker('sub-tloc-ECO2011-A-TUT')">--</button></div>
-      </div>
-      <div class="section-btn-group">
-        <button class="btn btn-success btn-sm" onclick="addSubSection('ECO2011','ECO2011-A','TUT')">确认</button>
-        <button class="btn btn-outline btn-sm" onclick="hideSubInput('ECO2011-A','TUT')">取消</button>
-      </div>
-    </div>
-        </div>
-      </div>
-    </div><div class="section-item">
-      <div class="section-item-row">
-        <span><b>B</b> &nbsp;Tu Th &nbsp;08:30-10:20 &nbsp;TD</span>
-        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('ECO2011','ECO2011-B')">+ 子课程</button>
-        <button class="btn btn-danger btn-sm" onclick="delSection('ECO2011','ECO2011-B')">×</button>
-      </div>
-      <div class="sub-list">
-        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ TUT <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('ECO2011','ECO2011-B','TUT')">+ 时段</button></div>
-        <div class="sub-item"><span>Fr &nbsp;16:30-18:30 &nbsp;TC</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('ECO2011','ECO2011-B','TUT','ECO2011-B-1')">×</button></div>
-        <div id="sub-inp-ECO2011-B-TUT" class="sub-input-area hidden">
-          <h5>新增 TUT 时段</h5>
-    <div style="display:flex;flex-direction:column;gap:6px;">
-      <div class="hint">上课日</div>
-      <div class="days-group" id="sub-days-ECO2011-B-TUT">
-        <label class="day-check" id="sub-dc-ECO2011-B-TUT-1"><input type="checkbox" value="1" onchange="updateSubDayCheck('ECO2011-B','TUT',1)">Mo</label><label class="day-check" id="sub-dc-ECO2011-B-TUT-2"><input type="checkbox" value="2" onchange="updateSubDayCheck('ECO2011-B','TUT',2)">Tu</label><label class="day-check" id="sub-dc-ECO2011-B-TUT-3"><input type="checkbox" value="3" onchange="updateSubDayCheck('ECO2011-B','TUT',3)">We</label><label class="day-check" id="sub-dc-ECO2011-B-TUT-4"><input type="checkbox" value="4" onchange="updateSubDayCheck('ECO2011-B','TUT',4)">Th</label><label class="day-check" id="sub-dc-ECO2011-B-TUT-5"><input type="checkbox" value="5" onchange="updateSubDayCheck('ECO2011-B','TUT',5)">Fr</label><label class="day-check" id="sub-dc-ECO2011-B-TUT-6"><input type="checkbox" value="6" onchange="updateSubDayCheck('ECO2011-B','TUT',6)">St</label><label class="day-check" id="sub-dc-ECO2011-B-TUT-7"><input type="checkbox" value="7" onchange="updateSubDayCheck('ECO2011-B','TUT',7)">Su</label>
-      </div>
-      <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
-        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-ECO2011-B-TUT" onclick="openTimePicker('sub-tstart-ECO2011-B-TUT','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-ECO2011-B-TUT-txt">--:--</span></button></div>
-        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-ECO2011-B-TUT" onclick="openTimePicker('sub-tend-ECO2011-B-TUT','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-ECO2011-B-TUT-txt">--:--</span></button></div>
-        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-ECO2011-B-TUT" onclick="openLocPicker('sub-tloc-ECO2011-B-TUT')">--</button></div>
-      </div>
-      <div class="section-btn-group">
-        <button class="btn btn-success btn-sm" onclick="addSubSection('ECO2011','ECO2011-B','TUT')">确认</button>
-        <button class="btn btn-outline btn-sm" onclick="hideSubInput('ECO2011-B','TUT')">取消</button>
-      </div>
-    </div>
-        </div>
-      </div>
-    </div></div>
-      
-    </div>
-    <div class="course-card">
-      <div class="course-card-header">
-        <span class="course-code">ACT2031</span>
-        <div>
-          <button class="btn btn-outline btn-sm" onclick="showSectionInput('ACT2031')">+ 时段</button>
-          <button class="btn btn-danger btn-sm" onclick="delCourse('ACT2031')">删除</button>
-        </div>
-      </div>
-      <div id="sec-inp-ACT2031" class="section-input-area hidden">
-        <h4>添加时段 → ACT2031</h4>
-        <div class="section-row" style="flex-direction:column;align-items:stretch;gap:6px;">
-          <div class="hint">上课日（必选1~7个）</div>
-          <div class="days-group" id="days-ACT2031">
-            <label class="day-check" id="dc-ACT2031-1"><input type="checkbox" value="1" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',1)">Mo</label><label class="day-check" id="dc-ACT2031-2"><input type="checkbox" value="2" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',2)">Tu</label><label class="day-check" id="dc-ACT2031-3"><input type="checkbox" value="3" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',3)">We</label><label class="day-check" id="dc-ACT2031-4"><input type="checkbox" value="4" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',4)">Th</label><label class="day-check" id="dc-ACT2031-5"><input type="checkbox" value="5" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',5)">Fr</label><label class="day-check" id="dc-ACT2031-6"><input type="checkbox" value="6" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',6)">St</label><label class="day-check" id="dc-ACT2031-7"><input type="checkbox" value="7" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',7)">Su</label>
-          </div>
-        </div>
-        <div class="section-row" style="margin-top:8px;align-items:flex-end;">
-          <div style="flex:1"><div class="hint">开始</div><button class="time-picker-btn" id="tstart-ACT2031" onclick="openTimePicker('tstart-ACT2031','开始时间')"><span class="clock-icon">🕐</span><span id="tstart-ACT2031-txt">--:--</span></button></div>
-          <div style="flex:1"><div class="hint">结束</div><button class="time-picker-btn" id="tend-ACT2031" onclick="openTimePicker('tend-ACT2031','结束时间')"><span class="clock-icon">🕑</span><span id="tend-ACT2031-txt">--:--</span></button></div>
-          <div style="flex:1"><div class="hint">地点</div><button class="loc-picker-btn" id="tloc-ACT2031" onclick="openLocPicker('tloc-ACT2031')">--</button></div>
-        </div>
-        <div class="section-btn-group">
-          <button class="btn btn-primary btn-sm" onclick="addSection('ACT2031')">确认</button>
-          <button class="btn btn-outline btn-sm" onclick="hideSectionInput('ACT2031')">取消</button>
-        </div>
-      </div>
-      <div><div class="section-item">
-      <div class="section-item-row">
-        <span><b>A</b> &nbsp;Tu Th &nbsp;08:30-09:30 &nbsp;TA</span>
-        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('ACT2031','ACT2031-A')">+ 子课程</button>
-        <button class="btn btn-danger btn-sm" onclick="delSection('ACT2031','ACT2031-A')">×</button>
-      </div>
-      
-    </div><div class="section-item">
-      <div class="section-item-row">
-        <span><b>B</b> &nbsp;Tu Th &nbsp;14:30-15:30 &nbsp;TC</span>
-        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('ACT2031','ACT2031-B')">+ 子课程</button>
-        <button class="btn btn-danger btn-sm" onclick="delSection('ACT2031','ACT2031-B')">×</button>
-      </div>
-      
-    </div><div class="section-item">
-      <div class="section-item-row">
-        <span><b>C</b> &nbsp;Mo We &nbsp;19:30-20:30 &nbsp;TD</span>
-        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('ACT2031','ACT2031-C')">+ 子课程</button>
-        <button class="btn btn-danger btn-sm" onclick="delSection('ACT2031','ACT2031-C')">×</button>
-      </div>
-      
-    </div></div>
-      
-    </div></div>
         </div>
         <div class="panel" style="margin-top:16px;">
           <div class="panel-title"><span class="icon">⚙️</span>筛选与排序</div>
@@ -1693,7 +1302,7 @@
 
     <!-- 中间栏：课程管理 + 筛选排序（管理员专用） -->
     <div id="centerPanel">
-      <div id="adminCenterContent" style="display: flex; flex-direction: column; gap: 16px;">
+      <div id="adminCenterContent" style="display:none;flex-direction:column;gap:16px;">
         <div class="panel">
           <div class="panel-title"><span class="icon">📚</span>课程管理</div>
           <div class="course-input">
@@ -1701,311 +1310,10 @@
             <button class="btn btn-primary" onclick="addCourse2()">添加</button>
           </div>
           <div class="course-list" id="courseList2">
-    <div class="course-card">
-      <div class="course-card-header">
-        <span class="course-code">MAT3007</span>
-        <div>
-          <button class="btn btn-outline btn-sm" onclick="showSectionInput('MAT3007')">+ 时段</button>
-          <button class="btn btn-danger btn-sm" onclick="delCourse('MAT3007')">删除</button>
-        </div>
-      </div>
-      <div id="sec-inp-MAT3007" class="section-input-area hidden">
-        <h4>添加时段 → MAT3007</h4>
-        <div class="section-row" style="flex-direction:column;align-items:stretch;gap:6px;">
-          <div class="hint">上课日（必选1~7个）</div>
-          <div class="days-group" id="days-MAT3007">
-            <label class="day-check" id="dc-MAT3007-1"><input type="checkbox" value="1" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',1)">Mo</label><label class="day-check" id="dc-MAT3007-2"><input type="checkbox" value="2" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',2)">Tu</label><label class="day-check" id="dc-MAT3007-3"><input type="checkbox" value="3" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',3)">We</label><label class="day-check" id="dc-MAT3007-4"><input type="checkbox" value="4" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',4)">Th</label><label class="day-check" id="dc-MAT3007-5"><input type="checkbox" value="5" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',5)">Fr</label><label class="day-check" id="dc-MAT3007-6"><input type="checkbox" value="6" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',6)">St</label><label class="day-check" id="dc-MAT3007-7"><input type="checkbox" value="7" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',7)">Su</label>
+            <div class="empty-state" id="courseEmpty2">
+              <div class="emoji">📋</div>暂无课程<br><small>请在上方添加课程</small>
+            </div>
           </div>
-        </div>
-        <div class="section-row" style="margin-top:8px;align-items:flex-end;">
-          <div style="flex:1"><div class="hint">开始</div><button class="time-picker-btn" id="tstart-MAT3007" onclick="openTimePicker('tstart-MAT3007','开始时间')"><span class="clock-icon">🕐</span><span id="tstart-MAT3007-txt">--:--</span></button></div>
-          <div style="flex:1"><div class="hint">结束</div><button class="time-picker-btn" id="tend-MAT3007" onclick="openTimePicker('tend-MAT3007','结束时间')"><span class="clock-icon">🕑</span><span id="tend-MAT3007-txt">--:--</span></button></div>
-          <div style="flex:1"><div class="hint">地点</div><button class="loc-picker-btn" id="tloc-MAT3007" onclick="openLocPicker('tloc-MAT3007')">--</button></div>
-        </div>
-        <div class="section-btn-group">
-          <button class="btn btn-primary btn-sm" onclick="addSection('MAT3007')">确认</button>
-          <button class="btn btn-outline btn-sm" onclick="hideSectionInput('MAT3007')">取消</button>
-        </div>
-      </div>
-      <div><div class="section-item">
-      <div class="section-item-row">
-        <span><b>A</b> &nbsp;Mo We &nbsp;16:00-18:00 &nbsp;TA</span>
-        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('MAT3007','MAT3007-A')">+ 子课程</button>
-        <button class="btn btn-danger btn-sm" onclick="delSection('MAT3007','MAT3007-A')">×</button>
-      </div>
-      <div class="sub-list">
-        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ TUT <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('MAT3007','MAT3007-A','TUT')">+ 时段</button></div>
-        <div class="sub-item"><span>Mo &nbsp;15:30-16:00 &nbsp;TD</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('MAT3007','MAT3007-A','TUT','MAT3007-A-1')">×</button></div><div class="sub-item"><span>We &nbsp;06:00-07:00 &nbsp;TC</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('MAT3007','MAT3007-A','TUT','MAT3007-A-2')">×</button></div><div class="sub-item"><span>We Th &nbsp;16:00-19:00 &nbsp;TD</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('MAT3007','MAT3007-A','TUT','MAT3007-A-3')">×</button></div>
-        <div id="sub-inp-MAT3007-A-TUT" class="sub-input-area hidden">
-          <h5>新增 TUT 时段</h5>
-    <div style="display:flex;flex-direction:column;gap:6px;">
-      <div class="hint">上课日</div>
-      <div class="days-group" id="sub-days-MAT3007-A-TUT">
-        <label class="day-check" id="sub-dc-MAT3007-A-TUT-1"><input type="checkbox" value="1" onchange="updateSubDayCheck('MAT3007-A','TUT',1)">Mo</label><label class="day-check" id="sub-dc-MAT3007-A-TUT-2"><input type="checkbox" value="2" onchange="updateSubDayCheck('MAT3007-A','TUT',2)">Tu</label><label class="day-check" id="sub-dc-MAT3007-A-TUT-3"><input type="checkbox" value="3" onchange="updateSubDayCheck('MAT3007-A','TUT',3)">We</label><label class="day-check" id="sub-dc-MAT3007-A-TUT-4"><input type="checkbox" value="4" onchange="updateSubDayCheck('MAT3007-A','TUT',4)">Th</label><label class="day-check" id="sub-dc-MAT3007-A-TUT-5"><input type="checkbox" value="5" onchange="updateSubDayCheck('MAT3007-A','TUT',5)">Fr</label><label class="day-check" id="sub-dc-MAT3007-A-TUT-6"><input type="checkbox" value="6" onchange="updateSubDayCheck('MAT3007-A','TUT',6)">St</label><label class="day-check" id="sub-dc-MAT3007-A-TUT-7"><input type="checkbox" value="7" onchange="updateSubDayCheck('MAT3007-A','TUT',7)">Su</label>
-      </div>
-      <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
-        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-MAT3007-A-TUT" onclick="openTimePicker('sub-tstart-MAT3007-A-TUT','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-MAT3007-A-TUT-txt">--:--</span></button></div>
-        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-MAT3007-A-TUT" onclick="openTimePicker('sub-tend-MAT3007-A-TUT','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-MAT3007-A-TUT-txt">--:--</span></button></div>
-        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-MAT3007-A-TUT" onclick="openLocPicker('sub-tloc-MAT3007-A-TUT')">--</button></div>
-      </div>
-      <div class="section-btn-group">
-        <button class="btn btn-success btn-sm" onclick="addSubSection('MAT3007','MAT3007-A','TUT')">确认</button>
-        <button class="btn btn-outline btn-sm" onclick="hideSubInput('MAT3007-A','TUT')">取消</button>
-      </div>
-    </div>
-        </div>
-      </div>
-    </div><div class="section-item">
-      <div class="section-item-row">
-        <span><b>C</b> &nbsp;Mo We &nbsp;15:30-16:20 &nbsp;TXA</span>
-        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('MAT3007','MAT3007-C')">+ 子课程</button>
-        <button class="btn btn-danger btn-sm" onclick="delSection('MAT3007','MAT3007-C')">×</button>
-      </div>
-      <div class="sub-list">
-        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ TUT <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('MAT3007','MAT3007-C','TUT')">+ 时段</button></div>
-        <div class="sub-item"><span>Tu &nbsp;08:30-09:30 &nbsp;TD</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('MAT3007','MAT3007-C','TUT','MAT3007-C-1')">×</button></div>
-        <div id="sub-inp-MAT3007-C-TUT" class="sub-input-area hidden">
-          <h5>新增 TUT 时段</h5>
-    <div style="display:flex;flex-direction:column;gap:6px;">
-      <div class="hint">上课日</div>
-      <div class="days-group" id="sub-days-MAT3007-C-TUT">
-        <label class="day-check" id="sub-dc-MAT3007-C-TUT-1"><input type="checkbox" value="1" onchange="updateSubDayCheck('MAT3007-C','TUT',1)">Mo</label><label class="day-check" id="sub-dc-MAT3007-C-TUT-2"><input type="checkbox" value="2" onchange="updateSubDayCheck('MAT3007-C','TUT',2)">Tu</label><label class="day-check" id="sub-dc-MAT3007-C-TUT-3"><input type="checkbox" value="3" onchange="updateSubDayCheck('MAT3007-C','TUT',3)">We</label><label class="day-check" id="sub-dc-MAT3007-C-TUT-4"><input type="checkbox" value="4" onchange="updateSubDayCheck('MAT3007-C','TUT',4)">Th</label><label class="day-check" id="sub-dc-MAT3007-C-TUT-5"><input type="checkbox" value="5" onchange="updateSubDayCheck('MAT3007-C','TUT',5)">Fr</label><label class="day-check" id="sub-dc-MAT3007-C-TUT-6"><input type="checkbox" value="6" onchange="updateSubDayCheck('MAT3007-C','TUT',6)">St</label><label class="day-check" id="sub-dc-MAT3007-C-TUT-7"><input type="checkbox" value="7" onchange="updateSubDayCheck('MAT3007-C','TUT',7)">Su</label>
-      </div>
-      <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
-        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-MAT3007-C-TUT" onclick="openTimePicker('sub-tstart-MAT3007-C-TUT','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-MAT3007-C-TUT-txt">--:--</span></button></div>
-        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-MAT3007-C-TUT" onclick="openTimePicker('sub-tend-MAT3007-C-TUT','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-MAT3007-C-TUT-txt">--:--</span></button></div>
-        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-MAT3007-C-TUT" onclick="openLocPicker('sub-tloc-MAT3007-C-TUT')">--</button></div>
-      </div>
-      <div class="section-btn-group">
-        <button class="btn btn-success btn-sm" onclick="addSubSection('MAT3007','MAT3007-C','TUT')">确认</button>
-        <button class="btn btn-outline btn-sm" onclick="hideSubInput('MAT3007-C','TUT')">取消</button>
-      </div>
-    </div>
-        </div>
-      </div>
-    </div></div>
-      
-    </div>
-    <div class="course-card">
-      <div class="course-card-header">
-        <span class="course-code">MAT1002</span>
-        <div>
-          <button class="btn btn-outline btn-sm" onclick="showSectionInput('MAT1002')">+ 时段</button>
-          <button class="btn btn-danger btn-sm" onclick="delCourse('MAT1002')">删除</button>
-        </div>
-      </div>
-      <div id="sec-inp-MAT1002" class="section-input-area hidden">
-        <h4>添加时段 → MAT1002</h4>
-        <div class="section-row" style="flex-direction:column;align-items:stretch;gap:6px;">
-          <div class="hint">上课日（必选1~7个）</div>
-          <div class="days-group" id="days-MAT1002">
-            <label class="day-check" id="dc-MAT1002-1"><input type="checkbox" value="1" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',1)">Mo</label><label class="day-check" id="dc-MAT1002-2"><input type="checkbox" value="2" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',2)">Tu</label><label class="day-check" id="dc-MAT1002-3"><input type="checkbox" value="3" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',3)">We</label><label class="day-check" id="dc-MAT1002-4"><input type="checkbox" value="4" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',4)">Th</label><label class="day-check" id="dc-MAT1002-5"><input type="checkbox" value="5" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',5)">Fr</label><label class="day-check" id="dc-MAT1002-6"><input type="checkbox" value="6" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',6)">St</label><label class="day-check" id="dc-MAT1002-7"><input type="checkbox" value="7" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',7)">Su</label>
-          </div>
-        </div>
-        <div class="section-row" style="margin-top:8px;align-items:flex-end;">
-          <div style="flex:1"><div class="hint">开始</div><button class="time-picker-btn" id="tstart-MAT1002" onclick="openTimePicker('tstart-MAT1002','开始时间')"><span class="clock-icon">🕐</span><span id="tstart-MAT1002-txt">--:--</span></button></div>
-          <div style="flex:1"><div class="hint">结束</div><button class="time-picker-btn" id="tend-MAT1002" onclick="openTimePicker('tend-MAT1002','结束时间')"><span class="clock-icon">🕑</span><span id="tend-MAT1002-txt">--:--</span></button></div>
-          <div style="flex:1"><div class="hint">地点</div><button class="loc-picker-btn" id="tloc-MAT1002" onclick="openLocPicker('tloc-MAT1002')">--</button></div>
-        </div>
-        <div class="section-btn-group">
-          <button class="btn btn-primary btn-sm" onclick="addSection('MAT1002')">确认</button>
-          <button class="btn btn-outline btn-sm" onclick="hideSectionInput('MAT1002')">取消</button>
-        </div>
-      </div>
-      <div><div class="section-item">
-      <div class="section-item-row">
-        <span><b>A</b> &nbsp;Tu &nbsp;14:30-15:30 &nbsp;TA</span>
-        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('MAT1002','MAT1002-A')">+ 子课程</button>
-        <button class="btn btn-danger btn-sm" onclick="delSection('MAT1002','MAT1002-A')">×</button>
-      </div>
-      <div class="sub-list">
-        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ tut <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('MAT1002','MAT1002-A','tut')">+ 时段</button></div>
-        <div class="sub-item"><span>We &nbsp;15:30-14:30 &nbsp;TD</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('MAT1002','MAT1002-A','tut','MAT1002-A-1')">×</button></div>
-        <div id="sub-inp-MAT1002-A-tut" class="sub-input-area hidden">
-          <h5>新增 tut 时段</h5>
-    <div style="display:flex;flex-direction:column;gap:6px;">
-      <div class="hint">上课日</div>
-      <div class="days-group" id="sub-days-MAT1002-A-tut">
-        <label class="day-check" id="sub-dc-MAT1002-A-tut-1"><input type="checkbox" value="1" onchange="updateSubDayCheck('MAT1002-A','tut',1)">Mo</label><label class="day-check" id="sub-dc-MAT1002-A-tut-2"><input type="checkbox" value="2" onchange="updateSubDayCheck('MAT1002-A','tut',2)">Tu</label><label class="day-check" id="sub-dc-MAT1002-A-tut-3"><input type="checkbox" value="3" onchange="updateSubDayCheck('MAT1002-A','tut',3)">We</label><label class="day-check" id="sub-dc-MAT1002-A-tut-4"><input type="checkbox" value="4" onchange="updateSubDayCheck('MAT1002-A','tut',4)">Th</label><label class="day-check" id="sub-dc-MAT1002-A-tut-5"><input type="checkbox" value="5" onchange="updateSubDayCheck('MAT1002-A','tut',5)">Fr</label><label class="day-check" id="sub-dc-MAT1002-A-tut-6"><input type="checkbox" value="6" onchange="updateSubDayCheck('MAT1002-A','tut',6)">St</label><label class="day-check" id="sub-dc-MAT1002-A-tut-7"><input type="checkbox" value="7" onchange="updateSubDayCheck('MAT1002-A','tut',7)">Su</label>
-      </div>
-      <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
-        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-MAT1002-A-tut" onclick="openTimePicker('sub-tstart-MAT1002-A-tut','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-MAT1002-A-tut-txt">--:--</span></button></div>
-        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-MAT1002-A-tut" onclick="openTimePicker('sub-tend-MAT1002-A-tut','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-MAT1002-A-tut-txt">--:--</span></button></div>
-        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-MAT1002-A-tut" onclick="openLocPicker('sub-tloc-MAT1002-A-tut')">--</button></div>
-      </div>
-      <div class="section-btn-group">
-        <button class="btn btn-success btn-sm" onclick="addSubSection('MAT1002','MAT1002-A','tut')">确认</button>
-        <button class="btn btn-outline btn-sm" onclick="hideSubInput('MAT1002-A','tut')">取消</button>
-      </div>
-    </div>
-        </div>
-      </div>
-    </div><div class="section-item">
-      <div class="section-item-row">
-        <span><b>B</b> &nbsp;Mo We &nbsp;17:50-19:00 &nbsp;TD</span>
-        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('MAT1002','MAT1002-B')">+ 子课程</button>
-        <button class="btn btn-danger btn-sm" onclick="delSection('MAT1002','MAT1002-B')">×</button>
-      </div>
-      <div class="sub-list">
-        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ TUT <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('MAT1002','MAT1002-B','TUT')">+ 时段</button></div>
-        
-        <div id="sub-inp-MAT1002-B-TUT" class="sub-input-area hidden">
-          <h5>新增 TUT 时段</h5>
-    <div style="display:flex;flex-direction:column;gap:6px;">
-      <div class="hint">上课日</div>
-      <div class="days-group" id="sub-days-MAT1002-B-TUT">
-        <label class="day-check" id="sub-dc-MAT1002-B-TUT-1"><input type="checkbox" value="1" onchange="updateSubDayCheck('MAT1002-B','TUT',1)">Mo</label><label class="day-check" id="sub-dc-MAT1002-B-TUT-2"><input type="checkbox" value="2" onchange="updateSubDayCheck('MAT1002-B','TUT',2)">Tu</label><label class="day-check" id="sub-dc-MAT1002-B-TUT-3"><input type="checkbox" value="3" onchange="updateSubDayCheck('MAT1002-B','TUT',3)">We</label><label class="day-check" id="sub-dc-MAT1002-B-TUT-4"><input type="checkbox" value="4" onchange="updateSubDayCheck('MAT1002-B','TUT',4)">Th</label><label class="day-check" id="sub-dc-MAT1002-B-TUT-5"><input type="checkbox" value="5" onchange="updateSubDayCheck('MAT1002-B','TUT',5)">Fr</label><label class="day-check" id="sub-dc-MAT1002-B-TUT-6"><input type="checkbox" value="6" onchange="updateSubDayCheck('MAT1002-B','TUT',6)">St</label><label class="day-check" id="sub-dc-MAT1002-B-TUT-7"><input type="checkbox" value="7" onchange="updateSubDayCheck('MAT1002-B','TUT',7)">Su</label>
-      </div>
-      <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
-        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-MAT1002-B-TUT" onclick="openTimePicker('sub-tstart-MAT1002-B-TUT','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-MAT1002-B-TUT-txt">--:--</span></button></div>
-        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-MAT1002-B-TUT" onclick="openTimePicker('sub-tend-MAT1002-B-TUT','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-MAT1002-B-TUT-txt">--:--</span></button></div>
-        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-MAT1002-B-TUT" onclick="openLocPicker('sub-tloc-MAT1002-B-TUT')">--</button></div>
-      </div>
-      <div class="section-btn-group">
-        <button class="btn btn-success btn-sm" onclick="addSubSection('MAT1002','MAT1002-B','TUT')">确认</button>
-        <button class="btn btn-outline btn-sm" onclick="hideSubInput('MAT1002-B','TUT')">取消</button>
-      </div>
-    </div>
-        </div>
-      </div>
-    </div></div>
-      
-    </div>
-    <div class="course-card">
-      <div class="course-card-header">
-        <span class="course-code">ECO2011</span>
-        <div>
-          <button class="btn btn-outline btn-sm" onclick="showSectionInput('ECO2011')">+ 时段</button>
-          <button class="btn btn-danger btn-sm" onclick="delCourse('ECO2011')">删除</button>
-        </div>
-      </div>
-      <div id="sec-inp-ECO2011" class="section-input-area hidden">
-        <h4>添加时段 → ECO2011</h4>
-        <div class="section-row" style="flex-direction:column;align-items:stretch;gap:6px;">
-          <div class="hint">上课日（必选1~7个）</div>
-          <div class="days-group" id="days-ECO2011">
-            <label class="day-check" id="dc-ECO2011-1"><input type="checkbox" value="1" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',1)">Mo</label><label class="day-check" id="dc-ECO2011-2"><input type="checkbox" value="2" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',2)">Tu</label><label class="day-check" id="dc-ECO2011-3"><input type="checkbox" value="3" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',3)">We</label><label class="day-check" id="dc-ECO2011-4"><input type="checkbox" value="4" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',4)">Th</label><label class="day-check" id="dc-ECO2011-5"><input type="checkbox" value="5" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',5)">Fr</label><label class="day-check" id="dc-ECO2011-6"><input type="checkbox" value="6" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',6)">St</label><label class="day-check" id="dc-ECO2011-7"><input type="checkbox" value="7" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',7)">Su</label>
-          </div>
-        </div>
-        <div class="section-row" style="margin-top:8px;align-items:flex-end;">
-          <div style="flex:1"><div class="hint">开始</div><button class="time-picker-btn" id="tstart-ECO2011" onclick="openTimePicker('tstart-ECO2011','开始时间')"><span class="clock-icon">🕐</span><span id="tstart-ECO2011-txt">--:--</span></button></div>
-          <div style="flex:1"><div class="hint">结束</div><button class="time-picker-btn" id="tend-ECO2011" onclick="openTimePicker('tend-ECO2011','结束时间')"><span class="clock-icon">🕑</span><span id="tend-ECO2011-txt">--:--</span></button></div>
-          <div style="flex:1"><div class="hint">地点</div><button class="loc-picker-btn" id="tloc-ECO2011" onclick="openLocPicker('tloc-ECO2011')">--</button></div>
-        </div>
-        <div class="section-btn-group">
-          <button class="btn btn-primary btn-sm" onclick="addSection('ECO2011')">确认</button>
-          <button class="btn btn-outline btn-sm" onclick="hideSectionInput('ECO2011')">取消</button>
-        </div>
-      </div>
-      <div><div class="section-item">
-      <div class="section-item-row">
-        <span><b>A</b> &nbsp;Mo We &nbsp;08:30-10:20 &nbsp;TC</span>
-        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('ECO2011','ECO2011-A')">+ 子课程</button>
-        <button class="btn btn-danger btn-sm" onclick="delSection('ECO2011','ECO2011-A')">×</button>
-      </div>
-      <div class="sub-list">
-        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ TUT <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('ECO2011','ECO2011-A','TUT')">+ 时段</button></div>
-        <div class="sub-item"><span>Tu &nbsp;08:30-09:30 &nbsp;TD</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('ECO2011','ECO2011-A','TUT','ECO2011-A-1')">×</button></div>
-        <div id="sub-inp-ECO2011-A-TUT" class="sub-input-area hidden">
-          <h5>新增 TUT 时段</h5>
-    <div style="display:flex;flex-direction:column;gap:6px;">
-      <div class="hint">上课日</div>
-      <div class="days-group" id="sub-days-ECO2011-A-TUT">
-        <label class="day-check" id="sub-dc-ECO2011-A-TUT-1"><input type="checkbox" value="1" onchange="updateSubDayCheck('ECO2011-A','TUT',1)">Mo</label><label class="day-check" id="sub-dc-ECO2011-A-TUT-2"><input type="checkbox" value="2" onchange="updateSubDayCheck('ECO2011-A','TUT',2)">Tu</label><label class="day-check" id="sub-dc-ECO2011-A-TUT-3"><input type="checkbox" value="3" onchange="updateSubDayCheck('ECO2011-A','TUT',3)">We</label><label class="day-check" id="sub-dc-ECO2011-A-TUT-4"><input type="checkbox" value="4" onchange="updateSubDayCheck('ECO2011-A','TUT',4)">Th</label><label class="day-check" id="sub-dc-ECO2011-A-TUT-5"><input type="checkbox" value="5" onchange="updateSubDayCheck('ECO2011-A','TUT',5)">Fr</label><label class="day-check" id="sub-dc-ECO2011-A-TUT-6"><input type="checkbox" value="6" onchange="updateSubDayCheck('ECO2011-A','TUT',6)">St</label><label class="day-check" id="sub-dc-ECO2011-A-TUT-7"><input type="checkbox" value="7" onchange="updateSubDayCheck('ECO2011-A','TUT',7)">Su</label>
-      </div>
-      <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
-        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-ECO2011-A-TUT" onclick="openTimePicker('sub-tstart-ECO2011-A-TUT','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-ECO2011-A-TUT-txt">--:--</span></button></div>
-        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-ECO2011-A-TUT" onclick="openTimePicker('sub-tend-ECO2011-A-TUT','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-ECO2011-A-TUT-txt">--:--</span></button></div>
-        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-ECO2011-A-TUT" onclick="openLocPicker('sub-tloc-ECO2011-A-TUT')">--</button></div>
-      </div>
-      <div class="section-btn-group">
-        <button class="btn btn-success btn-sm" onclick="addSubSection('ECO2011','ECO2011-A','TUT')">确认</button>
-        <button class="btn btn-outline btn-sm" onclick="hideSubInput('ECO2011-A','TUT')">取消</button>
-      </div>
-    </div>
-        </div>
-      </div>
-    </div><div class="section-item">
-      <div class="section-item-row">
-        <span><b>B</b> &nbsp;Tu Th &nbsp;08:30-10:20 &nbsp;TD</span>
-        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('ECO2011','ECO2011-B')">+ 子课程</button>
-        <button class="btn btn-danger btn-sm" onclick="delSection('ECO2011','ECO2011-B')">×</button>
-      </div>
-      <div class="sub-list">
-        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ TUT <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('ECO2011','ECO2011-B','TUT')">+ 时段</button></div>
-        <div class="sub-item"><span>Fr &nbsp;16:30-18:30 &nbsp;TC</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('ECO2011','ECO2011-B','TUT','ECO2011-B-1')">×</button></div>
-        <div id="sub-inp-ECO2011-B-TUT" class="sub-input-area hidden">
-          <h5>新增 TUT 时段</h5>
-    <div style="display:flex;flex-direction:column;gap:6px;">
-      <div class="hint">上课日</div>
-      <div class="days-group" id="sub-days-ECO2011-B-TUT">
-        <label class="day-check" id="sub-dc-ECO2011-B-TUT-1"><input type="checkbox" value="1" onchange="updateSubDayCheck('ECO2011-B','TUT',1)">Mo</label><label class="day-check" id="sub-dc-ECO2011-B-TUT-2"><input type="checkbox" value="2" onchange="updateSubDayCheck('ECO2011-B','TUT',2)">Tu</label><label class="day-check" id="sub-dc-ECO2011-B-TUT-3"><input type="checkbox" value="3" onchange="updateSubDayCheck('ECO2011-B','TUT',3)">We</label><label class="day-check" id="sub-dc-ECO2011-B-TUT-4"><input type="checkbox" value="4" onchange="updateSubDayCheck('ECO2011-B','TUT',4)">Th</label><label class="day-check" id="sub-dc-ECO2011-B-TUT-5"><input type="checkbox" value="5" onchange="updateSubDayCheck('ECO2011-B','TUT',5)">Fr</label><label class="day-check" id="sub-dc-ECO2011-B-TUT-6"><input type="checkbox" value="6" onchange="updateSubDayCheck('ECO2011-B','TUT',6)">St</label><label class="day-check" id="sub-dc-ECO2011-B-TUT-7"><input type="checkbox" value="7" onchange="updateSubDayCheck('ECO2011-B','TUT',7)">Su</label>
-      </div>
-      <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
-        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-ECO2011-B-TUT" onclick="openTimePicker('sub-tstart-ECO2011-B-TUT','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-ECO2011-B-TUT-txt">--:--</span></button></div>
-        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-ECO2011-B-TUT" onclick="openTimePicker('sub-tend-ECO2011-B-TUT','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-ECO2011-B-TUT-txt">--:--</span></button></div>
-        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-ECO2011-B-TUT" onclick="openLocPicker('sub-tloc-ECO2011-B-TUT')">--</button></div>
-      </div>
-      <div class="section-btn-group">
-        <button class="btn btn-success btn-sm" onclick="addSubSection('ECO2011','ECO2011-B','TUT')">确认</button>
-        <button class="btn btn-outline btn-sm" onclick="hideSubInput('ECO2011-B','TUT')">取消</button>
-      </div>
-    </div>
-        </div>
-      </div>
-    </div></div>
-      
-    </div>
-    <div class="course-card">
-      <div class="course-card-header">
-        <span class="course-code">ACT2031</span>
-        <div>
-          <button class="btn btn-outline btn-sm" onclick="showSectionInput('ACT2031')">+ 时段</button>
-          <button class="btn btn-danger btn-sm" onclick="delCourse('ACT2031')">删除</button>
-        </div>
-      </div>
-      <div id="sec-inp-ACT2031" class="section-input-area hidden">
-        <h4>添加时段 → ACT2031</h4>
-        <div class="section-row" style="flex-direction:column;align-items:stretch;gap:6px;">
-          <div class="hint">上课日（必选1~7个）</div>
-          <div class="days-group" id="days-ACT2031">
-            <label class="day-check" id="dc-ACT2031-1"><input type="checkbox" value="1" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',1)">Mo</label><label class="day-check" id="dc-ACT2031-2"><input type="checkbox" value="2" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',2)">Tu</label><label class="day-check" id="dc-ACT2031-3"><input type="checkbox" value="3" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',3)">We</label><label class="day-check" id="dc-ACT2031-4"><input type="checkbox" value="4" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',4)">Th</label><label class="day-check" id="dc-ACT2031-5"><input type="checkbox" value="5" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',5)">Fr</label><label class="day-check" id="dc-ACT2031-6"><input type="checkbox" value="6" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',6)">St</label><label class="day-check" id="dc-ACT2031-7"><input type="checkbox" value="7" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',7)">Su</label>
-          </div>
-        </div>
-        <div class="section-row" style="margin-top:8px;align-items:flex-end;">
-          <div style="flex:1"><div class="hint">开始</div><button class="time-picker-btn" id="tstart-ACT2031" onclick="openTimePicker('tstart-ACT2031','开始时间')"><span class="clock-icon">🕐</span><span id="tstart-ACT2031-txt">--:--</span></button></div>
-          <div style="flex:1"><div class="hint">结束</div><button class="time-picker-btn" id="tend-ACT2031" onclick="openTimePicker('tend-ACT2031','结束时间')"><span class="clock-icon">🕑</span><span id="tend-ACT2031-txt">--:--</span></button></div>
-          <div style="flex:1"><div class="hint">地点</div><button class="loc-picker-btn" id="tloc-ACT2031" onclick="openLocPicker('tloc-ACT2031')">--</button></div>
-        </div>
-        <div class="section-btn-group">
-          <button class="btn btn-primary btn-sm" onclick="addSection('ACT2031')">确认</button>
-          <button class="btn btn-outline btn-sm" onclick="hideSectionInput('ACT2031')">取消</button>
-        </div>
-      </div>
-      <div><div class="section-item">
-      <div class="section-item-row">
-        <span><b>A</b> &nbsp;Tu Th &nbsp;08:30-09:30 &nbsp;TA</span>
-        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('ACT2031','ACT2031-A')">+ 子课程</button>
-        <button class="btn btn-danger btn-sm" onclick="delSection('ACT2031','ACT2031-A')">×</button>
-      </div>
-      
-    </div><div class="section-item">
-      <div class="section-item-row">
-        <span><b>B</b> &nbsp;Tu Th &nbsp;14:30-15:30 &nbsp;TC</span>
-        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('ACT2031','ACT2031-B')">+ 子课程</button>
-        <button class="btn btn-danger btn-sm" onclick="delSection('ACT2031','ACT2031-B')">×</button>
-      </div>
-      
-    </div><div class="section-item">
-      <div class="section-item-row">
-        <span><b>C</b> &nbsp;Mo We &nbsp;19:30-20:30 &nbsp;TD</span>
-        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('ACT2031','ACT2031-C')">+ 子课程</button>
-        <button class="btn btn-danger btn-sm" onclick="delSection('ACT2031','ACT2031-C')">×</button>
-      </div>
-      
-    </div></div>
-      
-    </div></div>
         </div>
         <div class="panel">
           <div class="panel-title"><span class="icon">⚙️</span>筛选与排序</div>
@@ -2058,7 +1366,7 @@
     <!-- 右侧栏：排课结果 -->
     <div id="rightPanel">
       <!-- 用户右侧：排课结果（默认显示） -->
-      <div id="userRightContent" style="display: none;">
+      <div id="userRightContent">
         <div class="panel">
           <div class="panel-title"><span class="icon">📊</span>排课结果</div>
           <div id="resultsContent">
@@ -2069,7 +1377,7 @@
         </div>
       </div>
       <!-- 管理员右侧：仅排课结果 -->
-      <div id="adminRightContent" style="display: block;">
+      <div id="adminRightContent" style="display:none;">
         <div class="panel">
           <div class="panel-title"><span class="icon">📊</span>排课结果</div>
           <div id="resultsContent2">
@@ -2083,7 +1391,7 @@
   </div>
 </div>
 
-<script id="builtin-data" type="application/json">{"notifs":[{"id":"n_mpd2yjmolzhn","title":"1.7版本更新","content":"为优化用户体验和长久发展，本系统进行1.7版本更新，更新内容如下：\n1.新增公告栏：用户可以查看更新公告等信息；\n2.新增子课程选项：用户可以在新建完某一课程后在任一时段后链接子课程（如Lec&tut）,排课会考虑到链接课程，增加排课合理性；\n3.优化时间地点选择方式：新增时段时将时间选择优化为滚轮滑动或手动输入，将地点选择优化为直接点击（校内）或手动输入（供校外自定义）；\n4.地点选项增加：新增ABE地点，地点优先排序时其计算与TA同理，但本身与TA距离为1；\n5.新增自定义排除选项：用户可以自定义不想上的时间或地点进行筛选；\n6.优化页面布局：优化不同窗口比例，使布局更加合理；\n7.新增使用额度：为避免同一账号多人使用，新增使用额度，每次计算方案会消耗一次使用额度，额度耗尽请联系管理员。","enabled":true,"createdAt":1779222199776},{"id":"n_mpd2z70vx6st","title":"第一轮内测反馈","content":"欢迎各位内测用户向开发者反馈bug或优化建议!所有反馈一经采纳将获得公测高级账号(超长时间超高额度^^)!反馈方式:微信号Ablu6669","enabled":true,"createdAt":1779222230095}],"accounts":[{"username":"NC1","password":"NC1","expire":"2026-05-25","quota":9999,"used":6}]}</script>
+<script id="builtin-data" type="application/json">{"notifs":[{"id":"n_builtin_1","title":"\u7cfb\u7edf\u66f4\u65b0\u901a\u77e5","content":"\u6392\u8bfe\u7cfb\u7edf\u5df2\u66f4\u65b0\uff0c\u5982\u6709\u95ee\u9898\u8bf7\u8054\u7cfb\u7ba1\u7406\u5458\u3002","enabled":true,"createdAt":1747676400000}],"accounts":[{"username":"NC1","password":"NC1","expire":"2026-05-25","quota":999,"used":0}]}</script>
 <script>
 // ══════════════════════════════════════
 //  AUTH SYSTEM
@@ -3680,6 +2988,5 @@ document.getElementById("locpickerOverlay").addEventListener("click", function(e
   if (e.target === this) lpCancel();
 });
 </script>
-
-
-</body></html>
+</body>
+</html>

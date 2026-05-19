@@ -998,6 +998,43 @@
   }
   .loc-picker-btn:hover { border-color: var(--success); }
   .loc-picker-btn.active { border-color: var(--success); box-shadow: 0 0 0 3px rgba(34,197,94,.15); color: var(--success); background: var(--success-light); }
+
+  /* 通知详情全屏弹窗 */
+  .notif-detail-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.55);
+    z-index: 10000; display: flex; align-items: center; justify-content: center;
+    animation: fadeIn .15s ease;
+  }
+  .notif-detail-modal {
+    background: var(--card); border-radius: 16px;
+    width: 640px; max-width: 92vw; max-height: 85vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 16px 64px rgba(0,0,0,.25);
+    animation: scaleIn .2s ease;
+  }
+  .notif-detail-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 20px 24px 16px; border-bottom: 1.5px solid var(--border);
+    gap: 12px;
+  }
+  .notif-detail-title { font-size: 1.15rem; font-weight: 700; color: var(--text); line-height: 1.4; flex: 1; }
+  .notif-detail-close {
+    background: none; border: none; cursor: pointer; font-size: 1.2rem;
+    color: var(--text-muted); padding: 4px 8px; border-radius: 8px;
+    transition: background .15s; flex-shrink: 0;
+  }
+  .notif-detail-close:hover { background: var(--danger-light); color: var(--danger); }
+  .notif-detail-meta {
+    padding: 10px 24px 0; font-size: .78rem; color: var(--text-muted);
+    display: flex; gap: 12px; align-items: center;
+  }
+  .notif-detail-body {
+    flex: 1; overflow-y: auto; padding: 20px 24px 24px;
+    font-size: .95rem; line-height: 1.8; color: var(--text);
+    white-space: pre-wrap; word-break: break-word;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes scaleIn { from { opacity: 0; transform: scale(.95); } to { opacity: 1; transform: none; } }
 </style>
 </head>
 <body>
@@ -1148,6 +1185,21 @@
     <div id="notifPageContent" class="notif-page-content"></div>
   </div>
   <div id="notifPageOverlay" class="notif-page-overlay" style="display:none;" onclick="toggleNotifPage()"></div>
+
+  <!-- 通知详情全屏弹窗 -->
+  <div id="notifDetailOverlay" class="notif-detail-overlay" style="display:none;" onclick="closeNotifDetail()">
+    <div class="notif-detail-modal" onclick="event.stopPropagation()">
+      <div class="notif-detail-header">
+        <div class="notif-detail-title" id="notifDetailTitle"></div>
+        <button class="notif-detail-close" title="关闭" onclick="closeNotifDetail()">✕</button>
+      </div>
+      <div class="notif-detail-meta">
+        <span id="notifDetailTime"></span>
+        <span id="notifDetailType"></span>
+      </div>
+      <div class="notif-detail-body" id="notifDetailBody"></div>
+    </div>
+  </div>
 
   <!-- 编辑账号弹窗 -->
   <div id="editAccountModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;justify-content:center;align-items:center;">
@@ -1678,7 +1730,7 @@ function renderNotifPage() {
 
   content.innerHTML = `
     ${sorted.map(n => `
-      <div class="notif-page-card">
+      <div class="notif-page-card" style="cursor:pointer;" onclick="openNotifDetail('${_escHtml(n.id)}')">
         <div class="notif-page-card-header">
           <div class="notif-page-card-title">
             ${_escHtml(n.title || '通知')}
@@ -1688,6 +1740,41 @@ function renderNotifPage() {
         <div class="notif-page-card-body">${_escHtml(n.content)}</div>
       </div>
     `).join("")}`;
+}
+
+// 打开通知详情弹窗（全屏放大查看）
+function openNotifDetail(id) {
+  const list = getNotifs();
+  const n = list.find(x => x.id === id);
+  if (!n) return;
+
+  // 标记已读
+  if (!n.read) {
+    n.read = true;
+    saveNotifs(list);
+    updateNotifBadge();
+    renderNotifPage();
+  }
+
+  // 填充内容
+  document.getElementById("notifDetailTitle").textContent = n.title || "通知";
+
+  const typeSpan = document.getElementById("notifDetailType");
+  typeSpan.textContent = (_notifIcon(n.type) || "🔔") + " ";
+  typeSpan.style.marginRight = "6px";
+
+  document.getElementById("notifDetailTime").textContent = _formatNotifTime(n.createdAt);
+
+  // 转义 HTML 并将换行符转为 <br>
+  const body = _escHtml(n.content || "").replace(/\n/g, "<br>");
+  document.getElementById("notifDetailBody").innerHTML = body;
+
+  document.getElementById("notifDetailOverlay").style.display = "flex";
+}
+
+// 关闭通知详情弹窗
+function closeNotifDetail() {
+  document.getElementById("notifDetailOverlay").style.display = "none";
 }
 
 // 格式化通知时间

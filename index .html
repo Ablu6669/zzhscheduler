@@ -1,0 +1,3685 @@
+<html lang="zh"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>自动排课系统</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f0f2f5;
+    --card: #fff;
+    --primary: #4f6ef7;
+    --primary-light: #eef0fe;
+    --danger: #ef4444;
+    --danger-light: #fee2e2;
+    --success: #22c55e;
+    --success-light: #dcfce7;
+    --warning: #f59e0b;
+    --warning-light: #fef3c7;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --radius: 12px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+
+  body {
+    font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── Auth screen ── */
+  #authScreen {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #4f6ef7 0%, #6c63ff 100%);
+    padding: 20px;
+  }
+
+  .auth-box {
+    background: var(--card);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    padding: 40px 36px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+  }
+
+  .auth-logo {
+    font-size: 3rem;
+    margin-bottom: 8px;
+  }
+
+  .auth-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .auth-subtitle {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 28px;
+  }
+
+  .auth-tabs {
+    display: flex;
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 24px;
+  }
+
+  .auth-tab {
+    flex: 1;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+  }
+
+  .auth-tab.active {
+    background: var(--card);
+    color: var(--primary);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+
+  .auth-panel { display: none; }
+  .auth-panel.active { display: block; }
+
+  .form-group {
+    margin-bottom: 16px;
+    text-align: left;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+
+  .form-group input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 9px;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+    text-align: left;
+  }
+
+  .form-group input:focus { border-color: var(--primary); }
+
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.18s;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: #3a57e0; }
+
+  .btn-outline { background: transparent; color: var(--primary); border: 1.5px solid var(--primary); }
+  .btn-outline:hover { background: var(--primary-light); }
+
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #dc2626; }
+
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-success:hover { background: #16a34a; }
+
+  .btn-sm { padding: 6px 12px; font-size: 0.8rem; width: auto; }
+
+  .auth-error {
+    color: var(--danger);
+    font-size: 0.8rem;
+    margin-top: -8px;
+    margin-bottom: 10px;
+    text-align: left;
+    min-height: 18px;
+  }
+
+  .auth-link {
+    color: var(--primary);
+    font-size: 0.82rem;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+
+  /* Admin accounts panel */
+  .accounts-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1.5px solid var(--border);
+    border-radius: 9px;
+    margin-bottom: 12px;
+  }
+
+  .account-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.82rem;
+  }
+
+  .account-item:last-child { border-bottom: none; }
+
+  .account-info { text-align: left; }
+  .account-user { font-weight: 600; color: var(--text); }
+  .account-exp { font-size: 0.75rem; color: var(--text-muted); }
+  .account-exp.expired { color: var(--danger); }
+  .account-exp.active { color: var(--success); }
+
+  .btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background 0.15s;
+  }
+
+  .btn-icon:hover { background: var(--danger-light); }
+
+  /* ── Main app (hidden by default) ── */
+  #mainApp { display: none; width: 100%; }
+
+  h1 {
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--primary);
+    letter-spacing: -0.5px;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 28px;
+  }
+
+  .layout {
+    display: grid;
+    gap: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+    /* 默认用户两栏 */
+    grid-template-columns: 2fr 5fr;
+  }
+  .layout.admin-mode {
+    grid-template-columns: 1fr 2fr 3fr;
+  }
+  #leftPanel { display: flex; flex-direction: column; gap: 16px; }
+  #centerPanel { display: none; flex-direction: column; gap: 16px; }
+  .layout.admin-mode #centerPanel { display: flex; }
+  #rightPanel { display: flex; flex-direction: column; gap: 16px; }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr 1fr !important; }
+    .layout.admin-mode { grid-template-columns: 1fr 1fr !important; }
+    #centerPanel { grid-column: 1 / -1; }
+  }
+  @media (max-width: 600px) {
+    .layout { grid-template-columns: 1fr !important; }
+    .layout.admin-mode { grid-template-columns: 1fr !important; }
+  }
+
+  .panel {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+  }
+
+  .panel-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: space-between;
+  }
+
+  .panel-title .icon { font-size: 1.1rem; }
+
+  /* Course input */
+  .course-input {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .course-input input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+    text-transform: uppercase;
+  }
+
+  .course-input input:focus { border-color: var(--primary); }
+
+  /* Section input */
+  .section-input-area {
+    background: var(--primary-light);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 16px;
+    border: 1.5px solid #dde0fc;
+  }
+
+  .section-input-area.hidden { display: none; }
+
+  .section-input-area h4 {
+    font-size: 0.85rem;
+    color: var(--primary);
+    margin-bottom: 10px;
+  }
+
+  .section-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .section-row input {
+    padding: 6px 8px;
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    font-size: 0.82rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .section-row input:focus { border-color: var(--primary); }
+  .section-row input[type="text"] { flex: 1; }
+  .section-row input.w60 { width: 60px; }
+  .section-row input.w50 { width: 50px; }
+
+  .hint {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    display: block;
+  }
+
+  .days-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .day-check {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    user-select: none;
+    padding: 3px 6px;
+    border-radius: 5px;
+    border: 1.5px solid var(--border);
+    transition: all 0.15s;
+  }
+
+  .day-check input { display: none; }
+
+  .day-check.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+
+  /* Course list */
+  .course-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .course-card {
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    background: var(--card);
+  }
+
+  .course-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .course-code { font-weight: 700; font-size: 0.95rem; color: var(--primary); }
+
+  .course-card .section-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    border-top: 1px solid var(--border);
+    font-size: 0.82rem;
+  }
+
+  .course-card .section-item span { color: var(--text-muted); }
+
+  .section-id-tag {
+    font-size: 0.72rem;
+    background: var(--primary-light);
+    color: var(--primary);
+    padding: 1px 5px;
+    border-radius: 4px;
+    margin-right: 4px;
+  }
+
+  /* Filters */
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .filter-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .toggle {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+
+  .toggle input { opacity: 0; width: 0; height: 0; }
+
+  .toggle .slider {
+    position: absolute;
+    inset: 0;
+    background: var(--border);
+    border-radius: 22px;
+    cursor: pointer;
+    transition: 0.25s;
+  }
+
+  .toggle .slider::before {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    left: 3px;
+    top: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.25s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+
+  .toggle input:checked + .slider { background: var(--primary); }
+  .toggle input:checked + .slider::before { transform: translateX(18px); }
+
+  .filter-label { font-size: 0.88rem; color: var(--text); flex: 1; }
+  .filter-label span { color: var(--text-muted); font-size: 0.78rem; display: block; margin-top: 1px; }
+
+  .filter-row + .filter-row {
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  .max-display-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.88rem;
+  }
+
+  .max-display-row input {
+    width: 70px;
+    padding: 6px 10px;
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    font-size: 0.88rem;
+    outline: none;
+  }
+
+  .max-display-row input:focus { border-color: var(--primary); }
+
+  .loc-ref {
+    font-size: 0.78rem;
+
+  /* 自定义排除 */
+  .exclusion-section { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .exclusion-section-title { font-size: 0.82rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .exclusion-input-row { display: flex; gap: 6px; margin-bottom: 6px; }
+  .exclusion-input-row input { flex: 1; padding: 5px 8px; font-size: 0.82rem; border: 1.5px solid var(--border); border-radius: 6px; outline: none; }
+  .exclusion-input-row input:focus { border-color: var(--primary); }
+  .exclusion-input-row .btn-sm { padding: 5px 12px; font-size: 0.78rem; flex-shrink: 0; }
+  .exclusion-tags { display: flex; flex-wrap: wrap; gap: 4px; min-height: 20px; }
+  .exclusion-tag { display: inline-flex; align-items: center; gap: 2px; background: var(--danger-light); color: var(--danger); font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--danger); }
+  .exclusion-tag .tag-remove { cursor: pointer; margin-left: 2px; font-size: 0.7rem; opacity: 0.7; }
+  .exclusion-tag .tag-remove:hover { opacity: 1; }
+    color: var(--text-muted);
+    background: #f8fafc;
+    border-radius: 7px;
+    padding: 8px 10px;
+    margin-bottom: 14px;
+    line-height: 1.6;
+  }
+
+  .loc-ref strong { color: var(--text); }
+
+  /* Results */
+  .results-area { overflow-y: auto; max-height: calc(100vh - 120px); }
+
+  .results-summary {
+    padding: 10px 14px;
+    background: var(--primary-light);
+    border-radius: 8px;
+    font-size: 0.88rem;
+    color: var(--primary);
+    margin-bottom: 16px;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  .results-summary.empty { background: var(--danger-light); color: var(--danger); }
+
+  .plan-card {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 14px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+
+  .plan-card:hover { box-shadow: 0 4px 16px rgba(79,110,247,0.15); }
+
+  .plan-header {
+    background: var(--primary);
+    color: #fff;
+    padding: 10px 16px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .plan-scores { font-size: 0.78rem; opacity: 0.85; font-weight: 400; }
+  .plan-summary { padding: 6px 16px 10px; font-size: 0.92rem; font-weight: 600; color: var(--text); border-bottom: 1px solid var(--border); line-height: 1.8; }
+  .plan-tag { background: var(--primary-light); color: var(--primary); padding: 2px 10px; border-radius: 6px; font-weight: 700; }
+  .plan-tag-sub { background: var(--success-light); color: var(--success); padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.82em; }
+
+  .plan-body { padding: 12px 16px; }
+  .plan-row-sub { background: #f8fffe; border-left: 3px solid var(--success); padding-left: 8px !important; }
+  .plan-code-sub { font-weight: 600; color: var(--success); min-width: 80px; font-size: 0.82em; }
+
+  /* Sub-course UI */
+  .section-item { display: flex; align-items: flex-start; flex-direction: column; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .section-item:last-child { border-bottom: none; }
+  .section-item-row { display: flex; align-items: center; width: 100%; gap: 6px; }
+  .section-item-row span { flex: 1; color: var(--text-muted); font-size: 0.82rem; }
+  .sub-list { width: 100%; padding-left: 14px; margin-top: 4px; }
+  .sub-item { display: flex; align-items: center; gap: 6px; padding: 3px 0; border-left: 2px solid var(--success); padding-left: 8px; margin-bottom: 2px; font-size: 0.79rem; color: var(--text-muted); }
+  .sub-item span { flex: 1; }
+  .sub-input-area { width: 100%; padding: 8px 0 4px 14px; border-left: 2px solid var(--success); margin-top: 4px; }
+  .sub-input-area.hidden { display: none; }
+  .sub-input-area h5 { font-size: 0.78rem; color: var(--success); margin-bottom: 6px; font-weight: 600; }
+  .sub-name-row { display: flex; gap: 6px; margin-bottom: 6px; align-items: center; font-size: 0.8rem; }
+  .sub-name-row input { padding: 5px 8px; border: 1.5px solid var(--border); border-radius: 7px; font-size: 0.8rem; outline: none; flex: 1; }
+  .sub-name-row input:focus { border-color: var(--success); }
+
+  .plan-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.86rem;
+  }
+
+  .plan-row:last-child { border-bottom: none; }
+  .plan-code { font-weight: 600; color: var(--primary); min-width: 80px; }
+  .plan-day { background: var(--primary-light); color: var(--primary); padding: 2px 7px; border-radius: 5px; font-size: 0.75rem; font-weight: 600; }
+  .plan-time { color: var(--text-muted); font-size: 0.82rem; }
+  .plan-loc { margin-left: auto; font-weight: 600; font-size: 0.88rem; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+  .empty-state .emoji { font-size: 3rem; margin-bottom: 10px; }
+
+  .actions { display: flex; gap: 8px; margin-bottom: 16px; }
+
+  .section-btn-group { display: flex; gap: 6px; margin-top: 8px; }
+
+  /* top bar */
+  .topbar {
+    background: var(--card);
+    box-shadow: var(--shadow);
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .topbar-title { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
+  .topbar-info { font-size: 0.82rem; color: var(--text-muted); }
+  .topbar-info span { font-weight: 600; color: var(--primary); }
+
+  .user-mode-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+  #quotaDisplay {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 12px;
+  }
+  .quota-time {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background: #f1f5f9;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .quota-remaining {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .quota-ok { background: #dcfce7; color: #166534; }
+  .quota-warning { background: #fef9c3; color: #854d0e; }
+  .quota-critical { background: #fee2e2; color: #991b1b; }
+
+  .badge-admin { background: var(--warning-light); color: var(--warning); }
+  .badge-user { background: var(--primary-light); color: var(--primary); }
+
+  /* 账号额度显示 */
+  .account-quota {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-top: 4px;
+  }
+  .account-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  /* 通知按钮（醒目公告栏样式） */
+  .notif-btn {
+    position: relative; background: var(--warning-light); border: 1.5px solid var(--warning);
+    cursor: pointer; font-size: .82rem; padding: 6px 14px; border-radius: 20px;
+    transition: all .15s; margin-right: 10px; color: #92400e; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .notif-btn:hover { background: var(--warning); color: #fff; transform: translateY(-1px); }
+  .notif-btn .notif-badge {
+    position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px;
+    background: var(--danger); color: #fff; font-size: .65rem; font-weight: 700;
+    border-radius: 9px; display: flex; align-items: center; justify-content: center;
+    padding: 0 5px; line-height: 1; border: 2px solid #fff;
+  }
+
+  /* 通知页面面板 */
+  .notif-page {
+    position: fixed; top: 0; right: 0; bottom: 0; width: 380px; max-width: 90vw;
+    background: var(--card); box-shadow: -4px 0 24px rgba(0,0,0,.15);
+    z-index: 9999; display: flex; flex-direction: column;
+    animation: slideInRight .25s ease;
+  }
+  @keyframes slideInRight { from { transform: translateX(100%); } to { transform: none; } }
+  .notif-page-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 9998;
+  }
+  .notif-page-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 2px solid var(--border);
+  }
+  .notif-page-title { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+  .notif-page-close {
+    background: none; border: none; cursor: pointer; font-size: 1.1rem;
+    color: var(--text-muted); padding: 4px 8px; border-radius: 6px;
+    transition: background .15s;
+  }
+  .notif-page-close:hover { background: var(--danger-light); color: var(--danger); }
+  .notif-page-content { flex: 1; overflow-y: auto; padding: 16px; }
+  .notif-page-empty { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+  .notif-page-empty .emoji { font-size: 3rem; margin-bottom: 10px; }
+  .notif-page-markall { text-align: right; margin-bottom: 12px; }
+  .notif-page-markall button {
+    background: none; border: none; cursor: pointer; font-size: .82rem;
+    color: var(--primary); padding: 4px 8px; border-radius: 6px;
+    transition: background .15s;
+  }
+  .notif-page-markall button:hover { background: var(--primary-light); }
+
+  /* 页面内通知卡片 */
+  .notif-page-card {
+    background: var(--card); border: 1.5px solid var(--border);
+    border-left: 4px solid var(--warning);
+    border-radius: 12px; padding: 14px; margin-bottom: 12px;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .notif-page-card:hover { border-color: var(--warning); box-shadow: 0 2px 12px rgba(245,158,11,.15); }
+  .notif-page-card.unread { background: var(--warning-light); }
+  .notif-page-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+  .notif-page-card-title { font-weight: 700; font-size: .9rem; color: var(--text); display: flex; align-items: center; gap: 6px; }
+  .notif-page-card-time { font-size: .72rem; color: var(--text-muted); flex-shrink: 0; }
+  .notif-page-card-body { font-size: .85rem; color: var(--text-muted); line-height: 1.5; }
+  .notif-page-card-actions { display: flex; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .notif-page-card-actions button {
+    background: none; border: none; cursor: pointer; font-size: .78rem;
+    padding: 4px 8px; border-radius: 6px; transition: background .15s;
+    color: var(--text-muted);
+  }
+  .notif-page-card-actions button:hover { background: var(--bg); }
+  .notif-page-card-actions .btn-read { color: var(--success); }
+
+  .admin-tools {
+    background: var(--warning-light);
+    border: 1.5px solid #fde68a;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+
+  .admin-tools h4 {
+    font-size: 0.85rem;
+    color: var(--warning);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .form-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .form-row .form-group { margin-bottom: 0; flex: 1; min-width: 0; }
+  .form-row input { width: 100%; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.85rem; outline: none; }
+  .form-row input:focus { border-color: var(--primary); }
+  /* 窄面板中日期+额度字段换行 */
+  #adminLeftContent .form-row:has(input[type="date"]) {
+    flex-direction: column;
+    gap: 6px;
+  }
+  #adminLeftContent .form-row:has(input[type="date"]) .form-group {
+    width: 100%;
+    flex: none;
+  }
+
+  .accounts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .accounts-header span { font-size: 0.8rem; color: var(--text-muted); }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
+
+  /* ── 时间选择器触发按钮 ── */
+  .time-picker-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 4px; padding: 6px 12px; border: 1.5px solid var(--border);
+    border-radius: 8px; background: var(--card); cursor: pointer;
+    font-size: 0.88rem; font-weight: 600; color: var(--text);
+    min-width: 76px; transition: border-color .15s, box-shadow .15s;
+    user-select: none;
+  }
+  .time-picker-btn:hover { border-color: var(--primary); }
+  .time-picker-btn.active { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,110,247,.15); color: var(--primary); }
+  .time-picker-btn .clock-icon { font-size: 0.9em; opacity: .7; }
+
+  /* ── 弹窗遮罩 ── */
+  #timepickerOverlay {
+    display: none; position: fixed; inset: 0; z-index: 9000;
+    background: rgba(0,0,0,.35); align-items: center; justify-content: center;
+  }
+  #timepickerOverlay.open { display: flex; }
+
+  /* ── 弹窗主体 ── */
+  .tp-modal {
+    background: var(--card); border-radius: 18px;
+    box-shadow: 0 12px 48px rgba(0,0,0,.22);
+    padding: 20px 24px 16px; width: 280px;
+    display: flex; flex-direction: column; gap: 14px;
+    animation: tpIn .2s ease;
+  }
+  @keyframes tpIn { from { transform: translateY(12px) scale(.96); opacity:0 } to { transform:none; opacity:1 } }
+
+  .tp-title { font-size: .95rem; font-weight: 700; color: var(--text); text-align: center; }
+
+  /* ── 滚轮区 ── */
+  .tp-wheels { display: flex; align-items: center; justify-content: center; gap: 4px; }
+  .tp-sep { font-size: 1.5rem; font-weight: 700; color: var(--text-muted); line-height: 1; padding: 0 2px; }
+
+  .tp-wheel-wrap {
+    position: relative; width: 72px; overflow: hidden;
+    border-radius: 10px; background: var(--bg);
+    border: 1.5px solid var(--border);
+  }
+  /* 磨砂遮罩 */
+  .tp-wheel-wrap::before,
+  .tp-wheel-wrap::after {
+    content: ""; position: absolute; left: 0; right: 0; height: 44px; z-index: 2; pointer-events: none;
+  }
+  .tp-wheel-wrap::before { top: 0;    background: linear-gradient(to bottom, var(--card) 0%, rgba(255,255,255,0) 100%); }
+  .tp-wheel-wrap::after  { bottom: 0; background: linear-gradient(to top,    var(--card) 0%, rgba(255,255,255,0) 100%); }
+  /* 中间选中高亮 */
+  .tp-wheel-wrap .tp-highlight {
+    position: absolute; top: 50%; left: 4px; right: 4px; height: 38px;
+    transform: translateY(-50%); background: var(--primary-light);
+    border-radius: 8px; z-index: 1; pointer-events: none;
+    border: 1.5px solid rgba(79,110,247,.25);
+  }
+
+  .tp-wheel {
+    overflow-y: scroll; height: 190px;
+    scrollbar-width: none; scroll-snap-type: y mandatory;
+    position: relative; z-index: 3;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tp-wheel::-webkit-scrollbar { display: none; }
+
+  .tp-item {
+    height: 38px; display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; font-weight: 600; color: var(--text-muted);
+    scroll-snap-align: center; cursor: pointer; transition: color .1s;
+    user-select: none;
+  }
+  .tp-item.selected { color: var(--primary); }
+  /* 上下各两个空白 padding 项 */
+  .tp-item.pad { pointer-events: none; color: transparent; }
+
+  /* ── 手动输入框 ── */
+  .tp-manual {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--bg); border-radius: 10px; padding: 8px 12px;
+    border: 1.5px solid var(--border);
+  }
+  .tp-manual label { font-size: .78rem; color: var(--text-muted); white-space: nowrap; }
+  .tp-manual input {
+    flex: 1; border: none; background: transparent; outline: none;
+    font-size: .9rem; font-weight: 600; color: var(--text); text-align: center;
+    width: 56px;
+  }
+  .tp-manual input::placeholder { color: var(--border); font-weight: 400; }
+
+  /* ── 按钮行 ── */
+  .tp-actions { display: flex; gap: 8px; }
+  .tp-actions button { flex: 1; padding: 9px; border-radius: 10px; font-size: .88rem; font-weight: 600; border: none; cursor: pointer; transition: opacity .15s; }
+  .tp-actions button:hover { opacity: .85; }
+  .tp-cancel { background: var(--bg); color: var(--text-muted); }
+  .tp-confirm { background: var(--primary); color: #fff; }
+
+  /* ── 地点选择器弹窗 ── */
+  #locpickerOverlay {
+    display: none; position: fixed; inset: 0; z-index: 9000;
+    background: rgba(0,0,0,.35); align-items: center; justify-content: center;
+  }
+  #locpickerOverlay.open { display: flex; }
+
+  .lp-modal {
+    background: var(--card); border-radius: 18px;
+    box-shadow: 0 12px 48px rgba(0,0,0,.22);
+    padding: 20px 24px 16px; width: 300px;
+    display: flex; flex-direction: column; gap: 14px;
+    animation: tpIn .2s ease;
+  }
+  .lp-title { font-size: .95rem; font-weight: 700; color: var(--text); text-align: center; }
+  .lp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .lp-divider { display: flex; align-items: center; gap: 8px; font-size: .78rem; color: var(--text-muted); }
+  .lp-divider::before, .lp-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+  .lp-manual-inp {
+    width: 100%; padding: 8px 12px; border: 1.5px solid var(--border);
+    border-radius: 8px; font-size: .9rem; font-weight: 600; outline: none;
+    text-align: center; text-transform: uppercase; letter-spacing: 1px;
+    transition: border-color .15s;
+  }
+  .lp-manual-inp:focus { border-color: var(--success); }
+  .lp-manual-inp::placeholder { font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--text-muted); font-size: .82rem; }
+  .lp-item {
+    display: flex; align-items: center; justify-content: center;
+    padding: 12px 0; border-radius: 10px; font-size: 1rem; font-weight: 700;
+    cursor: pointer; transition: all .15s; user-select: none;
+    background: var(--bg); color: var(--text); border: 2px solid transparent;
+  }
+  .lp-item:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+  .lp-item.selected { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .lp-actions { display: flex; gap: 8px; }
+  .lp-actions button { flex: 1; padding: 9px; border-radius: 10px; font-size: .88rem; font-weight: 600; border: none; cursor: pointer; transition: opacity .15s; }
+  .lp-actions .lp-cancel { background: var(--bg); color: var(--text-muted); }
+  .lp-actions .lp-confirm { background: var(--primary); color: #fff; }
+
+  /* 通知显示区（用户看到的多个通知） */
+  .notif-area {
+    display: flex; flex-direction: column; gap: 10px;
+    margin: 12px 24px 0;
+  }
+  .notif-card {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 12px; padding: 12px 16px; border-radius: 10px;
+    font-size: 0.88rem; line-height: 1.5;
+    background: var(--warning-light); border: 1.5px solid var(--warning);
+    color: #92400e;
+  }
+  .notif-card.info { background: var(--primary-light); border-color: var(--primary); color: #3730a3; }
+  .notif-card.success { background: var(--success-light); border-color: var(--success); color: #166534; }
+  .notif-card.danger { background: var(--danger-light); border-color: var(--danger); color: #991b1b; }
+  .notif-card .notif-icon { font-size: 1.1em; flex-shrink: 0; margin-top: 1px; }
+  .notif-card .notif-body { flex: 1; }
+  .notif-card .notif-title { font-weight: 700; margin-bottom: 2px; }
+  .notif-card .notif-content { opacity: .9; }
+  .notif-card .notif-close {
+    background: none; border: none; cursor: pointer; font-size: 1rem;
+    color: inherit; opacity: .5; padding: 2px 6px; border-radius: 4px;
+    flex-shrink: 0; transition: opacity .15s;
+  }
+  .notif-card .notif-close:hover { opacity: 1; }
+
+  /* 旧的通知横幅（兼容单条模式，隐藏） */
+  .notif-banner { display: none !important; }
+
+  /* 通知编辑区 */
+  .notif-editor { display: flex; flex-direction: column; gap: 8px; }
+  .notif-editor label { font-size: .8rem; color: var(--text-muted); font-weight: 600; }
+  .notif-toggle { display: flex; align-items: center; gap: 10px; font-size: .85rem; cursor: pointer; }
+  .notif-toggle input { display: none; }
+  .toggle-switch {
+    width: 36px; height: 20px; background: var(--border); border-radius: 10px;
+    position: relative; transition: background .2s; flex-shrink: 0;
+  }
+  .toggle-switch::after {
+    content: ""; position: absolute; top: 3px; left: 3px;
+    width: 14px; height: 14px; background: #fff; border-radius: 50%;
+    transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  }
+  .notif-toggle input:checked + .toggle-switch { background: var(--success); }
+  .notif-toggle input:checked + .toggle-switch::after { transform: translateX(16px); }
+  .notif-editor textarea {
+    width: 100%; padding: 8px 10px; border: 1.5px solid var(--border);
+    border-radius: 8px; font-size: .85rem; resize: vertical; min-height: 64px;
+    outline: none; font-family: inherit; line-height: 1.5;
+    transition: border-color .15s;
+  }
+  .notif-editor textarea:focus { border-color: var(--primary); }
+
+  /* 通知列表（管理员） */
+  .notif-list { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; }
+  .notif-record {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; padding: 10px 14px; border-radius: 10px;
+    border: 1.5px solid var(--border); background: var(--card);
+    cursor: pointer; transition: all .15s; font-size: .85rem;
+  }
+  .notif-record:hover { border-color: var(--primary); background: var(--primary-light); }
+  .notif-record .rec-icon { font-size: 1rem; flex-shrink: 0; }
+  .notif-record .rec-title { font-weight: 600; flex: 1; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .notif-record .rec-actions { display: flex; gap: 2px; opacity: 0; transition: opacity .15s; }
+  .notif-record:hover .rec-actions { opacity: 1; }
+  .notif-record .rec-actions button {
+    background: none; border: none; cursor: pointer; font-size: .85rem;
+    padding: 3px 6px; border-radius: 4px; transition: background .15s;
+  }
+  .notif-record .rec-actions button:hover { background: rgba(79,110,247,.1); }
+  .notif-record .rec-actions .btn-del:hover { background: var(--danger-light); }
+  .notif-record .rec-actions .btn-edit:hover { background: var(--primary-light); }
+  .notif-empty { text-align: center; padding: 20px; color: var(--text-muted); font-size: .85rem; }
+
+  /* 新增通知表单 */
+  .notif-add-form { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--bg); border-radius: 10px; border: 1.5px dashed var(--border); margin-bottom: 12px; }
+  .notif-add-form input { padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: .85rem; outline: none; }
+  .notif-add-form input:focus { border-color: var(--primary); }
+
+  /* 地点按钮触发样式 */
+  .loc-picker-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 56px; padding: 6px 14px; border: 1.5px solid var(--border);
+    border-radius: 8px; background: var(--card); cursor: pointer;
+    font-size: 0.88rem; font-weight: 700; color: var(--text-muted);
+    transition: border-color .15s, box-shadow .15s; user-select: none;
+  }
+  .loc-picker-btn:hover { border-color: var(--success); }
+  .loc-picker-btn.active { border-color: var(--success); box-shadow: 0 0 0 3px rgba(34,197,94,.15); color: var(--success); background: var(--success-light); }
+</style>
+</head>
+<body>
+
+<!-- ══ 时间选择器弹窗 ══════════════════════ -->
+<div id="timepickerOverlay">
+  <div class="tp-modal">
+    <div class="tp-title" id="tp-title">选择时间</div>
+    <div class="tp-wheels">
+      <div class="tp-wheel-wrap">
+        <div class="tp-highlight"></div>
+        <div class="tp-wheel" id="tp-hour-wheel"></div>
+      </div>
+      <span class="tp-sep">:</span>
+      <div class="tp-wheel-wrap">
+        <div class="tp-highlight"></div>
+        <div class="tp-wheel" id="tp-min-wheel"></div>
+      </div>
+    </div>
+    <div class="tp-manual">
+      <label>手动输入</label>
+      <input type="text" id="tp-manual-input" placeholder="08:30" maxlength="5">
+    </div>
+    <div class="tp-actions">
+      <button class="tp-cancel" onclick="tpCancel()">取消</button>
+      <button class="tp-confirm" onclick="tpConfirm()">确认</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 地点选择器弹窗 ═════════════════ -->
+<div id="locpickerOverlay">
+  <div class="lp-modal">
+    <div class="lp-title">选择地点</div>
+    <div class="lp-grid" id="lp-grid"></div>
+    <div class="lp-divider">或手动输入</div>
+    <input type="text" class="lp-manual-inp" id="lp-manual-inp" placeholder="输入自定义地点，如 ZX" maxlength="3">
+    <div class="lp-actions">
+      <button class="lp-cancel" onclick="lpCancel()">取消</button>
+      <button class="lp-confirm" onclick="lpConfirm()">确认</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     AUTH SCREEN
+════════════════════════════════════════ -->
+<div id="authScreen" style="display: none;">
+  <div class="auth-box">
+    <div class="auth-logo">📚</div>
+    <div class="auth-title">自动排课系统</div>
+    <div class="auth-subtitle">智能排课 · 安全访问</div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab" id="tabUser" onclick="switchTab('user')">用户登录</button>
+      <button class="auth-tab" id="tabAdmin" onclick="switchTab('admin')">管理员入口</button>
+    </div>
+
+    <!-- User login panel -->
+    <div class="auth-panel" id="panelUser">
+      <div class="form-group">
+        <label>账号</label>
+        <input type="text" id="loginUsername" placeholder="请输入账号" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>密码</label>
+        <input type="password" id="loginPassword" placeholder="请输入密码" onkeydown="if(event.key==='Enter')doUserLogin()">
+      </div>
+      <div class="auth-error" id="loginError"></div>
+      <button class="btn btn-primary" onclick="doUserLogin()">登录</button>
+      <div class="auth-link" onclick="switchTab('admin')">管理员入口 →</div>
+    </div>
+
+    <!-- Admin panel -->
+    <div class="auth-panel" id="panelAdmin">
+      <div class="form-group">
+        <label>管理员密钥</label>
+        <input type="password" id="adminKey" placeholder="请输入管理员密钥" onkeydown="if(event.key==='Enter')doAdminLogin()">
+      </div>
+      <div class="auth-error" id="adminError"></div>
+      <button class="btn btn-primary" onclick="doAdminLogin()">进入管理后台</button>
+      <div class="auth-link" onclick="switchTab('user')">← 用户登录</div>
+    </div>
+
+    <!-- Admin dashboard (hidden initially) -->
+    <div class="auth-panel active" id="panelAdminDash">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+        <div style="font-weight:700;font-size:1rem;">管理员后台</div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary btn-sm" onclick="exportUpdatedIndex()" title="将当前账号/通知数据写入代码并下载最新 index.html">📥 导出 index.html</button>
+          <button class="btn btn-outline btn-sm" onclick="doLogout()">退出</button>
+        </div>
+      </div>
+
+      <div class="admin-tools">
+        <h4>🔑 创建账号</h4>
+        <div class="form-row">
+          <div class="form-group"><label>账号</label><input type="text" id="newUsername" placeholder="用户名"></div>
+          <div class="form-group"><label>密码</label><input type="text" id="newPassword" placeholder="密码"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>过期日期</label>
+            <input type="date" id="expireDate">
+          </div>
+          <div class="form-group">
+            <label>使用额度</label>
+            <input type="number" id="newQuota" placeholder="如 100" min="1" max="9999" value="100">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="display:flex;align-items:flex-end;">
+            <button class="btn btn-success btn-sm" onclick="createAccount()" style="width:100%;margin:0;">生成账号</button>
+          </div>
+        </div>
+        <div class="auth-error" id="createError" style="margin-top:4px;"></div>
+      </div>
+
+      <div class="accounts-header">
+        <span>已创建账号</span>
+        <span id="accountCount">1 个</span>
+      </div>
+      <div class="accounts-list" id="accountsList"><div class="account-item">
+      <div class="account-info">
+        <div class="account-user">NC1</div>
+        <div class="account-exp active">剩余 6 天（2026-05-25） &nbsp;|&nbsp; 密码：NC1</div>
+        <div class="account-quota quota-ok">📊 额度：无限</div>
+      </div>
+      <div class="account-actions">
+        <button class="btn-icon" onclick="editAccount(0)" title="编辑">✏️</button>
+        <button class="btn-icon" onclick="deleteAccount(0)" title="删除">🗑️</button>
+      </div>
+    </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     MAIN APP
+════════════════════════════════════════ -->
+<div id="mainApp" style="display: block;">
+  <div class="topbar">
+    <div class="topbar-title">📚 自动排课系统</div>
+    <div class="topbar-info">
+      <span id="quotaDisplay"></span>
+      <button class="notif-btn" id="notifBtn" onclick="toggleNotifPage()">
+        🔔 公告栏 <span id="notifBadge" style="display: none;">2</span>
+      </button>
+      <button class="btn btn-primary btn-sm" id="topbarExportBtn" onclick="exportUpdatedIndex()" style="display: inline-block; margin-left: 8px;" title="将当前账号/通知数据写入代码并下载最新 index.html">📥 导出 index.html</button>
+      <span class="user-mode-badge badge-admin" id="modeBadge">管理员</span>
+      欢迎，<span id="welcomeUser">管理员</span>
+      <button class="btn btn-outline btn-sm" onclick="doLogout()" style="margin-left:12px;width:auto;">退出登录</button>
+    </div>
+  </div>
+
+  <!-- 通知页面面板 -->
+  <div id="notifPage" class="notif-page" style="display: none;">
+    <div class="notif-page-header">
+      <div class="notif-page-title">📬 我的通知</div>
+      <button class="notif-page-close" onclick="toggleNotifPage()">✕</button>
+    </div>
+    <div id="notifPageContent" class="notif-page-content">
+    
+      <div class="notif-page-card">
+        <div class="notif-page-card-header">
+          <div class="notif-page-card-title">
+            第一轮内测反馈
+          </div>
+          <div class="notif-page-card-time">刚刚</div>
+        </div>
+        <div class="notif-page-card-body">欢迎各位内测用户向开发者反馈bug或优化建议!所有反馈一经采纳将获得公测高级账号(超长时间超高额度^^)!反馈方式:微信号Ablu6669</div>
+      </div>
+    
+      <div class="notif-page-card">
+        <div class="notif-page-card-header">
+          <div class="notif-page-card-title">
+            1.7版本更新
+          </div>
+          <div class="notif-page-card-time">刚刚</div>
+        </div>
+        <div class="notif-page-card-body">为优化用户体验和长久发展，本系统进行1.7版本更新，更新内容如下：
+1.新增公告栏：用户可以查看更新公告等信息；
+2.新增子课程选项：用户可以在新建完某一课程后在任一时段后链接子课程（如Lec&amp;tut）,排课会考虑到链接课程，增加排课合理性；
+3.优化时间地点选择方式：新增时段时将时间选择优化为滚轮滑动或手动输入，将地点选择优化为直接点击（校内）或手动输入（供校外自定义）；
+4.地点选项增加：新增ABE地点，地点优先排序时其计算与TA同理，但本身与TA距离为1；
+5.新增自定义排除选项：用户可以自定义不想上的时间或地点进行筛选；
+6.优化页面布局：优化不同窗口比例，使布局更加合理；
+7.新增使用额度：为避免同一账号多人使用，新增使用额度，每次计算方案会消耗一次使用额度，额度耗尽请联系管理员。</div>
+      </div>
+    </div>
+  </div>
+  <div id="notifPageOverlay" class="notif-page-overlay" style="display: none;" onclick="toggleNotifPage()"></div>
+
+  <!-- 编辑账号弹窗 -->
+  <div id="editAccountModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;justify-content:center;align-items:center;">
+    <div style="background:#fff;border-radius:12px;padding:24px;width:340px;max-width:90%;">
+      <div style="font-weight:700;font-size:1rem;margin-bottom:16px;">✏️ 编辑账号</div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>账号</label>
+        <input type="text" id="editAccUsername" disabled="" style="background:#f1f5f9;color:#94a3b8;">
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>过期日期</label>
+        <input type="date" id="editAccExpire" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;">
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>使用额度</label>
+        <input type="number" id="editAccQuota" min="1" max="9999" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;">
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary" onclick="saveAccountEdit()" style="flex:1;">保存</button>
+        <button class="btn btn-outline" onclick="closeEditAccountModal()" style="flex:1;">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 通知显示区已移除，改为通知页面 -->
+
+  <div class="layout admin-mode" id="mainLayout" style="padding:0 24px 24px;">
+
+    <!-- 左侧栏：通知管理 + 账号管理 -->
+    <div id="leftPanel">
+      <div id="adminLeftContent" style="display: flex;">
+        <div class="panel">
+          <div class="panel-title" style="margin-bottom:10px;"><span class="icon">🔔</span>通知管理</div>
+          <div id="notifAdminArea">
+    <div style="font-size:.78rem;color:var(--text-muted);line-height:1.6;margin-bottom:10px;padding:8px 10px;background:var(--primary-light);border-radius:8px;">
+      💡 <b>全端通知</b>：在此编辑/删除，然后点击顶部「📥 导出 index.html」生成新文件并上传 GitHub，所有用户同步更新。
+    </div>
+    <div style="font-weight:600;font-size:.82rem;color:var(--text-muted);margin-bottom:6px;">全端通知（所有用户可见）</div>
+    <div class="notif-list" style="margin-bottom:12px;">
+    <div class="notif-record" style="border-color:var(--primary);">
+      <span class="rec-icon">🔔</span>
+      <span class="rec-title">1.7版本更新 <span style="font-size:.7rem;color:var(--primary);">[全端]</span></span>
+      <div class="rec-actions" onclick="event.stopPropagation()">
+        <button class="btn-edit" onclick="editBuiltinNotif('n_mpd2yjmolzhn')" title="编辑">✏️</button>
+        <button class="btn-del" onclick="deleteBuiltinNotif('n_mpd2yjmolzhn')" title="删除">🗑️</button>
+      </div>
+    </div>
+  
+    <div class="notif-record" style="border-color:var(--primary);">
+      <span class="rec-icon">🔔</span>
+      <span class="rec-title">第一轮内测反馈 <span style="font-size:.7rem;color:var(--primary);">[全端]</span></span>
+      <div class="rec-actions" onclick="event.stopPropagation()">
+        <button class="btn-edit" onclick="editBuiltinNotif('n_mpd2z70vx6st')" title="编辑">✏️</button>
+        <button class="btn-del" onclick="deleteBuiltinNotif('n_mpd2z70vx6st')" title="删除">🗑️</button>
+      </div>
+    </div>
+  </div>
+    <!-- 全端通知编辑弹窗 -->
+    <div id="editBuiltinNotifModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;justify-content:center;align-items:center;">
+      <div style="background:#fff;border-radius:12px;padding:24px;width:400px;max-width:90%;">
+        <div style="font-weight:700;font-size:1rem;margin-bottom:16px;">✏️ 编辑全端通知</div>
+        <input type="text" id="editBuiltinTitle" placeholder="通知标题（可选）" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;margin-bottom:12px;font-size:.85rem;">
+        <textarea id="editBuiltinContent" placeholder="通知内容（必填）" style="width:100%;min-height:80px;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem;resize:vertical;margin-bottom:16px;"></textarea>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary" onclick="saveBuiltinNotifEdit()" style="flex:1;">保存</button>
+          <button class="btn btn-outline" onclick="closeBuiltinNotifEdit()" style="flex:1;">取消</button>
+        </div>
+      </div>
+    </div>
+    <div class="notif-add-form">
+      <div style="font-size:.8rem;font-weight:600;color:var(--text-muted);margin-bottom:4px;">+ 发布全端通知</div>
+      <input type="text" id="newBuiltinNotifTitle" placeholder="通知标题（可选）" maxlength="50">
+      <textarea id="newBuiltinNotifContent" placeholder="通知内容（必填）" style="min-height:50px;resize:none;font-size:.82rem;padding:6px 8px;" maxlength="500"></textarea>
+      <button class="btn btn-primary" onclick="addBuiltinNotif()" style="width:100%;margin:0;">发布到全端</button>
+    </div>
+    <hr style="margin:16px 0;border:none;border-top:1px solid var(--border);">
+    <div id="localNotifList"><div class="notif-empty" style="font-size:.78rem;">暂无本机通知</div></div>
+  </div>
+        </div>
+        <div class="panel" style="margin-top:0;">
+          <div class="panel-title" style="margin-bottom:10px;"><span class="icon">🔑</span>账号管理</div>
+          <div class="admin-tools">
+            <h4>创建账号</h4>
+            <div class="form-row">
+              <div class="form-group"><label>账号</label><input type="text" id="newUsername2" placeholder="用户名"></div>
+              <div class="form-group"><label>密码</label><input type="text" id="newPassword2" placeholder="密码"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>过期日期</label>
+                <input type="date" id="expireDate2">
+              </div>
+              <div class="form-group">
+                <label>使用额度</label>
+                <input type="number" id="newQuota2" placeholder="如 100" min="1" max="9999" value="100">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group" style="display:flex;align-items:flex-end;">
+                <button class="btn btn-success btn-sm" onclick="createAccountInApp()" style="width:100%;margin:0;">生成</button>
+              </div>
+            </div>
+            <div class="auth-error" id="createError2" style="margin-top:4px;"></div>
+            <div class="accounts-header" style="margin-top:8px;">
+              <span>已创建账号</span>
+              <span id="accountCount2">1 个</span>
+            </div>
+            <div class="accounts-list" id="accountsList2" style="max-height:200px;"><div class="account-item">
+      <div class="account-info">
+        <div class="account-user">NC1</div>
+        <div class="account-exp active">剩余 6 天（2026-05-25） &nbsp;|&nbsp; 密码：NC1</div>
+        <div class="account-quota quota-ok">📊 额度：无限</div>
+      </div>
+      <div class="account-actions">
+        <button class="btn-icon" onclick="editAccount(0)" title="编辑">✏️</button>
+        <button class="btn-icon" onclick="deleteAccount(0)" title="删除">🗑️</button>
+      </div>
+    </div></div>
+          </div>
+        </div>
+      </div>
+      <!-- 用户左侧：课程管理+筛选排序（默认显示） -->
+      <div id="userLeftContent" style="display: none;">
+        <div class="panel">
+          <div class="panel-title"><span class="icon">📚</span>课程管理</div>
+          <div class="course-input">
+            <input type="text" id="courseCodeInput" placeholder="课程代号，如 MAT1001" maxlength="20">
+            <button class="btn btn-primary" onclick="addCourse()">添加</button>
+          </div>
+          <div class="course-list" id="courseList">
+    <div class="course-card">
+      <div class="course-card-header">
+        <span class="course-code">MAT3007</span>
+        <div>
+          <button class="btn btn-outline btn-sm" onclick="showSectionInput('MAT3007')">+ 时段</button>
+          <button class="btn btn-danger btn-sm" onclick="delCourse('MAT3007')">删除</button>
+        </div>
+      </div>
+      <div id="sec-inp-MAT3007" class="section-input-area hidden">
+        <h4>添加时段 → MAT3007</h4>
+        <div class="section-row" style="flex-direction:column;align-items:stretch;gap:6px;">
+          <div class="hint">上课日（必选1~7个）</div>
+          <div class="days-group" id="days-MAT3007">
+            <label class="day-check" id="dc-MAT3007-1"><input type="checkbox" value="1" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',1)">Mo</label><label class="day-check" id="dc-MAT3007-2"><input type="checkbox" value="2" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',2)">Tu</label><label class="day-check" id="dc-MAT3007-3"><input type="checkbox" value="3" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',3)">We</label><label class="day-check" id="dc-MAT3007-4"><input type="checkbox" value="4" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',4)">Th</label><label class="day-check" id="dc-MAT3007-5"><input type="checkbox" value="5" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',5)">Fr</label><label class="day-check" id="dc-MAT3007-6"><input type="checkbox" value="6" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',6)">St</label><label class="day-check" id="dc-MAT3007-7"><input type="checkbox" value="7" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',7)">Su</label>
+          </div>
+        </div>
+        <div class="section-row" style="margin-top:8px;align-items:flex-end;">
+          <div style="flex:1"><div class="hint">开始</div><button class="time-picker-btn" id="tstart-MAT3007" onclick="openTimePicker('tstart-MAT3007','开始时间')"><span class="clock-icon">🕐</span><span id="tstart-MAT3007-txt">--:--</span></button></div>
+          <div style="flex:1"><div class="hint">结束</div><button class="time-picker-btn" id="tend-MAT3007" onclick="openTimePicker('tend-MAT3007','结束时间')"><span class="clock-icon">🕑</span><span id="tend-MAT3007-txt">--:--</span></button></div>
+          <div style="flex:1"><div class="hint">地点</div><button class="loc-picker-btn" id="tloc-MAT3007" onclick="openLocPicker('tloc-MAT3007')">--</button></div>
+        </div>
+        <div class="section-btn-group">
+          <button class="btn btn-primary btn-sm" onclick="addSection('MAT3007')">确认</button>
+          <button class="btn btn-outline btn-sm" onclick="hideSectionInput('MAT3007')">取消</button>
+        </div>
+      </div>
+      <div><div class="section-item">
+      <div class="section-item-row">
+        <span><b>A</b> &nbsp;Mo We &nbsp;16:00-18:00 &nbsp;TA</span>
+        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('MAT3007','MAT3007-A')">+ 子课程</button>
+        <button class="btn btn-danger btn-sm" onclick="delSection('MAT3007','MAT3007-A')">×</button>
+      </div>
+      <div class="sub-list">
+        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ TUT <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('MAT3007','MAT3007-A','TUT')">+ 时段</button></div>
+        <div class="sub-item"><span>Mo &nbsp;15:30-16:00 &nbsp;TD</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('MAT3007','MAT3007-A','TUT','MAT3007-A-1')">×</button></div><div class="sub-item"><span>We &nbsp;06:00-07:00 &nbsp;TC</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('MAT3007','MAT3007-A','TUT','MAT3007-A-2')">×</button></div><div class="sub-item"><span>We Th &nbsp;16:00-19:00 &nbsp;TD</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('MAT3007','MAT3007-A','TUT','MAT3007-A-3')">×</button></div>
+        <div id="sub-inp-MAT3007-A-TUT" class="sub-input-area hidden">
+          <h5>新增 TUT 时段</h5>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div class="hint">上课日</div>
+      <div class="days-group" id="sub-days-MAT3007-A-TUT">
+        <label class="day-check" id="sub-dc-MAT3007-A-TUT-1"><input type="checkbox" value="1" onchange="updateSubDayCheck('MAT3007-A','TUT',1)">Mo</label><label class="day-check" id="sub-dc-MAT3007-A-TUT-2"><input type="checkbox" value="2" onchange="updateSubDayCheck('MAT3007-A','TUT',2)">Tu</label><label class="day-check" id="sub-dc-MAT3007-A-TUT-3"><input type="checkbox" value="3" onchange="updateSubDayCheck('MAT3007-A','TUT',3)">We</label><label class="day-check" id="sub-dc-MAT3007-A-TUT-4"><input type="checkbox" value="4" onchange="updateSubDayCheck('MAT3007-A','TUT',4)">Th</label><label class="day-check" id="sub-dc-MAT3007-A-TUT-5"><input type="checkbox" value="5" onchange="updateSubDayCheck('MAT3007-A','TUT',5)">Fr</label><label class="day-check" id="sub-dc-MAT3007-A-TUT-6"><input type="checkbox" value="6" onchange="updateSubDayCheck('MAT3007-A','TUT',6)">St</label><label class="day-check" id="sub-dc-MAT3007-A-TUT-7"><input type="checkbox" value="7" onchange="updateSubDayCheck('MAT3007-A','TUT',7)">Su</label>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
+        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-MAT3007-A-TUT" onclick="openTimePicker('sub-tstart-MAT3007-A-TUT','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-MAT3007-A-TUT-txt">--:--</span></button></div>
+        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-MAT3007-A-TUT" onclick="openTimePicker('sub-tend-MAT3007-A-TUT','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-MAT3007-A-TUT-txt">--:--</span></button></div>
+        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-MAT3007-A-TUT" onclick="openLocPicker('sub-tloc-MAT3007-A-TUT')">--</button></div>
+      </div>
+      <div class="section-btn-group">
+        <button class="btn btn-success btn-sm" onclick="addSubSection('MAT3007','MAT3007-A','TUT')">确认</button>
+        <button class="btn btn-outline btn-sm" onclick="hideSubInput('MAT3007-A','TUT')">取消</button>
+      </div>
+    </div>
+        </div>
+      </div>
+    </div><div class="section-item">
+      <div class="section-item-row">
+        <span><b>C</b> &nbsp;Mo We &nbsp;15:30-16:20 &nbsp;TXA</span>
+        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('MAT3007','MAT3007-C')">+ 子课程</button>
+        <button class="btn btn-danger btn-sm" onclick="delSection('MAT3007','MAT3007-C')">×</button>
+      </div>
+      <div class="sub-list">
+        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ TUT <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('MAT3007','MAT3007-C','TUT')">+ 时段</button></div>
+        <div class="sub-item"><span>Tu &nbsp;08:30-09:30 &nbsp;TD</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('MAT3007','MAT3007-C','TUT','MAT3007-C-1')">×</button></div>
+        <div id="sub-inp-MAT3007-C-TUT" class="sub-input-area hidden">
+          <h5>新增 TUT 时段</h5>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div class="hint">上课日</div>
+      <div class="days-group" id="sub-days-MAT3007-C-TUT">
+        <label class="day-check" id="sub-dc-MAT3007-C-TUT-1"><input type="checkbox" value="1" onchange="updateSubDayCheck('MAT3007-C','TUT',1)">Mo</label><label class="day-check" id="sub-dc-MAT3007-C-TUT-2"><input type="checkbox" value="2" onchange="updateSubDayCheck('MAT3007-C','TUT',2)">Tu</label><label class="day-check" id="sub-dc-MAT3007-C-TUT-3"><input type="checkbox" value="3" onchange="updateSubDayCheck('MAT3007-C','TUT',3)">We</label><label class="day-check" id="sub-dc-MAT3007-C-TUT-4"><input type="checkbox" value="4" onchange="updateSubDayCheck('MAT3007-C','TUT',4)">Th</label><label class="day-check" id="sub-dc-MAT3007-C-TUT-5"><input type="checkbox" value="5" onchange="updateSubDayCheck('MAT3007-C','TUT',5)">Fr</label><label class="day-check" id="sub-dc-MAT3007-C-TUT-6"><input type="checkbox" value="6" onchange="updateSubDayCheck('MAT3007-C','TUT',6)">St</label><label class="day-check" id="sub-dc-MAT3007-C-TUT-7"><input type="checkbox" value="7" onchange="updateSubDayCheck('MAT3007-C','TUT',7)">Su</label>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
+        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-MAT3007-C-TUT" onclick="openTimePicker('sub-tstart-MAT3007-C-TUT','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-MAT3007-C-TUT-txt">--:--</span></button></div>
+        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-MAT3007-C-TUT" onclick="openTimePicker('sub-tend-MAT3007-C-TUT','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-MAT3007-C-TUT-txt">--:--</span></button></div>
+        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-MAT3007-C-TUT" onclick="openLocPicker('sub-tloc-MAT3007-C-TUT')">--</button></div>
+      </div>
+      <div class="section-btn-group">
+        <button class="btn btn-success btn-sm" onclick="addSubSection('MAT3007','MAT3007-C','TUT')">确认</button>
+        <button class="btn btn-outline btn-sm" onclick="hideSubInput('MAT3007-C','TUT')">取消</button>
+      </div>
+    </div>
+        </div>
+      </div>
+    </div></div>
+      
+    </div>
+    <div class="course-card">
+      <div class="course-card-header">
+        <span class="course-code">MAT1002</span>
+        <div>
+          <button class="btn btn-outline btn-sm" onclick="showSectionInput('MAT1002')">+ 时段</button>
+          <button class="btn btn-danger btn-sm" onclick="delCourse('MAT1002')">删除</button>
+        </div>
+      </div>
+      <div id="sec-inp-MAT1002" class="section-input-area hidden">
+        <h4>添加时段 → MAT1002</h4>
+        <div class="section-row" style="flex-direction:column;align-items:stretch;gap:6px;">
+          <div class="hint">上课日（必选1~7个）</div>
+          <div class="days-group" id="days-MAT1002">
+            <label class="day-check" id="dc-MAT1002-1"><input type="checkbox" value="1" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',1)">Mo</label><label class="day-check" id="dc-MAT1002-2"><input type="checkbox" value="2" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',2)">Tu</label><label class="day-check" id="dc-MAT1002-3"><input type="checkbox" value="3" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',3)">We</label><label class="day-check" id="dc-MAT1002-4"><input type="checkbox" value="4" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',4)">Th</label><label class="day-check" id="dc-MAT1002-5"><input type="checkbox" value="5" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',5)">Fr</label><label class="day-check" id="dc-MAT1002-6"><input type="checkbox" value="6" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',6)">St</label><label class="day-check" id="dc-MAT1002-7"><input type="checkbox" value="7" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',7)">Su</label>
+          </div>
+        </div>
+        <div class="section-row" style="margin-top:8px;align-items:flex-end;">
+          <div style="flex:1"><div class="hint">开始</div><button class="time-picker-btn" id="tstart-MAT1002" onclick="openTimePicker('tstart-MAT1002','开始时间')"><span class="clock-icon">🕐</span><span id="tstart-MAT1002-txt">--:--</span></button></div>
+          <div style="flex:1"><div class="hint">结束</div><button class="time-picker-btn" id="tend-MAT1002" onclick="openTimePicker('tend-MAT1002','结束时间')"><span class="clock-icon">🕑</span><span id="tend-MAT1002-txt">--:--</span></button></div>
+          <div style="flex:1"><div class="hint">地点</div><button class="loc-picker-btn" id="tloc-MAT1002" onclick="openLocPicker('tloc-MAT1002')">--</button></div>
+        </div>
+        <div class="section-btn-group">
+          <button class="btn btn-primary btn-sm" onclick="addSection('MAT1002')">确认</button>
+          <button class="btn btn-outline btn-sm" onclick="hideSectionInput('MAT1002')">取消</button>
+        </div>
+      </div>
+      <div><div class="section-item">
+      <div class="section-item-row">
+        <span><b>A</b> &nbsp;Tu &nbsp;14:30-15:30 &nbsp;TA</span>
+        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('MAT1002','MAT1002-A')">+ 子课程</button>
+        <button class="btn btn-danger btn-sm" onclick="delSection('MAT1002','MAT1002-A')">×</button>
+      </div>
+      <div class="sub-list">
+        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ tut <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('MAT1002','MAT1002-A','tut')">+ 时段</button></div>
+        <div class="sub-item"><span>We &nbsp;15:30-14:30 &nbsp;TD</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('MAT1002','MAT1002-A','tut','MAT1002-A-1')">×</button></div>
+        <div id="sub-inp-MAT1002-A-tut" class="sub-input-area hidden">
+          <h5>新增 tut 时段</h5>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div class="hint">上课日</div>
+      <div class="days-group" id="sub-days-MAT1002-A-tut">
+        <label class="day-check" id="sub-dc-MAT1002-A-tut-1"><input type="checkbox" value="1" onchange="updateSubDayCheck('MAT1002-A','tut',1)">Mo</label><label class="day-check" id="sub-dc-MAT1002-A-tut-2"><input type="checkbox" value="2" onchange="updateSubDayCheck('MAT1002-A','tut',2)">Tu</label><label class="day-check" id="sub-dc-MAT1002-A-tut-3"><input type="checkbox" value="3" onchange="updateSubDayCheck('MAT1002-A','tut',3)">We</label><label class="day-check" id="sub-dc-MAT1002-A-tut-4"><input type="checkbox" value="4" onchange="updateSubDayCheck('MAT1002-A','tut',4)">Th</label><label class="day-check" id="sub-dc-MAT1002-A-tut-5"><input type="checkbox" value="5" onchange="updateSubDayCheck('MAT1002-A','tut',5)">Fr</label><label class="day-check" id="sub-dc-MAT1002-A-tut-6"><input type="checkbox" value="6" onchange="updateSubDayCheck('MAT1002-A','tut',6)">St</label><label class="day-check" id="sub-dc-MAT1002-A-tut-7"><input type="checkbox" value="7" onchange="updateSubDayCheck('MAT1002-A','tut',7)">Su</label>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
+        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-MAT1002-A-tut" onclick="openTimePicker('sub-tstart-MAT1002-A-tut','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-MAT1002-A-tut-txt">--:--</span></button></div>
+        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-MAT1002-A-tut" onclick="openTimePicker('sub-tend-MAT1002-A-tut','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-MAT1002-A-tut-txt">--:--</span></button></div>
+        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-MAT1002-A-tut" onclick="openLocPicker('sub-tloc-MAT1002-A-tut')">--</button></div>
+      </div>
+      <div class="section-btn-group">
+        <button class="btn btn-success btn-sm" onclick="addSubSection('MAT1002','MAT1002-A','tut')">确认</button>
+        <button class="btn btn-outline btn-sm" onclick="hideSubInput('MAT1002-A','tut')">取消</button>
+      </div>
+    </div>
+        </div>
+      </div>
+    </div><div class="section-item">
+      <div class="section-item-row">
+        <span><b>B</b> &nbsp;Mo We &nbsp;17:50-19:00 &nbsp;TD</span>
+        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('MAT1002','MAT1002-B')">+ 子课程</button>
+        <button class="btn btn-danger btn-sm" onclick="delSection('MAT1002','MAT1002-B')">×</button>
+      </div>
+      <div class="sub-list">
+        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ TUT <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('MAT1002','MAT1002-B','TUT')">+ 时段</button></div>
+        
+        <div id="sub-inp-MAT1002-B-TUT" class="sub-input-area hidden">
+          <h5>新增 TUT 时段</h5>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div class="hint">上课日</div>
+      <div class="days-group" id="sub-days-MAT1002-B-TUT">
+        <label class="day-check" id="sub-dc-MAT1002-B-TUT-1"><input type="checkbox" value="1" onchange="updateSubDayCheck('MAT1002-B','TUT',1)">Mo</label><label class="day-check" id="sub-dc-MAT1002-B-TUT-2"><input type="checkbox" value="2" onchange="updateSubDayCheck('MAT1002-B','TUT',2)">Tu</label><label class="day-check" id="sub-dc-MAT1002-B-TUT-3"><input type="checkbox" value="3" onchange="updateSubDayCheck('MAT1002-B','TUT',3)">We</label><label class="day-check" id="sub-dc-MAT1002-B-TUT-4"><input type="checkbox" value="4" onchange="updateSubDayCheck('MAT1002-B','TUT',4)">Th</label><label class="day-check" id="sub-dc-MAT1002-B-TUT-5"><input type="checkbox" value="5" onchange="updateSubDayCheck('MAT1002-B','TUT',5)">Fr</label><label class="day-check" id="sub-dc-MAT1002-B-TUT-6"><input type="checkbox" value="6" onchange="updateSubDayCheck('MAT1002-B','TUT',6)">St</label><label class="day-check" id="sub-dc-MAT1002-B-TUT-7"><input type="checkbox" value="7" onchange="updateSubDayCheck('MAT1002-B','TUT',7)">Su</label>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
+        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-MAT1002-B-TUT" onclick="openTimePicker('sub-tstart-MAT1002-B-TUT','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-MAT1002-B-TUT-txt">--:--</span></button></div>
+        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-MAT1002-B-TUT" onclick="openTimePicker('sub-tend-MAT1002-B-TUT','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-MAT1002-B-TUT-txt">--:--</span></button></div>
+        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-MAT1002-B-TUT" onclick="openLocPicker('sub-tloc-MAT1002-B-TUT')">--</button></div>
+      </div>
+      <div class="section-btn-group">
+        <button class="btn btn-success btn-sm" onclick="addSubSection('MAT1002','MAT1002-B','TUT')">确认</button>
+        <button class="btn btn-outline btn-sm" onclick="hideSubInput('MAT1002-B','TUT')">取消</button>
+      </div>
+    </div>
+        </div>
+      </div>
+    </div></div>
+      
+    </div>
+    <div class="course-card">
+      <div class="course-card-header">
+        <span class="course-code">ECO2011</span>
+        <div>
+          <button class="btn btn-outline btn-sm" onclick="showSectionInput('ECO2011')">+ 时段</button>
+          <button class="btn btn-danger btn-sm" onclick="delCourse('ECO2011')">删除</button>
+        </div>
+      </div>
+      <div id="sec-inp-ECO2011" class="section-input-area hidden">
+        <h4>添加时段 → ECO2011</h4>
+        <div class="section-row" style="flex-direction:column;align-items:stretch;gap:6px;">
+          <div class="hint">上课日（必选1~7个）</div>
+          <div class="days-group" id="days-ECO2011">
+            <label class="day-check" id="dc-ECO2011-1"><input type="checkbox" value="1" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',1)">Mo</label><label class="day-check" id="dc-ECO2011-2"><input type="checkbox" value="2" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',2)">Tu</label><label class="day-check" id="dc-ECO2011-3"><input type="checkbox" value="3" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',3)">We</label><label class="day-check" id="dc-ECO2011-4"><input type="checkbox" value="4" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',4)">Th</label><label class="day-check" id="dc-ECO2011-5"><input type="checkbox" value="5" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',5)">Fr</label><label class="day-check" id="dc-ECO2011-6"><input type="checkbox" value="6" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',6)">St</label><label class="day-check" id="dc-ECO2011-7"><input type="checkbox" value="7" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',7)">Su</label>
+          </div>
+        </div>
+        <div class="section-row" style="margin-top:8px;align-items:flex-end;">
+          <div style="flex:1"><div class="hint">开始</div><button class="time-picker-btn" id="tstart-ECO2011" onclick="openTimePicker('tstart-ECO2011','开始时间')"><span class="clock-icon">🕐</span><span id="tstart-ECO2011-txt">--:--</span></button></div>
+          <div style="flex:1"><div class="hint">结束</div><button class="time-picker-btn" id="tend-ECO2011" onclick="openTimePicker('tend-ECO2011','结束时间')"><span class="clock-icon">🕑</span><span id="tend-ECO2011-txt">--:--</span></button></div>
+          <div style="flex:1"><div class="hint">地点</div><button class="loc-picker-btn" id="tloc-ECO2011" onclick="openLocPicker('tloc-ECO2011')">--</button></div>
+        </div>
+        <div class="section-btn-group">
+          <button class="btn btn-primary btn-sm" onclick="addSection('ECO2011')">确认</button>
+          <button class="btn btn-outline btn-sm" onclick="hideSectionInput('ECO2011')">取消</button>
+        </div>
+      </div>
+      <div><div class="section-item">
+      <div class="section-item-row">
+        <span><b>A</b> &nbsp;Mo We &nbsp;08:30-10:20 &nbsp;TC</span>
+        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('ECO2011','ECO2011-A')">+ 子课程</button>
+        <button class="btn btn-danger btn-sm" onclick="delSection('ECO2011','ECO2011-A')">×</button>
+      </div>
+      <div class="sub-list">
+        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ TUT <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('ECO2011','ECO2011-A','TUT')">+ 时段</button></div>
+        <div class="sub-item"><span>Tu &nbsp;08:30-09:30 &nbsp;TD</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('ECO2011','ECO2011-A','TUT','ECO2011-A-1')">×</button></div>
+        <div id="sub-inp-ECO2011-A-TUT" class="sub-input-area hidden">
+          <h5>新增 TUT 时段</h5>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div class="hint">上课日</div>
+      <div class="days-group" id="sub-days-ECO2011-A-TUT">
+        <label class="day-check" id="sub-dc-ECO2011-A-TUT-1"><input type="checkbox" value="1" onchange="updateSubDayCheck('ECO2011-A','TUT',1)">Mo</label><label class="day-check" id="sub-dc-ECO2011-A-TUT-2"><input type="checkbox" value="2" onchange="updateSubDayCheck('ECO2011-A','TUT',2)">Tu</label><label class="day-check" id="sub-dc-ECO2011-A-TUT-3"><input type="checkbox" value="3" onchange="updateSubDayCheck('ECO2011-A','TUT',3)">We</label><label class="day-check" id="sub-dc-ECO2011-A-TUT-4"><input type="checkbox" value="4" onchange="updateSubDayCheck('ECO2011-A','TUT',4)">Th</label><label class="day-check" id="sub-dc-ECO2011-A-TUT-5"><input type="checkbox" value="5" onchange="updateSubDayCheck('ECO2011-A','TUT',5)">Fr</label><label class="day-check" id="sub-dc-ECO2011-A-TUT-6"><input type="checkbox" value="6" onchange="updateSubDayCheck('ECO2011-A','TUT',6)">St</label><label class="day-check" id="sub-dc-ECO2011-A-TUT-7"><input type="checkbox" value="7" onchange="updateSubDayCheck('ECO2011-A','TUT',7)">Su</label>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
+        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-ECO2011-A-TUT" onclick="openTimePicker('sub-tstart-ECO2011-A-TUT','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-ECO2011-A-TUT-txt">--:--</span></button></div>
+        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-ECO2011-A-TUT" onclick="openTimePicker('sub-tend-ECO2011-A-TUT','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-ECO2011-A-TUT-txt">--:--</span></button></div>
+        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-ECO2011-A-TUT" onclick="openLocPicker('sub-tloc-ECO2011-A-TUT')">--</button></div>
+      </div>
+      <div class="section-btn-group">
+        <button class="btn btn-success btn-sm" onclick="addSubSection('ECO2011','ECO2011-A','TUT')">确认</button>
+        <button class="btn btn-outline btn-sm" onclick="hideSubInput('ECO2011-A','TUT')">取消</button>
+      </div>
+    </div>
+        </div>
+      </div>
+    </div><div class="section-item">
+      <div class="section-item-row">
+        <span><b>B</b> &nbsp;Tu Th &nbsp;08:30-10:20 &nbsp;TD</span>
+        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('ECO2011','ECO2011-B')">+ 子课程</button>
+        <button class="btn btn-danger btn-sm" onclick="delSection('ECO2011','ECO2011-B')">×</button>
+      </div>
+      <div class="sub-list">
+        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ TUT <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('ECO2011','ECO2011-B','TUT')">+ 时段</button></div>
+        <div class="sub-item"><span>Fr &nbsp;16:30-18:30 &nbsp;TC</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('ECO2011','ECO2011-B','TUT','ECO2011-B-1')">×</button></div>
+        <div id="sub-inp-ECO2011-B-TUT" class="sub-input-area hidden">
+          <h5>新增 TUT 时段</h5>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div class="hint">上课日</div>
+      <div class="days-group" id="sub-days-ECO2011-B-TUT">
+        <label class="day-check" id="sub-dc-ECO2011-B-TUT-1"><input type="checkbox" value="1" onchange="updateSubDayCheck('ECO2011-B','TUT',1)">Mo</label><label class="day-check" id="sub-dc-ECO2011-B-TUT-2"><input type="checkbox" value="2" onchange="updateSubDayCheck('ECO2011-B','TUT',2)">Tu</label><label class="day-check" id="sub-dc-ECO2011-B-TUT-3"><input type="checkbox" value="3" onchange="updateSubDayCheck('ECO2011-B','TUT',3)">We</label><label class="day-check" id="sub-dc-ECO2011-B-TUT-4"><input type="checkbox" value="4" onchange="updateSubDayCheck('ECO2011-B','TUT',4)">Th</label><label class="day-check" id="sub-dc-ECO2011-B-TUT-5"><input type="checkbox" value="5" onchange="updateSubDayCheck('ECO2011-B','TUT',5)">Fr</label><label class="day-check" id="sub-dc-ECO2011-B-TUT-6"><input type="checkbox" value="6" onchange="updateSubDayCheck('ECO2011-B','TUT',6)">St</label><label class="day-check" id="sub-dc-ECO2011-B-TUT-7"><input type="checkbox" value="7" onchange="updateSubDayCheck('ECO2011-B','TUT',7)">Su</label>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
+        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-ECO2011-B-TUT" onclick="openTimePicker('sub-tstart-ECO2011-B-TUT','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-ECO2011-B-TUT-txt">--:--</span></button></div>
+        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-ECO2011-B-TUT" onclick="openTimePicker('sub-tend-ECO2011-B-TUT','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-ECO2011-B-TUT-txt">--:--</span></button></div>
+        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-ECO2011-B-TUT" onclick="openLocPicker('sub-tloc-ECO2011-B-TUT')">--</button></div>
+      </div>
+      <div class="section-btn-group">
+        <button class="btn btn-success btn-sm" onclick="addSubSection('ECO2011','ECO2011-B','TUT')">确认</button>
+        <button class="btn btn-outline btn-sm" onclick="hideSubInput('ECO2011-B','TUT')">取消</button>
+      </div>
+    </div>
+        </div>
+      </div>
+    </div></div>
+      
+    </div>
+    <div class="course-card">
+      <div class="course-card-header">
+        <span class="course-code">ACT2031</span>
+        <div>
+          <button class="btn btn-outline btn-sm" onclick="showSectionInput('ACT2031')">+ 时段</button>
+          <button class="btn btn-danger btn-sm" onclick="delCourse('ACT2031')">删除</button>
+        </div>
+      </div>
+      <div id="sec-inp-ACT2031" class="section-input-area hidden">
+        <h4>添加时段 → ACT2031</h4>
+        <div class="section-row" style="flex-direction:column;align-items:stretch;gap:6px;">
+          <div class="hint">上课日（必选1~7个）</div>
+          <div class="days-group" id="days-ACT2031">
+            <label class="day-check" id="dc-ACT2031-1"><input type="checkbox" value="1" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',1)">Mo</label><label class="day-check" id="dc-ACT2031-2"><input type="checkbox" value="2" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',2)">Tu</label><label class="day-check" id="dc-ACT2031-3"><input type="checkbox" value="3" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',3)">We</label><label class="day-check" id="dc-ACT2031-4"><input type="checkbox" value="4" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',4)">Th</label><label class="day-check" id="dc-ACT2031-5"><input type="checkbox" value="5" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',5)">Fr</label><label class="day-check" id="dc-ACT2031-6"><input type="checkbox" value="6" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',6)">St</label><label class="day-check" id="dc-ACT2031-7"><input type="checkbox" value="7" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',7)">Su</label>
+          </div>
+        </div>
+        <div class="section-row" style="margin-top:8px;align-items:flex-end;">
+          <div style="flex:1"><div class="hint">开始</div><button class="time-picker-btn" id="tstart-ACT2031" onclick="openTimePicker('tstart-ACT2031','开始时间')"><span class="clock-icon">🕐</span><span id="tstart-ACT2031-txt">--:--</span></button></div>
+          <div style="flex:1"><div class="hint">结束</div><button class="time-picker-btn" id="tend-ACT2031" onclick="openTimePicker('tend-ACT2031','结束时间')"><span class="clock-icon">🕑</span><span id="tend-ACT2031-txt">--:--</span></button></div>
+          <div style="flex:1"><div class="hint">地点</div><button class="loc-picker-btn" id="tloc-ACT2031" onclick="openLocPicker('tloc-ACT2031')">--</button></div>
+        </div>
+        <div class="section-btn-group">
+          <button class="btn btn-primary btn-sm" onclick="addSection('ACT2031')">确认</button>
+          <button class="btn btn-outline btn-sm" onclick="hideSectionInput('ACT2031')">取消</button>
+        </div>
+      </div>
+      <div><div class="section-item">
+      <div class="section-item-row">
+        <span><b>A</b> &nbsp;Tu Th &nbsp;08:30-09:30 &nbsp;TA</span>
+        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('ACT2031','ACT2031-A')">+ 子课程</button>
+        <button class="btn btn-danger btn-sm" onclick="delSection('ACT2031','ACT2031-A')">×</button>
+      </div>
+      
+    </div><div class="section-item">
+      <div class="section-item-row">
+        <span><b>B</b> &nbsp;Tu Th &nbsp;14:30-15:30 &nbsp;TC</span>
+        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('ACT2031','ACT2031-B')">+ 子课程</button>
+        <button class="btn btn-danger btn-sm" onclick="delSection('ACT2031','ACT2031-B')">×</button>
+      </div>
+      
+    </div><div class="section-item">
+      <div class="section-item-row">
+        <span><b>C</b> &nbsp;Mo We &nbsp;19:30-20:30 &nbsp;TD</span>
+        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('ACT2031','ACT2031-C')">+ 子课程</button>
+        <button class="btn btn-danger btn-sm" onclick="delSection('ACT2031','ACT2031-C')">×</button>
+      </div>
+      
+    </div></div>
+      
+    </div></div>
+        </div>
+        <div class="panel" style="margin-top:16px;">
+          <div class="panel-title"><span class="icon">⚙️</span>筛选与排序</div>
+          <div class="filter-group">
+            <div class="filter-row">
+              <label class="toggle">
+                <input type="checkbox" id="noEarly" onchange="runSchedule()">
+                <span class="slider"></span>
+              </label>
+              <div class="filter-label">不上早八<span>排除 08:30 开始的课程</span></div>
+            </div>
+            <div class="filter-row">
+              <label class="toggle">
+                <input type="checkbox" id="noNoon" onchange="runSchedule()">
+                <span class="slider"></span>
+              </label>
+              <div class="filter-label">不上午一<span>排除 13:30 开始的课程</span></div>
+            </div>
+            <div class="filter-row">
+              <label class="toggle">
+                <input type="checkbox" id="timePriority" onchange="runSchedule()">
+                <span class="slider"></span>
+              </label>
+              <div class="filter-label">时间优先排序<span>早八/午一越少越靠前</span></div>
+            </div>
+            <div class="filter-row">
+              <label class="toggle">
+                <input type="checkbox" id="locPriority" onchange="runSchedule()">
+                <span class="slider"></span>
+              </label>
+              <div class="filter-label">地点优先排序<span>相邻课程地点越近越靠前</span></div>
+            </div>
+            <div class="max-display-row">
+              <label>最多显示</label>
+              <input type="number" id="maxDisplay" value="20" min="1" max="999" onchange="runSchedule()">
+              <span>个方案</span>
+            </div>
+            <!-- 自定义排除时间 -->
+            <div class="exclusion-section">
+              <div class="exclusion-section-title">🕐 排除指定时间</div>
+              <div class="exclusion-input-row">
+                <input type="text" id="excludeTimeInput" placeholder="如 08:30" maxlength="5" onkeydown="if(event.key==='Enter'){event.preventDefault();addExcludedTime();}">
+                <button class="btn btn-sm btn-danger" onclick="addExcludedTime()">添加</button>
+              </div>
+              <div class="exclusion-tags" id="excludedTimeTags"></div>
+            </div>
+            <!-- 自定义排除地点 -->
+            <div class="exclusion-section">
+              <div class="exclusion-section-title">📍 排除指定地点</div>
+              <div class="exclusion-input-row">
+                <input type="text" id="excludeLocInput" placeholder="如 TXA" maxlength="10" onkeydown="if(event.key==='Enter'){event.preventDefault();addExcludedLocation();}">
+                <button class="btn btn-sm btn-danger" onclick="addExcludedLocation()">添加</button>
+              </div>
+              <div class="exclusion-tags" id="excludedLocTags"></div>
+            </div>
+          </div>
+          <div class="loc-ref">
+            <strong>地点顺序：</strong>TXA — TXB — TXC — TA — ABE — TB — TC — TD — ZX<br>
+            相邻距离 = 1，每多隔一个 +1
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="runSchedule()" style="flex:1">🚀 计算排课方案</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 中间栏：课程管理 + 筛选排序（管理员专用） -->
+    <div id="centerPanel">
+      <div id="adminCenterContent" style="display: flex; flex-direction: column; gap: 16px;">
+        <div class="panel">
+          <div class="panel-title"><span class="icon">📚</span>课程管理</div>
+          <div class="course-input">
+            <input type="text" id="courseCodeInput2" placeholder="课程代号，如 MAT1001" maxlength="20">
+            <button class="btn btn-primary" onclick="addCourse2()">添加</button>
+          </div>
+          <div class="course-list" id="courseList2">
+    <div class="course-card">
+      <div class="course-card-header">
+        <span class="course-code">MAT3007</span>
+        <div>
+          <button class="btn btn-outline btn-sm" onclick="showSectionInput('MAT3007')">+ 时段</button>
+          <button class="btn btn-danger btn-sm" onclick="delCourse('MAT3007')">删除</button>
+        </div>
+      </div>
+      <div id="sec-inp-MAT3007" class="section-input-area hidden">
+        <h4>添加时段 → MAT3007</h4>
+        <div class="section-row" style="flex-direction:column;align-items:stretch;gap:6px;">
+          <div class="hint">上课日（必选1~7个）</div>
+          <div class="days-group" id="days-MAT3007">
+            <label class="day-check" id="dc-MAT3007-1"><input type="checkbox" value="1" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',1)">Mo</label><label class="day-check" id="dc-MAT3007-2"><input type="checkbox" value="2" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',2)">Tu</label><label class="day-check" id="dc-MAT3007-3"><input type="checkbox" value="3" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',3)">We</label><label class="day-check" id="dc-MAT3007-4"><input type="checkbox" value="4" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',4)">Th</label><label class="day-check" id="dc-MAT3007-5"><input type="checkbox" value="5" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',5)">Fr</label><label class="day-check" id="dc-MAT3007-6"><input type="checkbox" value="6" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',6)">St</label><label class="day-check" id="dc-MAT3007-7"><input type="checkbox" value="7" class="day-cb" data-code="MAT3007" onchange="updateDayCheck('MAT3007',7)">Su</label>
+          </div>
+        </div>
+        <div class="section-row" style="margin-top:8px;align-items:flex-end;">
+          <div style="flex:1"><div class="hint">开始</div><button class="time-picker-btn" id="tstart-MAT3007" onclick="openTimePicker('tstart-MAT3007','开始时间')"><span class="clock-icon">🕐</span><span id="tstart-MAT3007-txt">--:--</span></button></div>
+          <div style="flex:1"><div class="hint">结束</div><button class="time-picker-btn" id="tend-MAT3007" onclick="openTimePicker('tend-MAT3007','结束时间')"><span class="clock-icon">🕑</span><span id="tend-MAT3007-txt">--:--</span></button></div>
+          <div style="flex:1"><div class="hint">地点</div><button class="loc-picker-btn" id="tloc-MAT3007" onclick="openLocPicker('tloc-MAT3007')">--</button></div>
+        </div>
+        <div class="section-btn-group">
+          <button class="btn btn-primary btn-sm" onclick="addSection('MAT3007')">确认</button>
+          <button class="btn btn-outline btn-sm" onclick="hideSectionInput('MAT3007')">取消</button>
+        </div>
+      </div>
+      <div><div class="section-item">
+      <div class="section-item-row">
+        <span><b>A</b> &nbsp;Mo We &nbsp;16:00-18:00 &nbsp;TA</span>
+        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('MAT3007','MAT3007-A')">+ 子课程</button>
+        <button class="btn btn-danger btn-sm" onclick="delSection('MAT3007','MAT3007-A')">×</button>
+      </div>
+      <div class="sub-list">
+        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ TUT <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('MAT3007','MAT3007-A','TUT')">+ 时段</button></div>
+        <div class="sub-item"><span>Mo &nbsp;15:30-16:00 &nbsp;TD</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('MAT3007','MAT3007-A','TUT','MAT3007-A-1')">×</button></div><div class="sub-item"><span>We &nbsp;06:00-07:00 &nbsp;TC</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('MAT3007','MAT3007-A','TUT','MAT3007-A-2')">×</button></div><div class="sub-item"><span>We Th &nbsp;16:00-19:00 &nbsp;TD</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('MAT3007','MAT3007-A','TUT','MAT3007-A-3')">×</button></div>
+        <div id="sub-inp-MAT3007-A-TUT" class="sub-input-area hidden">
+          <h5>新增 TUT 时段</h5>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div class="hint">上课日</div>
+      <div class="days-group" id="sub-days-MAT3007-A-TUT">
+        <label class="day-check" id="sub-dc-MAT3007-A-TUT-1"><input type="checkbox" value="1" onchange="updateSubDayCheck('MAT3007-A','TUT',1)">Mo</label><label class="day-check" id="sub-dc-MAT3007-A-TUT-2"><input type="checkbox" value="2" onchange="updateSubDayCheck('MAT3007-A','TUT',2)">Tu</label><label class="day-check" id="sub-dc-MAT3007-A-TUT-3"><input type="checkbox" value="3" onchange="updateSubDayCheck('MAT3007-A','TUT',3)">We</label><label class="day-check" id="sub-dc-MAT3007-A-TUT-4"><input type="checkbox" value="4" onchange="updateSubDayCheck('MAT3007-A','TUT',4)">Th</label><label class="day-check" id="sub-dc-MAT3007-A-TUT-5"><input type="checkbox" value="5" onchange="updateSubDayCheck('MAT3007-A','TUT',5)">Fr</label><label class="day-check" id="sub-dc-MAT3007-A-TUT-6"><input type="checkbox" value="6" onchange="updateSubDayCheck('MAT3007-A','TUT',6)">St</label><label class="day-check" id="sub-dc-MAT3007-A-TUT-7"><input type="checkbox" value="7" onchange="updateSubDayCheck('MAT3007-A','TUT',7)">Su</label>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
+        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-MAT3007-A-TUT" onclick="openTimePicker('sub-tstart-MAT3007-A-TUT','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-MAT3007-A-TUT-txt">--:--</span></button></div>
+        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-MAT3007-A-TUT" onclick="openTimePicker('sub-tend-MAT3007-A-TUT','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-MAT3007-A-TUT-txt">--:--</span></button></div>
+        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-MAT3007-A-TUT" onclick="openLocPicker('sub-tloc-MAT3007-A-TUT')">--</button></div>
+      </div>
+      <div class="section-btn-group">
+        <button class="btn btn-success btn-sm" onclick="addSubSection('MAT3007','MAT3007-A','TUT')">确认</button>
+        <button class="btn btn-outline btn-sm" onclick="hideSubInput('MAT3007-A','TUT')">取消</button>
+      </div>
+    </div>
+        </div>
+      </div>
+    </div><div class="section-item">
+      <div class="section-item-row">
+        <span><b>C</b> &nbsp;Mo We &nbsp;15:30-16:20 &nbsp;TXA</span>
+        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('MAT3007','MAT3007-C')">+ 子课程</button>
+        <button class="btn btn-danger btn-sm" onclick="delSection('MAT3007','MAT3007-C')">×</button>
+      </div>
+      <div class="sub-list">
+        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ TUT <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('MAT3007','MAT3007-C','TUT')">+ 时段</button></div>
+        <div class="sub-item"><span>Tu &nbsp;08:30-09:30 &nbsp;TD</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('MAT3007','MAT3007-C','TUT','MAT3007-C-1')">×</button></div>
+        <div id="sub-inp-MAT3007-C-TUT" class="sub-input-area hidden">
+          <h5>新增 TUT 时段</h5>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div class="hint">上课日</div>
+      <div class="days-group" id="sub-days-MAT3007-C-TUT">
+        <label class="day-check" id="sub-dc-MAT3007-C-TUT-1"><input type="checkbox" value="1" onchange="updateSubDayCheck('MAT3007-C','TUT',1)">Mo</label><label class="day-check" id="sub-dc-MAT3007-C-TUT-2"><input type="checkbox" value="2" onchange="updateSubDayCheck('MAT3007-C','TUT',2)">Tu</label><label class="day-check" id="sub-dc-MAT3007-C-TUT-3"><input type="checkbox" value="3" onchange="updateSubDayCheck('MAT3007-C','TUT',3)">We</label><label class="day-check" id="sub-dc-MAT3007-C-TUT-4"><input type="checkbox" value="4" onchange="updateSubDayCheck('MAT3007-C','TUT',4)">Th</label><label class="day-check" id="sub-dc-MAT3007-C-TUT-5"><input type="checkbox" value="5" onchange="updateSubDayCheck('MAT3007-C','TUT',5)">Fr</label><label class="day-check" id="sub-dc-MAT3007-C-TUT-6"><input type="checkbox" value="6" onchange="updateSubDayCheck('MAT3007-C','TUT',6)">St</label><label class="day-check" id="sub-dc-MAT3007-C-TUT-7"><input type="checkbox" value="7" onchange="updateSubDayCheck('MAT3007-C','TUT',7)">Su</label>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
+        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-MAT3007-C-TUT" onclick="openTimePicker('sub-tstart-MAT3007-C-TUT','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-MAT3007-C-TUT-txt">--:--</span></button></div>
+        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-MAT3007-C-TUT" onclick="openTimePicker('sub-tend-MAT3007-C-TUT','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-MAT3007-C-TUT-txt">--:--</span></button></div>
+        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-MAT3007-C-TUT" onclick="openLocPicker('sub-tloc-MAT3007-C-TUT')">--</button></div>
+      </div>
+      <div class="section-btn-group">
+        <button class="btn btn-success btn-sm" onclick="addSubSection('MAT3007','MAT3007-C','TUT')">确认</button>
+        <button class="btn btn-outline btn-sm" onclick="hideSubInput('MAT3007-C','TUT')">取消</button>
+      </div>
+    </div>
+        </div>
+      </div>
+    </div></div>
+      
+    </div>
+    <div class="course-card">
+      <div class="course-card-header">
+        <span class="course-code">MAT1002</span>
+        <div>
+          <button class="btn btn-outline btn-sm" onclick="showSectionInput('MAT1002')">+ 时段</button>
+          <button class="btn btn-danger btn-sm" onclick="delCourse('MAT1002')">删除</button>
+        </div>
+      </div>
+      <div id="sec-inp-MAT1002" class="section-input-area hidden">
+        <h4>添加时段 → MAT1002</h4>
+        <div class="section-row" style="flex-direction:column;align-items:stretch;gap:6px;">
+          <div class="hint">上课日（必选1~7个）</div>
+          <div class="days-group" id="days-MAT1002">
+            <label class="day-check" id="dc-MAT1002-1"><input type="checkbox" value="1" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',1)">Mo</label><label class="day-check" id="dc-MAT1002-2"><input type="checkbox" value="2" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',2)">Tu</label><label class="day-check" id="dc-MAT1002-3"><input type="checkbox" value="3" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',3)">We</label><label class="day-check" id="dc-MAT1002-4"><input type="checkbox" value="4" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',4)">Th</label><label class="day-check" id="dc-MAT1002-5"><input type="checkbox" value="5" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',5)">Fr</label><label class="day-check" id="dc-MAT1002-6"><input type="checkbox" value="6" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',6)">St</label><label class="day-check" id="dc-MAT1002-7"><input type="checkbox" value="7" class="day-cb" data-code="MAT1002" onchange="updateDayCheck('MAT1002',7)">Su</label>
+          </div>
+        </div>
+        <div class="section-row" style="margin-top:8px;align-items:flex-end;">
+          <div style="flex:1"><div class="hint">开始</div><button class="time-picker-btn" id="tstart-MAT1002" onclick="openTimePicker('tstart-MAT1002','开始时间')"><span class="clock-icon">🕐</span><span id="tstart-MAT1002-txt">--:--</span></button></div>
+          <div style="flex:1"><div class="hint">结束</div><button class="time-picker-btn" id="tend-MAT1002" onclick="openTimePicker('tend-MAT1002','结束时间')"><span class="clock-icon">🕑</span><span id="tend-MAT1002-txt">--:--</span></button></div>
+          <div style="flex:1"><div class="hint">地点</div><button class="loc-picker-btn" id="tloc-MAT1002" onclick="openLocPicker('tloc-MAT1002')">--</button></div>
+        </div>
+        <div class="section-btn-group">
+          <button class="btn btn-primary btn-sm" onclick="addSection('MAT1002')">确认</button>
+          <button class="btn btn-outline btn-sm" onclick="hideSectionInput('MAT1002')">取消</button>
+        </div>
+      </div>
+      <div><div class="section-item">
+      <div class="section-item-row">
+        <span><b>A</b> &nbsp;Tu &nbsp;14:30-15:30 &nbsp;TA</span>
+        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('MAT1002','MAT1002-A')">+ 子课程</button>
+        <button class="btn btn-danger btn-sm" onclick="delSection('MAT1002','MAT1002-A')">×</button>
+      </div>
+      <div class="sub-list">
+        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ tut <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('MAT1002','MAT1002-A','tut')">+ 时段</button></div>
+        <div class="sub-item"><span>We &nbsp;15:30-14:30 &nbsp;TD</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('MAT1002','MAT1002-A','tut','MAT1002-A-1')">×</button></div>
+        <div id="sub-inp-MAT1002-A-tut" class="sub-input-area hidden">
+          <h5>新增 tut 时段</h5>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div class="hint">上课日</div>
+      <div class="days-group" id="sub-days-MAT1002-A-tut">
+        <label class="day-check" id="sub-dc-MAT1002-A-tut-1"><input type="checkbox" value="1" onchange="updateSubDayCheck('MAT1002-A','tut',1)">Mo</label><label class="day-check" id="sub-dc-MAT1002-A-tut-2"><input type="checkbox" value="2" onchange="updateSubDayCheck('MAT1002-A','tut',2)">Tu</label><label class="day-check" id="sub-dc-MAT1002-A-tut-3"><input type="checkbox" value="3" onchange="updateSubDayCheck('MAT1002-A','tut',3)">We</label><label class="day-check" id="sub-dc-MAT1002-A-tut-4"><input type="checkbox" value="4" onchange="updateSubDayCheck('MAT1002-A','tut',4)">Th</label><label class="day-check" id="sub-dc-MAT1002-A-tut-5"><input type="checkbox" value="5" onchange="updateSubDayCheck('MAT1002-A','tut',5)">Fr</label><label class="day-check" id="sub-dc-MAT1002-A-tut-6"><input type="checkbox" value="6" onchange="updateSubDayCheck('MAT1002-A','tut',6)">St</label><label class="day-check" id="sub-dc-MAT1002-A-tut-7"><input type="checkbox" value="7" onchange="updateSubDayCheck('MAT1002-A','tut',7)">Su</label>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
+        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-MAT1002-A-tut" onclick="openTimePicker('sub-tstart-MAT1002-A-tut','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-MAT1002-A-tut-txt">--:--</span></button></div>
+        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-MAT1002-A-tut" onclick="openTimePicker('sub-tend-MAT1002-A-tut','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-MAT1002-A-tut-txt">--:--</span></button></div>
+        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-MAT1002-A-tut" onclick="openLocPicker('sub-tloc-MAT1002-A-tut')">--</button></div>
+      </div>
+      <div class="section-btn-group">
+        <button class="btn btn-success btn-sm" onclick="addSubSection('MAT1002','MAT1002-A','tut')">确认</button>
+        <button class="btn btn-outline btn-sm" onclick="hideSubInput('MAT1002-A','tut')">取消</button>
+      </div>
+    </div>
+        </div>
+      </div>
+    </div><div class="section-item">
+      <div class="section-item-row">
+        <span><b>B</b> &nbsp;Mo We &nbsp;17:50-19:00 &nbsp;TD</span>
+        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('MAT1002','MAT1002-B')">+ 子课程</button>
+        <button class="btn btn-danger btn-sm" onclick="delSection('MAT1002','MAT1002-B')">×</button>
+      </div>
+      <div class="sub-list">
+        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ TUT <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('MAT1002','MAT1002-B','TUT')">+ 时段</button></div>
+        
+        <div id="sub-inp-MAT1002-B-TUT" class="sub-input-area hidden">
+          <h5>新增 TUT 时段</h5>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div class="hint">上课日</div>
+      <div class="days-group" id="sub-days-MAT1002-B-TUT">
+        <label class="day-check" id="sub-dc-MAT1002-B-TUT-1"><input type="checkbox" value="1" onchange="updateSubDayCheck('MAT1002-B','TUT',1)">Mo</label><label class="day-check" id="sub-dc-MAT1002-B-TUT-2"><input type="checkbox" value="2" onchange="updateSubDayCheck('MAT1002-B','TUT',2)">Tu</label><label class="day-check" id="sub-dc-MAT1002-B-TUT-3"><input type="checkbox" value="3" onchange="updateSubDayCheck('MAT1002-B','TUT',3)">We</label><label class="day-check" id="sub-dc-MAT1002-B-TUT-4"><input type="checkbox" value="4" onchange="updateSubDayCheck('MAT1002-B','TUT',4)">Th</label><label class="day-check" id="sub-dc-MAT1002-B-TUT-5"><input type="checkbox" value="5" onchange="updateSubDayCheck('MAT1002-B','TUT',5)">Fr</label><label class="day-check" id="sub-dc-MAT1002-B-TUT-6"><input type="checkbox" value="6" onchange="updateSubDayCheck('MAT1002-B','TUT',6)">St</label><label class="day-check" id="sub-dc-MAT1002-B-TUT-7"><input type="checkbox" value="7" onchange="updateSubDayCheck('MAT1002-B','TUT',7)">Su</label>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
+        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-MAT1002-B-TUT" onclick="openTimePicker('sub-tstart-MAT1002-B-TUT','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-MAT1002-B-TUT-txt">--:--</span></button></div>
+        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-MAT1002-B-TUT" onclick="openTimePicker('sub-tend-MAT1002-B-TUT','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-MAT1002-B-TUT-txt">--:--</span></button></div>
+        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-MAT1002-B-TUT" onclick="openLocPicker('sub-tloc-MAT1002-B-TUT')">--</button></div>
+      </div>
+      <div class="section-btn-group">
+        <button class="btn btn-success btn-sm" onclick="addSubSection('MAT1002','MAT1002-B','TUT')">确认</button>
+        <button class="btn btn-outline btn-sm" onclick="hideSubInput('MAT1002-B','TUT')">取消</button>
+      </div>
+    </div>
+        </div>
+      </div>
+    </div></div>
+      
+    </div>
+    <div class="course-card">
+      <div class="course-card-header">
+        <span class="course-code">ECO2011</span>
+        <div>
+          <button class="btn btn-outline btn-sm" onclick="showSectionInput('ECO2011')">+ 时段</button>
+          <button class="btn btn-danger btn-sm" onclick="delCourse('ECO2011')">删除</button>
+        </div>
+      </div>
+      <div id="sec-inp-ECO2011" class="section-input-area hidden">
+        <h4>添加时段 → ECO2011</h4>
+        <div class="section-row" style="flex-direction:column;align-items:stretch;gap:6px;">
+          <div class="hint">上课日（必选1~7个）</div>
+          <div class="days-group" id="days-ECO2011">
+            <label class="day-check" id="dc-ECO2011-1"><input type="checkbox" value="1" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',1)">Mo</label><label class="day-check" id="dc-ECO2011-2"><input type="checkbox" value="2" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',2)">Tu</label><label class="day-check" id="dc-ECO2011-3"><input type="checkbox" value="3" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',3)">We</label><label class="day-check" id="dc-ECO2011-4"><input type="checkbox" value="4" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',4)">Th</label><label class="day-check" id="dc-ECO2011-5"><input type="checkbox" value="5" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',5)">Fr</label><label class="day-check" id="dc-ECO2011-6"><input type="checkbox" value="6" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',6)">St</label><label class="day-check" id="dc-ECO2011-7"><input type="checkbox" value="7" class="day-cb" data-code="ECO2011" onchange="updateDayCheck('ECO2011',7)">Su</label>
+          </div>
+        </div>
+        <div class="section-row" style="margin-top:8px;align-items:flex-end;">
+          <div style="flex:1"><div class="hint">开始</div><button class="time-picker-btn" id="tstart-ECO2011" onclick="openTimePicker('tstart-ECO2011','开始时间')"><span class="clock-icon">🕐</span><span id="tstart-ECO2011-txt">--:--</span></button></div>
+          <div style="flex:1"><div class="hint">结束</div><button class="time-picker-btn" id="tend-ECO2011" onclick="openTimePicker('tend-ECO2011','结束时间')"><span class="clock-icon">🕑</span><span id="tend-ECO2011-txt">--:--</span></button></div>
+          <div style="flex:1"><div class="hint">地点</div><button class="loc-picker-btn" id="tloc-ECO2011" onclick="openLocPicker('tloc-ECO2011')">--</button></div>
+        </div>
+        <div class="section-btn-group">
+          <button class="btn btn-primary btn-sm" onclick="addSection('ECO2011')">确认</button>
+          <button class="btn btn-outline btn-sm" onclick="hideSectionInput('ECO2011')">取消</button>
+        </div>
+      </div>
+      <div><div class="section-item">
+      <div class="section-item-row">
+        <span><b>A</b> &nbsp;Mo We &nbsp;08:30-10:20 &nbsp;TC</span>
+        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('ECO2011','ECO2011-A')">+ 子课程</button>
+        <button class="btn btn-danger btn-sm" onclick="delSection('ECO2011','ECO2011-A')">×</button>
+      </div>
+      <div class="sub-list">
+        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ TUT <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('ECO2011','ECO2011-A','TUT')">+ 时段</button></div>
+        <div class="sub-item"><span>Tu &nbsp;08:30-09:30 &nbsp;TD</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('ECO2011','ECO2011-A','TUT','ECO2011-A-1')">×</button></div>
+        <div id="sub-inp-ECO2011-A-TUT" class="sub-input-area hidden">
+          <h5>新增 TUT 时段</h5>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div class="hint">上课日</div>
+      <div class="days-group" id="sub-days-ECO2011-A-TUT">
+        <label class="day-check" id="sub-dc-ECO2011-A-TUT-1"><input type="checkbox" value="1" onchange="updateSubDayCheck('ECO2011-A','TUT',1)">Mo</label><label class="day-check" id="sub-dc-ECO2011-A-TUT-2"><input type="checkbox" value="2" onchange="updateSubDayCheck('ECO2011-A','TUT',2)">Tu</label><label class="day-check" id="sub-dc-ECO2011-A-TUT-3"><input type="checkbox" value="3" onchange="updateSubDayCheck('ECO2011-A','TUT',3)">We</label><label class="day-check" id="sub-dc-ECO2011-A-TUT-4"><input type="checkbox" value="4" onchange="updateSubDayCheck('ECO2011-A','TUT',4)">Th</label><label class="day-check" id="sub-dc-ECO2011-A-TUT-5"><input type="checkbox" value="5" onchange="updateSubDayCheck('ECO2011-A','TUT',5)">Fr</label><label class="day-check" id="sub-dc-ECO2011-A-TUT-6"><input type="checkbox" value="6" onchange="updateSubDayCheck('ECO2011-A','TUT',6)">St</label><label class="day-check" id="sub-dc-ECO2011-A-TUT-7"><input type="checkbox" value="7" onchange="updateSubDayCheck('ECO2011-A','TUT',7)">Su</label>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
+        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-ECO2011-A-TUT" onclick="openTimePicker('sub-tstart-ECO2011-A-TUT','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-ECO2011-A-TUT-txt">--:--</span></button></div>
+        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-ECO2011-A-TUT" onclick="openTimePicker('sub-tend-ECO2011-A-TUT','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-ECO2011-A-TUT-txt">--:--</span></button></div>
+        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-ECO2011-A-TUT" onclick="openLocPicker('sub-tloc-ECO2011-A-TUT')">--</button></div>
+      </div>
+      <div class="section-btn-group">
+        <button class="btn btn-success btn-sm" onclick="addSubSection('ECO2011','ECO2011-A','TUT')">确认</button>
+        <button class="btn btn-outline btn-sm" onclick="hideSubInput('ECO2011-A','TUT')">取消</button>
+      </div>
+    </div>
+        </div>
+      </div>
+    </div><div class="section-item">
+      <div class="section-item-row">
+        <span><b>B</b> &nbsp;Tu Th &nbsp;08:30-10:20 &nbsp;TD</span>
+        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('ECO2011','ECO2011-B')">+ 子课程</button>
+        <button class="btn btn-danger btn-sm" onclick="delSection('ECO2011','ECO2011-B')">×</button>
+      </div>
+      <div class="sub-list">
+        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ TUT <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('ECO2011','ECO2011-B','TUT')">+ 时段</button></div>
+        <div class="sub-item"><span>Fr &nbsp;16:30-18:30 &nbsp;TC</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('ECO2011','ECO2011-B','TUT','ECO2011-B-1')">×</button></div>
+        <div id="sub-inp-ECO2011-B-TUT" class="sub-input-area hidden">
+          <h5>新增 TUT 时段</h5>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div class="hint">上课日</div>
+      <div class="days-group" id="sub-days-ECO2011-B-TUT">
+        <label class="day-check" id="sub-dc-ECO2011-B-TUT-1"><input type="checkbox" value="1" onchange="updateSubDayCheck('ECO2011-B','TUT',1)">Mo</label><label class="day-check" id="sub-dc-ECO2011-B-TUT-2"><input type="checkbox" value="2" onchange="updateSubDayCheck('ECO2011-B','TUT',2)">Tu</label><label class="day-check" id="sub-dc-ECO2011-B-TUT-3"><input type="checkbox" value="3" onchange="updateSubDayCheck('ECO2011-B','TUT',3)">We</label><label class="day-check" id="sub-dc-ECO2011-B-TUT-4"><input type="checkbox" value="4" onchange="updateSubDayCheck('ECO2011-B','TUT',4)">Th</label><label class="day-check" id="sub-dc-ECO2011-B-TUT-5"><input type="checkbox" value="5" onchange="updateSubDayCheck('ECO2011-B','TUT',5)">Fr</label><label class="day-check" id="sub-dc-ECO2011-B-TUT-6"><input type="checkbox" value="6" onchange="updateSubDayCheck('ECO2011-B','TUT',6)">St</label><label class="day-check" id="sub-dc-ECO2011-B-TUT-7"><input type="checkbox" value="7" onchange="updateSubDayCheck('ECO2011-B','TUT',7)">Su</label>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
+        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-ECO2011-B-TUT" onclick="openTimePicker('sub-tstart-ECO2011-B-TUT','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-ECO2011-B-TUT-txt">--:--</span></button></div>
+        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-ECO2011-B-TUT" onclick="openTimePicker('sub-tend-ECO2011-B-TUT','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-ECO2011-B-TUT-txt">--:--</span></button></div>
+        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-ECO2011-B-TUT" onclick="openLocPicker('sub-tloc-ECO2011-B-TUT')">--</button></div>
+      </div>
+      <div class="section-btn-group">
+        <button class="btn btn-success btn-sm" onclick="addSubSection('ECO2011','ECO2011-B','TUT')">确认</button>
+        <button class="btn btn-outline btn-sm" onclick="hideSubInput('ECO2011-B','TUT')">取消</button>
+      </div>
+    </div>
+        </div>
+      </div>
+    </div></div>
+      
+    </div>
+    <div class="course-card">
+      <div class="course-card-header">
+        <span class="course-code">ACT2031</span>
+        <div>
+          <button class="btn btn-outline btn-sm" onclick="showSectionInput('ACT2031')">+ 时段</button>
+          <button class="btn btn-danger btn-sm" onclick="delCourse('ACT2031')">删除</button>
+        </div>
+      </div>
+      <div id="sec-inp-ACT2031" class="section-input-area hidden">
+        <h4>添加时段 → ACT2031</h4>
+        <div class="section-row" style="flex-direction:column;align-items:stretch;gap:6px;">
+          <div class="hint">上课日（必选1~7个）</div>
+          <div class="days-group" id="days-ACT2031">
+            <label class="day-check" id="dc-ACT2031-1"><input type="checkbox" value="1" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',1)">Mo</label><label class="day-check" id="dc-ACT2031-2"><input type="checkbox" value="2" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',2)">Tu</label><label class="day-check" id="dc-ACT2031-3"><input type="checkbox" value="3" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',3)">We</label><label class="day-check" id="dc-ACT2031-4"><input type="checkbox" value="4" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',4)">Th</label><label class="day-check" id="dc-ACT2031-5"><input type="checkbox" value="5" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',5)">Fr</label><label class="day-check" id="dc-ACT2031-6"><input type="checkbox" value="6" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',6)">St</label><label class="day-check" id="dc-ACT2031-7"><input type="checkbox" value="7" class="day-cb" data-code="ACT2031" onchange="updateDayCheck('ACT2031',7)">Su</label>
+          </div>
+        </div>
+        <div class="section-row" style="margin-top:8px;align-items:flex-end;">
+          <div style="flex:1"><div class="hint">开始</div><button class="time-picker-btn" id="tstart-ACT2031" onclick="openTimePicker('tstart-ACT2031','开始时间')"><span class="clock-icon">🕐</span><span id="tstart-ACT2031-txt">--:--</span></button></div>
+          <div style="flex:1"><div class="hint">结束</div><button class="time-picker-btn" id="tend-ACT2031" onclick="openTimePicker('tend-ACT2031','结束时间')"><span class="clock-icon">🕑</span><span id="tend-ACT2031-txt">--:--</span></button></div>
+          <div style="flex:1"><div class="hint">地点</div><button class="loc-picker-btn" id="tloc-ACT2031" onclick="openLocPicker('tloc-ACT2031')">--</button></div>
+        </div>
+        <div class="section-btn-group">
+          <button class="btn btn-primary btn-sm" onclick="addSection('ACT2031')">确认</button>
+          <button class="btn btn-outline btn-sm" onclick="hideSectionInput('ACT2031')">取消</button>
+        </div>
+      </div>
+      <div><div class="section-item">
+      <div class="section-item-row">
+        <span><b>A</b> &nbsp;Tu Th &nbsp;08:30-09:30 &nbsp;TA</span>
+        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('ACT2031','ACT2031-A')">+ 子课程</button>
+        <button class="btn btn-danger btn-sm" onclick="delSection('ACT2031','ACT2031-A')">×</button>
+      </div>
+      
+    </div><div class="section-item">
+      <div class="section-item-row">
+        <span><b>B</b> &nbsp;Tu Th &nbsp;14:30-15:30 &nbsp;TC</span>
+        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('ACT2031','ACT2031-B')">+ 子课程</button>
+        <button class="btn btn-danger btn-sm" onclick="delSection('ACT2031','ACT2031-B')">×</button>
+      </div>
+      
+    </div><div class="section-item">
+      <div class="section-item-row">
+        <span><b>C</b> &nbsp;Mo We &nbsp;19:30-20:30 &nbsp;TD</span>
+        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('ACT2031','ACT2031-C')">+ 子课程</button>
+        <button class="btn btn-danger btn-sm" onclick="delSection('ACT2031','ACT2031-C')">×</button>
+      </div>
+      
+    </div></div>
+      
+    </div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title"><span class="icon">⚙️</span>筛选与排序</div>
+          <div class="filter-group">
+            <div class="filter-row">
+              <label class="toggle">
+                <input type="checkbox" id="noEarly2" onchange="runSchedule2()">
+                <span class="slider"></span>
+              </label>
+              <div class="filter-label">不上早八<span>排除 08:30 开始的课程</span></div>
+            </div>
+            <div class="filter-row">
+              <label class="toggle">
+                <input type="checkbox" id="noNoon2" onchange="runSchedule2()">
+                <span class="slider"></span>
+              </label>
+              <div class="filter-label">不上午一<span>排除 13:30 开始的课程</span></div>
+            </div>
+            <div class="filter-row">
+              <label class="toggle">
+                <input type="checkbox" id="timePriority2" onchange="runSchedule2()">
+                <span class="slider"></span>
+              </label>
+              <div class="filter-label">时间优先排序<span>早八/午一越少越靠前</span></div>
+            </div>
+            <div class="filter-row">
+              <label class="toggle">
+                <input type="checkbox" id="locPriority2" onchange="runSchedule2()">
+                <span class="slider"></span>
+              </label>
+              <div class="filter-label">地点优先排序<span>相邻课程地点越近越靠前</span></div>
+            </div>
+            <div class="max-display-row">
+              <label>最多显示</label>
+              <input type="number" id="maxDisplay2" value="20" min="1" max="999" onchange="runSchedule2()">
+              <span>个方案</span>
+            </div>
+          </div>
+          <div class="loc-ref">
+            <strong>地点顺序：</strong>TXA — TXB — TXC — TA — ABE — TB — TC — TD — ZX<br>
+            相邻距离 = 1，每多隔一个 +1
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="runSchedule2()" style="flex:1">🚀 计算排课方案</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧栏：排课结果 -->
+    <div id="rightPanel">
+      <!-- 用户右侧：排课结果（默认显示） -->
+      <div id="userRightContent" style="display: none;">
+        <div class="panel">
+          <div class="panel-title"><span class="icon">📊</span>排课结果</div>
+          <div id="resultsContent">
+            <div class="empty-state">
+              <div class="emoji">🔍</div>点击「计算排课方案」查看结果
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- 管理员右侧：仅排课结果 -->
+      <div id="adminRightContent" style="display: block;">
+        <div class="panel">
+          <div class="panel-title"><span class="icon">📊</span>排课结果</div>
+          <div id="resultsContent2">
+            <div class="empty-state">
+              <div class="emoji">🔍</div>点击「计算排课方案」查看结果
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script id="builtin-data" type="application/json">{"notifs":[{"id":"n_mpd2yjmolzhn","title":"1.7版本更新","content":"为优化用户体验和长久发展，本系统进行1.7版本更新，更新内容如下：\n1.新增公告栏：用户可以查看更新公告等信息；\n2.新增子课程选项：用户可以在新建完某一课程后在任一时段后链接子课程（如Lec&tut）,排课会考虑到链接课程，增加排课合理性；\n3.优化时间地点选择方式：新增时段时将时间选择优化为滚轮滑动或手动输入，将地点选择优化为直接点击（校内）或手动输入（供校外自定义）；\n4.地点选项增加：新增ABE地点，地点优先排序时其计算与TA同理，但本身与TA距离为1；\n5.新增自定义排除选项：用户可以自定义不想上的时间或地点进行筛选；\n6.优化页面布局：优化不同窗口比例，使布局更加合理；\n7.新增使用额度：为避免同一账号多人使用，新增使用额度，每次计算方案会消耗一次使用额度，额度耗尽请联系管理员。","enabled":true,"createdAt":1779222199776},{"id":"n_mpd2z70vx6st","title":"第一轮内测反馈","content":"欢迎各位内测用户向开发者反馈bug或优化建议!所有反馈一经采纳将获得公测高级账号(超长时间超高额度^^)!反馈方式:微信号Ablu6669","enabled":true,"createdAt":1779222230095}],"accounts":[{"username":"NC1","password":"NC1","expire":"2026-05-25","quota":9999,"used":6}]}</script>
+<script>
+// ══════════════════════════════════════
+//  AUTH SYSTEM
+// ══════════════════════════════════════
+
+const ADMIN_KEY = "ZZH6669ABLU";
+const ACCOUNTS_KEY = "wb_scheduler_accounts";
+const SESSION_KEY  = "wb_scheduler_session";
+const COURSES_KEY  = "wb_scheduler_courses";
+
+let accounts = [];
+let session = null;   // { type:'admin'|'user', username, expire, quota, used }
+let excludedTimes = [];      // 排除的时间（分钟数），如 [510] 表示排除 08:30
+let excludedLocations = [];  // 排除的地点（大写），如 ["TXA", "TB"]
+
+function sha256(s) {
+  const enc = new TextEncoder();
+  const data = enc.encode(s);
+  return crypto.subtle.digest('SHA-256', data).then(buf => {
+    return Array.from(new Uint8Array(buf)).map(b=>('0'+b.toString(16)).slice(-2)).join('');
+  });
+}
+
+function loadAccounts() {
+  const raw = localStorage.getItem(ACCOUNTS_KEY);
+  accounts = raw ? JSON.parse(raw) : [];
+  window._accounts = accounts; // 供导出功能使用
+}
+
+function saveAccounts() {
+  localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+  window._accounts = accounts; // 供导出功能使用
+}
+
+function getExpireStatus(expireStr) {
+  if (!expireStr) return { label: "永不过期", cls: "active" };
+  const exp = new Date(expireStr).getTime();
+  const now = Date.now();
+  if (exp < now) return { label: `已过期 ${expireStr}`, cls: "expired" };
+  const left = Math.ceil((exp - now) / 86400000);
+  return { label: `剩余 ${left} 天（${expireStr}）`, cls: "active" };
+}
+
+function isAccountValid(username, password) {
+  return new Promise(async (resolve) => {
+    const raw = localStorage.getItem(ACCOUNTS_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    const now = Date.now();
+    const match = list.find(a =>
+      a.username === username &&
+      a.password === password &&
+      (!a.expire || new Date(a.expire).getTime() > now) &&
+      (!a.quota || (a.used || 0) < a.quota)
+    );
+    resolve(!!match);
+  });
+}
+
+// 获取当前账号的剩余额度
+function getAccountQuota(username) {
+  const raw = localStorage.getItem(ACCOUNTS_KEY);
+  const list = raw ? JSON.parse(raw) : [];
+  const acc = list.find(a => a.username === username);
+  if (!acc) return null;
+  const quota = acc.quota || 999; // 无限制默认为999
+  const used = acc.used || 0;
+  return { quota, used, remaining: quota - used };
+}
+
+// 消耗一次额度
+function consumeQuota(username) {
+  const raw = localStorage.getItem(ACCOUNTS_KEY);
+  const list = raw ? JSON.parse(raw) : [];
+  const idx = list.findIndex(a => a.username === username);
+  if (idx === -1) return false;
+  if (!list[idx].quota) return true; // 无限制
+  list[idx].used = (list[idx].used || 0) + 1;
+  localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(list));
+  return true;
+}
+
+function switchTab(tab) {
+  document.getElementById("tabUser").classList.toggle("active", tab==="user");
+  document.getElementById("tabAdmin").classList.toggle("active", tab==="admin");
+  document.getElementById("panelUser").classList.toggle("active", tab==="user");
+  document.getElementById("panelAdmin").classList.toggle("active", tab==="admin");
+  document.getElementById("panelAdminDash").classList.toggle("active", false);
+  if (tab !== "admin") {
+    document.getElementById("adminKey").value = "";
+    document.getElementById("adminError").textContent = "";
+  }
+}
+
+function switchTo(tab) {
+  document.getElementById("tabUser").classList.toggle("active", tab==="user");
+  document.getElementById("tabAdmin").classList.toggle("active", tab==="admin");
+  document.getElementById("panelUser").classList.toggle("active", tab==="user");
+  document.getElementById("panelAdmin").classList.toggle("active", tab==="admin");
+  document.getElementById("panelAdminDash").classList.toggle("active", tab==="adminDash");
+}
+
+async function doUserLogin() {
+  const u = document.getElementById("loginUsername").value.trim();
+  const p = document.getElementById("loginPassword").value;
+  if (!u || !p) { document.getElementById("loginError").textContent = "请输入账号和密码"; return; }
+  const valid = await isAccountValid(u, p);
+  if (!valid) {
+    document.getElementById("loginError").textContent = "账号或密码错误，或账号已过期/额度已用完";
+    return;
+  }
+  const q = getAccountQuota(u);
+  session = { type: "user", username: u, quota: q.quota, used: q.used };
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  document.getElementById("loginUsername").value = "";
+  document.getElementById("loginPassword").value = "";
+  document.getElementById("loginError").textContent = "";
+  enterMainApp();
+}
+
+async function doAdminLogin() {
+  const key = document.getElementById("adminKey").value.trim();
+  if (!key) { document.getElementById("adminError").textContent = "请输入密钥"; return; }
+  if (key !== ADMIN_KEY) {
+    document.getElementById("adminError").textContent = "密钥错误";
+    return;
+  }
+  session = { type: "admin", username: "管理员" };
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  document.getElementById("adminKey").value = "";
+  document.getElementById("adminError").textContent = "";
+  switchTo("adminDash");
+  renderAdminDash();
+  enterMainApp();
+}
+
+function doLogout() {
+  session = null;
+  localStorage.removeItem(SESSION_KEY);
+  document.getElementById("authScreen").style.display = "flex";
+  document.getElementById("mainApp").style.display = "none";
+  const exportBtn = document.getElementById("topbarExportBtn");
+  if (exportBtn) exportBtn.style.display = "none";
+  switchTab("user");
+  // clear credentials
+  document.getElementById("loginUsername").value = "";
+  document.getElementById("loginPassword").value = "";
+}
+
+function enterMainApp() {
+  document.getElementById("authScreen").style.display = "none";
+  document.getElementById("mainApp").style.display = "block";
+  const layout = document.getElementById("mainLayout");
+  if (session.type === "admin") {
+    layout.classList.add("admin-mode");
+    document.getElementById("modeBadge").className = "user-mode-badge badge-admin";
+    document.getElementById("modeBadge").textContent = "管理员";
+    // 管理员三栏
+    document.getElementById("adminLeftContent").style.display = "flex";
+    document.getElementById("userLeftContent").style.display = "none";
+    document.getElementById("adminCenterContent").style.display = "flex";
+    document.getElementById("userRightContent").style.display = "none";
+    document.getElementById("adminRightContent").style.display = "block";
+    // 同步课程数据到管理员视图
+    syncAdminRightCourses();
+    renderAdminDash2();
+    renderNotifAdmin();
+    const exportBtn = document.getElementById("topbarExportBtn");
+    if (exportBtn) exportBtn.style.display = "inline-block";
+  } else {
+    layout.classList.remove("admin-mode");
+    document.getElementById("modeBadge").className = "user-mode-badge badge-user";
+    document.getElementById("modeBadge").textContent = "用户";
+    // 用户两栏
+    document.getElementById("adminLeftContent").style.display = "none";
+    document.getElementById("adminCenterContent").style.display = "none";
+    document.getElementById("userLeftContent").style.display = "block";
+    document.getElementById("userRightContent").style.display = "block";
+    document.getElementById("adminRightContent").style.display = "none";
+    const exportBtn2 = document.getElementById("topbarExportBtn");
+    if (exportBtn2) exportBtn2.style.display = "none";
+  }
+  document.getElementById("welcomeUser").textContent = session.username;
+  // 更新并显示额度信息
+  updateQuotaDisplay();
+  renderNotifBanner();
+  updateNotifBadge();
+  loadCourses();
+  renderCourseList();
+}
+
+// 管理员中间栏同步课程和筛选
+function syncAdminRightCourses(){
+  const el2=document.getElementById("courseList2");
+  if(!el2) return;
+  // 渲染课程列表
+  renderCourseList();
+  // 同步筛选条件
+  document.getElementById("noEarly2").checked=document.getElementById("noEarly").checked;
+  document.getElementById("noNoon2").checked=document.getElementById("noNoon").checked;
+  document.getElementById("timePriority2").checked=document.getElementById("timePriority").checked;
+  document.getElementById("locPriority2").checked=document.getElementById("locPriority").checked;
+  document.getElementById("maxDisplay2").value=document.getElementById("maxDisplay").value;
+}
+
+function renderAccountList(containerId, countId) {
+  const el = document.getElementById(containerId);
+  const cnt = document.getElementById(countId);
+  if (!el) return;
+  loadAccounts();
+  cnt.textContent = `${accounts.length} 个`;
+  if (!accounts.length) {
+    el.innerHTML = `<div style="padding:14px;color:#94a3b8;font-size:0.82rem;text-align:center;">暂无账号</div>`;
+    return;
+  }
+  el.innerHTML = accounts.map((a,i) => {
+    const st = getExpireStatus(a.expire);
+    const q = a.quota || 999;
+    const u = a.used || 0;
+    const rem = q - u;
+    const qcls = rem <= 0 ? "quota-critical" : (rem <= q * 0.2 ? "quota-critical" : rem <= q * 0.5 ? "quota-warning" : "quota-ok");
+    const qLabel = q >= 999 ? "无限" : `${rem}/${q}`;
+    return `<div class="account-item">
+      <div class="account-info">
+        <div class="account-user">${a.username}</div>
+        <div class="account-exp ${st.cls}">${st.label} &nbsp;|&nbsp; 密码：${a.password}</div>
+        <div class="account-quota ${qcls}">📊 额度：${qLabel}</div>
+      </div>
+      <div class="account-actions">
+        <button class="btn-icon" onclick="editAccount(${i})" title="编辑">✏️</button>
+        <button class="btn-icon" onclick="deleteAccount(${i})" title="删除">🗑️</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderAdminDash() { renderAccountList("accountsList", "accountCount"); }
+function renderAdminDash2() { renderAccountList("accountsList2", "accountCount2"); }
+
+function createAccount() { createAccountCore("newUsername", "newPassword", "expireDate", "newQuota", "createError", renderAdminDash); }
+function createAccountInApp() { createAccountCore("newUsername2", "newPassword2", "expireDate2", "newQuota2", "createError2", renderAdminDash2); }
+
+// ══ 多通知管理 ══════════════════════════════
+// 全端共享通知列表（从 id="builtin-data" 的 script 标签读取，let 方便管理界面修改）
+let BUILTIN_NOTIFICATIONS = (() => {
+  try { return JSON.parse(document.getElementById('builtin-data').textContent).notifs || []; }
+  catch { return []; }
+})();
+const NOTIFICATIONS_KEY = "scheduler_notifications";
+const NOTIF_READ_KEY = "scheduler_notif_read"; // 各设备独立记录已读状态
+let _notifAdminRendered = false;
+
+// 获取所有通知（内置全端通知 + 本机通知）
+function getNotifs() {
+  // 内置通知（全端共享）
+  const builtin = BUILTIN_NOTIFICATIONS.filter(n => n.enabled).map(n => ({
+    ...n,
+    read: getNotifReadState(n.id),
+    _local: false
+  }));
+  // 本机通知（仅本机可见）
+  let local = [];
+  try { local = JSON.parse(localStorage.getItem("scheduler_local_notifs")) || []; } catch {}
+  const localMapped = local.filter(n => n.enabled).map(n => ({
+    ...n,
+    read: getNotifReadState(n.id),
+    _local: true
+  }));
+  return [...builtin, ...localMapped];
+}
+
+// 获取/设置已读状态（按设备独立）
+function getNotifReadState(id) {
+  try { return JSON.parse(localStorage.getItem(NOTIF_READ_KEY))?.[id] || false; }
+  catch { return false; }
+}
+function setNotifReadState(id) {
+  try {
+    const obj = JSON.parse(localStorage.getItem(NOTIF_READ_KEY)) || {};
+    obj[id] = true;
+    localStorage.setItem(NOTIF_READ_KEY, JSON.stringify(obj));
+  } catch {}
+}
+
+// 生成唯一ID
+function _genNotifId() { return "n_" + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+// ═══ 导出最新 index.html（将当前账号/通知数据写入代码）═══
+async function exportUpdatedIndex() {
+  if (!session || session.type !== "admin") { alert("仅管理员可操作"); return; }
+
+  // 1. 收集全端通知（直接从可变数组读取最新数据）
+  const notifications = BUILTIN_NOTIFICATIONS.filter(n => n.enabled);
+
+  // 2. 收集账号
+  const accountsData = window._accounts || accounts || [];
+
+  // 3. 更新页面中 builtin-data 标签的内容
+  const newData = JSON.stringify({ notifs: notifications, accounts: accountsData });
+  const dataTag = document.getElementById('builtin-data');
+  if (!dataTag) { alert('错误：找不到 builtin-data 标签'); return; }
+  dataTag.textContent = newData;
+
+  // 4. 获取完整 HTML 并下载
+  let html = document.documentElement.outerHTML;
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "index.html";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+
+  alert("已生成最新 index.html！\n请：1) 用下载的文件覆盖本地文件  2) 在 GitHub Desktop 中 Commit + Push");
+}
+
+// 获取类型图标
+function _notifIcon(type) { return { warning:"🔔", info:"ℹ️", success:"✅", danger:"🚨" }[type] || "🔔"; }
+
+// ── 通知页面（用户入口）────────────────
+function toggleNotifPage() {
+  const page = document.getElementById("notifPage");
+  const overlay = document.getElementById("notifPageOverlay");
+  if (page.style.display === "none") {
+    // 打开页面时自动标记全部已读（红点消失，仅本机）
+    const list = getNotifs();
+    list.forEach(n => { if (!n.read) setNotifReadState(n.id); });
+    updateNotifBadge();
+    page.style.display = "flex";
+    overlay.style.display = "block";
+    renderNotifPage();
+  } else {
+    page.style.display = "none";
+    overlay.style.display = "none";
+  }
+}
+
+// 渲染通知页面内容
+function renderNotifPage() {
+  const content = document.getElementById("notifPageContent");
+  if (!content) return;
+
+  const all = getNotifs().filter(n => n.enabled);
+  if (!all.length) {
+    content.innerHTML = `
+      <div class="notif-page-empty">
+        <div class="emoji">📭</div>
+        暂无通知
+      </div>
+    `;
+    return;
+  }
+
+  // 按时间倒序（最新在前）
+  const sorted = [...all].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+  content.innerHTML = `
+    ${sorted.map(n => `
+      <div class="notif-page-card">
+        <div class="notif-page-card-header">
+          <div class="notif-page-card-title">
+            ${_escHtml(n.title || '通知')}
+          </div>
+          <div class="notif-page-card-time">${_formatNotifTime(n.createdAt)}</div>
+        </div>
+        <div class="notif-page-card-body">${_escHtml(n.content)}</div>
+      </div>
+    `).join("")}`;
+}
+
+// 格式化通知时间
+function _formatNotifTime(ts) {
+  if (!ts) return "";
+  const d = new Date(ts);
+  const now = new Date();
+  const diff = now - d;
+  if (diff < 60000) return "刚刚";
+  if (diff < 3600000) return Math.floor(diff/60000) + "分钟前";
+  if (diff < 86400000) return Math.floor(diff/3600000) + "小时前";
+  if (diff < 604800000) return Math.floor(diff/86400000) + "天前";
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+
+// 标记单条已读（仅本机）
+function markNotifRead(id) {
+  setNotifReadState(id);
+  renderNotifPage();
+  updateNotifBadge();
+}
+
+// 全部标为已读（仅本机）
+function markAllNotifsRead() {
+  const list = getNotifs();
+  list.forEach(n => setNotifReadState(n.id));
+  renderNotifPage();
+  updateNotifBadge();
+}
+
+// 更新并显示额度信息
+function updateQuotaDisplay() {
+  const el = document.getElementById("quotaDisplay");
+  if (!el || !session || session.type === "admin") return;
+  
+  const q = getAccountQuota(session.username);
+  if (!q) return;
+  
+  // 更新session中的额度信息
+  session.quota = q.quota;
+  session.used = q.used;
+  
+  const remaining = q.remaining;
+  const isUnlimited = q.quota >= 999;
+  let html = "";
+  
+  // 获取账号过期信息
+  const raw = localStorage.getItem(ACCOUNTS_KEY);
+  const list = raw ? JSON.parse(raw) : [];
+  const acc = list.find(a => a.username === session.username);
+  
+  if (acc && acc.expire) {
+    const exp = new Date(acc.expire);
+    const now = new Date();
+    const leftDays = Math.ceil((exp - now) / 86400000);
+    if (leftDays > 0) {
+      html += `<span class="quota-time">⏰ ${leftDays}天</span>`;
+    }
+  }
+  
+  if (isUnlimited) {
+    html += `<span class="quota-remaining">💡 无限额度</span>`;
+  } else {
+    const pct = remaining / q.quota;
+    let cls = "quota-ok";
+    if (pct <= 0.2) cls = "quota-critical";
+    else if (pct <= 0.5) cls = "quota-warning";
+    html += `<span class="quota-remaining ${cls}">📊 ${remaining}/${q.quota}</span>`;
+  }
+  
+  el.innerHTML = html;
+}
+
+// 更新通知徽章（未读数量）
+function updateNotifBadge() {
+  const badge = document.getElementById("notifBadge");
+  if (!badge) return;
+  const unread = getNotifs().filter(n => n.enabled && !n.read).length;
+  if (unread > 0) {
+    badge.textContent = unread > 99 ? "99+" : unread;
+    badge.style.display = "flex";
+  } else {
+    badge.style.display = "none";
+  }
+}
+
+// ── 自定义排除功能 ─────────────────────
+function addExcludedTime() {
+  const input = document.getElementById("excludeTimeInput");
+  const val = input.value.trim();
+  if (!val) return;
+  try {
+    const mins = _toMin(val);
+    if (excludedTimes.includes(mins)) { alert("该时间已排除"); return; }
+    excludedTimes.push(mins);
+    input.value = "";
+    renderTimeTags();
+  } catch (e) {
+    alert("时间格式错误，请使用 HH:MM 格式（如 08:30）");
+  }
+}
+
+function removeExcludedTime(t) {
+  excludedTimes = excludedTimes.filter(x => x !== t);
+  renderTimeTags();
+}
+
+function renderTimeTags() {
+  const container = document.getElementById("excludedTimeTags");
+  if (!container) return;
+  container.innerHTML = excludedTimes.map(t => {
+    const h = String(Math.floor(t/60)).padStart(2,"0");
+    const m = String(t%60).padStart(2,"0");
+    return `<span class="exclusion-tag">${h}:${m} <span class="tag-remove" onclick="removeExcludedTime(${t})">✕</span></span>`;
+  }).join("");
+}
+
+function addExcludedLocation() {
+  const input = document.getElementById("excludeLocInput");
+  const val = input.value.trim().toUpperCase();
+  if (!val) return;
+  if (excludedLocations.includes(val)) { alert("该地点已排除"); return; }
+  excludedLocations.push(val);
+  input.value = "";
+  renderLocTags();
+}
+
+function removeExcludedLocation(loc) {
+  excludedLocations = excludedLocations.filter(x => x !== loc);
+  renderLocTags();
+}
+
+function renderLocTags() {
+  const container = document.getElementById("excludedLocTags");
+  if (!container) return;
+  container.innerHTML = excludedLocations.map(loc =>
+    `<span class="exclusion-tag">${loc} <span class="tag-remove" onclick="removeExcludedLocation('${loc}')">✕</span></span>`
+  ).join("");
+}
+
+// ── 用户视图（兼容，不再显示横幅）─────────
+function renderNotifBanner() {
+  // 已改为通知页面，不再显示顶部横幅
+  updateNotifBadge();
+}
+
+// ── 管理员视图：渲染通知管理区 ───────────
+function renderNotifAdmin() {
+  const area = document.getElementById("notifAdminArea");
+  if (!area) return;
+  _notifAdminRendered = true;
+
+  // 内置通知（全端共享），加编辑/删除按钮
+  const builtinList = BUILTIN_NOTIFICATIONS.filter(n => n.enabled);
+  const builtinHtml = builtinList.length ? builtinList.map((n, idx) => `
+    <div class="notif-record" style="border-color:var(--primary);">
+      <span class="rec-icon">🔔</span>
+      <span class="rec-title">${_escHtml(n.title || n.content || '无标题')} <span style="font-size:.7rem;color:var(--primary);">[全端]</span></span>
+      <div class="rec-actions" onclick="event.stopPropagation()">
+        <button class="btn-edit" onclick="editBuiltinNotif('${n.id}')" title="编辑">✏️</button>
+        <button class="btn-del" onclick="deleteBuiltinNotif('${n.id}')" title="删除">🗑️</button>
+      </div>
+    </div>
+  `).join("") : `<div class="notif-empty">暂无全端通知</div>`;
+
+  area.innerHTML = `
+    <div style="font-size:.78rem;color:var(--text-muted);line-height:1.6;margin-bottom:10px;padding:8px 10px;background:var(--primary-light);border-radius:8px;">
+      💡 <b>全端通知</b>：在此编辑/删除，然后点击顶部「📥 导出 index.html」生成新文件并上传 GitHub，所有用户同步更新。
+    </div>
+    <div style="font-weight:600;font-size:.82rem;color:var(--text-muted);margin-bottom:6px;">全端通知（所有用户可见）</div>
+    <div class="notif-list" style="margin-bottom:12px;">${builtinHtml}</div>
+    <!-- 全端通知编辑弹窗 -->
+    <div id="editBuiltinNotifModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;justify-content:center;align-items:center;">
+      <div style="background:#fff;border-radius:12px;padding:24px;width:400px;max-width:90%;">
+        <div style="font-weight:700;font-size:1rem;margin-bottom:16px;">✏️ 编辑全端通知</div>
+        <input type="text" id="editBuiltinTitle" placeholder="通知标题（可选）" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;margin-bottom:12px;font-size:.85rem;">
+        <textarea id="editBuiltinContent" placeholder="通知内容（必填）" style="width:100%;min-height:80px;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem;resize:vertical;margin-bottom:16px;"></textarea>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary" onclick="saveBuiltinNotifEdit()" style="flex:1;">保存</button>
+          <button class="btn btn-outline" onclick="closeBuiltinNotifEdit()" style="flex:1;">取消</button>
+        </div>
+      </div>
+    </div>
+    <div class="notif-add-form">
+      <div style="font-size:.8rem;font-weight:600;color:var(--text-muted);margin-bottom:4px;">+ 发布全端通知</div>
+      <input type="text" id="newBuiltinNotifTitle" placeholder="通知标题（可选）" maxlength="50">
+      <textarea id="newBuiltinNotifContent" placeholder="通知内容（必填）" style="min-height:50px;resize:none;font-size:.82rem;padding:6px 8px;" maxlength="500"></textarea>
+      <button class="btn btn-primary" onclick="addBuiltinNotif()" style="width:100%;margin:0;">发布到全端</button>
+    </div>
+    <hr style="margin:16px 0;border:none;border-top:1px solid var(--border);">
+    <div id="localNotifList"></div>
+  `;
+
+  // 渲染本机通知
+  renderLocalNotifs();
+}
+
+// 渲染本机通知列表（仅本机可见）
+function renderLocalNotifs() {
+  const el = document.getElementById("localNotifList");
+  if (!el) return;
+  const list = JSON.parse(localStorage.getItem("scheduler_local_notifs") || "[]");
+  if (!list.length) {
+    el.innerHTML = `<div class="notif-empty" style="font-size:.78rem;">暂无本机通知</div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div style="font-weight:600;font-size:.82rem;color:var(--text-muted);margin-bottom:6px;">本机通知（仅本机可见）</div>
+    <div class="notif-list">
+      ${list.map(n => `
+        <div class="notif-record">
+          <span class="rec-icon">🔔</span>
+          <span class="rec-title">${_escHtml(n.title || n.content || '无标题')}</span>
+          <div class="rec-actions" onclick="event.stopPropagation()">
+            <button class="btn-del" onclick="deleteLocalNotif('${n.id}')" title="删除">🗑️</button>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+// 添加本机通知（仅本机可见，存到 localStorage）
+function addNotif() {
+  const title = document.getElementById("newNotifTitle").value.trim();
+  const content = document.getElementById("newNotifContent").value.trim();
+  if (!content) { alert("请输入通知内容"); return; }
+  let list = [];
+  try { list = JSON.parse(localStorage.getItem("scheduler_local_notifs")) || []; } catch {}
+  list.unshift({ id: _genNotifId(), title, content, enabled: true, createdAt: Date.now() });
+  localStorage.setItem("scheduler_local_notifs", JSON.stringify(list));
+  document.getElementById("newNotifTitle").value = "";
+  document.getElementById("newNotifContent").value = "";
+  renderLocalNotifs();
+  updateNotifBadge();
+}
+
+// 删除本机通知
+function deleteLocalNotif(id) {
+  if (!confirm("确定删除该本机通知？")) return;
+  let list = [];
+  try { list = JSON.parse(localStorage.getItem("scheduler_local_notifs")) || []; } catch {}
+  list = list.filter(n => n.id !== id);
+  localStorage.setItem("scheduler_local_notifs", JSON.stringify(list));
+  renderLocalNotifs();
+  updateNotifBadge();
+}
+
+// ═══ 全端通知管理（编辑/删除后需导出新文件同步）═══
+
+// 删除全端通知
+function deleteBuiltinNotif(id) {
+  if (!confirm("确定删除该全端通知？删除后需点击「📥 导出 index.html」生成新文件同步到所有用户。")) return;
+  BUILTIN_NOTIFICATIONS = BUILTIN_NOTIFICATIONS.filter(n => n.id !== id);
+  renderNotifAdmin();
+  updateNotifBadge();
+}
+
+// 打开编辑全端通知弹窗
+let _editingBuiltinNotifId = null;
+function editBuiltinNotif(id) {
+  const n = BUILTIN_NOTIFICATIONS.find(n => n.id === id);
+  if (!n) return;
+  _editingBuiltinNotifId = id;
+  document.getElementById("editBuiltinTitle").value = n.title || "";
+  document.getElementById("editBuiltinContent").value = n.content || "";
+  document.getElementById("editBuiltinNotifModal").style.display = "flex";
+}
+
+// 保存全端通知编辑
+function saveBuiltinNotifEdit() {
+  if (!_editingBuiltinNotifId) return;
+  const title = document.getElementById("editBuiltinTitle").value.trim();
+  const content = document.getElementById("editBuiltinContent").value.trim();
+  if (!content) { alert("通知内容不能为空"); return; }
+  const idx = BUILTIN_NOTIFICATIONS.findIndex(n => n.id === _editingBuiltinNotifId);
+  if (idx !== -1) {
+    BUILTIN_NOTIFICATIONS[idx].title = title;
+    BUILTIN_NOTIFICATIONS[idx].content = content;
+  }
+  closeBuiltinNotifEdit();
+  renderNotifAdmin();
+}
+
+// 关闭编辑弹窗
+function closeBuiltinNotifEdit() {
+  _editingBuiltinNotifId = null;
+  document.getElementById("editBuiltinNotifModal").style.display = "none";
+}
+
+// 发布新的全端通知
+function addBuiltinNotif() {
+  const title = document.getElementById("newBuiltinNotifTitle").value.trim();
+  const content = document.getElementById("newBuiltinNotifContent").value.trim();
+  if (!content) { alert("请输入通知内容"); return; }
+  BUILTIN_NOTIFICATIONS.push({
+    id: _genNotifId(),
+    title,
+    content,
+    enabled: true,
+    createdAt: Date.now()
+  });
+  document.getElementById("newBuiltinNotifTitle").value = "";
+  document.getElementById("newBuiltinNotifContent").value = "";
+  renderNotifAdmin();
+  updateNotifBadge();
+  alert("全端通知已添加！请点击顶部「📥 导出 index.html」生成新文件并上传 GitHub，所有用户将同步看到。");
+}
+
+// HTML转义
+function _escHtml(str) {
+  if (!str) return "";
+  return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+// ══════════════════════════════════════════
+
+function createAccountCore(uId, pId, eId, qId, errId, renderFn) {
+  const u = document.getElementById(uId).value.trim();
+  const p = document.getElementById(pId).value;
+  const e = document.getElementById(eId).value;
+  const q = parseInt(document.getElementById(qId).value) || 100;
+  const err = document.getElementById(errId);
+  if (!u) { err.textContent = "请输入账号"; return; }
+  if (!p) { err.textContent = "请输入密码"; return; }
+  if (accounts.some(a=>a.username===u)) { err.textContent = "账号已存在"; return; }
+  accounts.push({ username: u, password: p, expire: e || null, quota: q, used: 0 });
+  saveAccounts();
+  document.getElementById(uId).value = "";
+  document.getElementById(pId).value = "";
+  document.getElementById(eId).value = "";
+  document.getElementById(qId).value = "100";
+  err.textContent = "";
+  err.style.color = "var(--success)";
+  err.textContent = "账号创建成功 ✓";
+  setTimeout(()=>{ err.textContent = ""; }, 2000);
+  renderFn();
+}
+
+function deleteAccount(idx) {
+  if (!confirm("确定删除该账号？")) return;
+  accounts.splice(idx, 1);
+  saveAccounts();
+  renderAccountList("accountsList", "accountCount");
+  renderAccountList("accountsList2", "accountCount2");
+}
+
+let _editAccountIdx = -1; // 当前编辑的账号索引
+
+function editAccount(idx) {
+  _editAccountIdx = idx;
+  const a = accounts[idx];
+  document.getElementById("editAccUsername").value = a.username;
+  document.getElementById("editAccExpire").value = a.expire || "";
+  document.getElementById("editAccQuota").value = a.quota || 100;
+  document.getElementById("editAccountModal").style.display = "flex";
+}
+
+function closeEditAccountModal() {
+  document.getElementById("editAccountModal").style.display = "none";
+  _editAccountIdx = -1;
+}
+
+function saveAccountEdit() {
+  if (_editAccountIdx < 0) return;
+  const expire = document.getElementById("editAccExpire").value;
+  const quota = parseInt(document.getElementById("editAccQuota").value) || 100;
+  accounts[_editAccountIdx].expire = expire || null;
+  accounts[_editAccountIdx].quota = quota;
+  saveAccounts();
+  renderAccountList("accountsList", "accountCount");
+  renderAccountList("accountsList2", "accountCount2");
+  closeEditAccountModal();
+}
+
+// ══════════════════════════════════════
+//  COURSE SCHEDULER (integrated)
+// ══════════════════════════════════════
+
+const LOCATIONS = ["TXA","TXB","TXC","TA","ABE","TB","TC","TD","ZX"];
+const LOC_INDEX = Object.fromEntries(LOCATIONS.map((l,i)=>[l,i]));
+const DAY_NAMES = {1:"Mo",2:"Tu",3:"We",4:"Th",5:"Fr",6:"St",7:"Su"};
+
+let courses = {};
+let sectionCounter = {};
+let currentPlans = [];
+
+// ─── 共用时间解析 ──────────────────────
+function _toMin(t) {
+  const parts = t.trim().replace(/[：﹕]/g,":").split(":");
+  if(parts.length!==2) throw new Error("时间需用冒号分隔，如 14:00");
+  const h=Number(parts[0]), m=Number(parts[1]);
+  if(!Number.isFinite(h)||!Number.isFinite(m)||h<0||h>23||m<0||m>59) throw new Error("时间格式应为 HH:MM（00~23:00~59）");
+  return h*60+m;
+}
+function _norm(t) {
+  const parts = t.trim().replace(/[：﹕]/g,":").split(":");
+  if(parts.length!==2) throw new Error("时间需用冒号分隔，如 14:00");
+  const h=Number(parts[0]), m=Number(parts[1]);
+  if(!Number.isFinite(h)||!Number.isFinite(m)||h<0||h>23||m<0||m>59) throw new Error("时间格式应为 HH:MM（00~23:00~59）");
+  return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+}
+
+// ─── SubSection：子时段（属于某个 Section）───
+class SubSection {
+  constructor(parentSectionId, subName, subId, weekdays, startRaw, endRaw, location) {
+    this.parentSectionId = parentSectionId; // 所属主时段 ID，如 "MAT2041-A"
+    this.subName = subName;                 // 子课程名称，如 "练习课"
+    this.subId = subId;                     // 子时段 ID，如 "MAT2041-A-1"
+    this.weekdays = weekdays.slice().sort((a,b)=>a-b);
+    this.start = _toMin(startRaw);
+    this.end = _toMin(endRaw);
+    this.location = location.toUpperCase();
+    this.startStr = _norm(startRaw);
+    this.endStr = _norm(endRaw);
+  }
+  isEarlyMorning() { return this.start === 8*60+30; }
+  isAfternoonFirst() { return this.start === 13*60+30; }
+  conflictsWith(other) { const c=this.weekdays.filter(d=>other.weekdays.includes(d)); return !!c.length && this.start<other.end&&other.start<this.end; }
+  daysStr() { return this.weekdays.map(d=>DAY_NAMES[d]).join(" "); }
+  toRowHTML() {
+    const days=this.weekdays.map(d=>`<span class="plan-day">${DAY_NAMES[d]}</span>`).join("");
+    return `<div class="plan-row plan-row-sub"><span class="plan-code plan-code-sub">↳ ${this.subName}</span>${days}<span class="plan-time">${this.startStr}-${this.endStr}</span><span class="plan-loc">${this.location}</span></div>`;
+  }
+}
+
+// ─── Section：主时段 ─────────────────────
+class Section {
+  constructor(courseCode, sectionId, weekdays, startRaw, endRaw, location) {
+    this.courseCode = courseCode;
+    this.sectionId = sectionId;
+    this.weekdays = weekdays.slice().sort((a,b)=>a-b);
+    this.start = _toMin(startRaw);
+    this.end = _toMin(endRaw);
+    this.location = location.toUpperCase();
+    this.startStr = _norm(startRaw);
+    this.endStr = _norm(endRaw);
+    // subSections: 按 subName 分组的子时段数组
+    // 结构: { "练习课": [SubSection, SubSection, ...], ... }
+    this.subGroups = {};
+    this.subCounters = {};
+  }
+  _toMin(t) { return _toMin(t); }
+  _norm(t)   { return _norm(t); }
+  isEarlyMorning() { return this.start === 8*60+30; }
+  isAfternoonFirst() { return this.start === 13*60+30; }
+  conflictsWith(other) { const c=this.weekdays.filter(d=>other.weekdays.includes(d)); return !!c.length && this.start<other.end&&other.start<this.end; }
+  daysStr() { return this.weekdays.map(d=>DAY_NAMES[d]).join(" "); }
+  // 返回子课程名称列表（顺序稳定）
+  subNames() { return Object.keys(this.subGroups); }
+  // 某子课程的时段列表
+  subList(name) { return this.subGroups[name] || []; }
+  toRowHTML() {
+    const days=this.weekdays.map(d=>`<span class="plan-day">${DAY_NAMES[d]}</span>`).join("");
+    return `<div class="plan-row"><span class="plan-code">${this.courseCode} ${this.sectionId.replace(this.courseCode+"-","")}</span>${days}<span class="plan-time">${this.startStr}-${this.endStr}</span><span class="plan-loc">${this.location}</span></div>`;
+  }
+  toListHTML() {
+    const secKey = this.sectionId;
+    const subNamesHtml = this.subNames().map(name => {
+      const subs = this.subList(name);
+      const subsHtml = subs.map(ss =>
+        `<div class="sub-item"><span>${ss.daysStr()} &nbsp;${ss.startStr}-${ss.endStr} &nbsp;${ss.location}</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('${this.courseCode}','${secKey}','${name}','${ss.subId}')">×</button></div>`
+      ).join("");
+      return `<div class="sub-list">
+        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ ${name} <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('${this.courseCode}','${secKey}','${name}')">+ 时段</button></div>
+        ${subsHtml}
+        <div id="sub-inp-${secKey}-${name}" class="sub-input-area hidden">
+          ${_renderSubInputHTML(this.courseCode, secKey, name)}
+        </div>
+      </div>`;
+    }).join("");
+    return `<div class="section-item">
+      <div class="section-item-row">
+        <span><b>${this.sectionId.replace(this.courseCode+"-","")}</b> &nbsp;${this.daysStr()} &nbsp;${this.startStr}-${this.endStr} &nbsp;${this.location}</span>
+        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('${this.courseCode}','${secKey}')">+ 子课程</button>
+        <button class="btn btn-danger btn-sm" onclick="delSection('${this.courseCode}','${secKey}')">×</button>
+      </div>
+      ${subNamesHtml}
+    </div>`;
+  }
+}
+
+// ─── 子时段 UI 辅助 ──────────────────────
+// 生成子时段输入区 HTML（内嵌在 section-item 里）
+function _renderSubInputHTML(code, secId, subName) {
+  const escCode = code.replace(/'/g,"\\'");
+  const escSec  = secId.replace(/'/g,"\\'");
+  const escName = subName.replace(/'/g,"\\'");
+  return `<h5>新增 ${subName} 时段</h5>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div class="hint">上课日</div>
+      <div class="days-group" id="sub-days-${secId}-${subName}">
+        ${[1,2,3,4,5,6,7].map(d=>`<label class="day-check" id="sub-dc-${secId}-${subName}-${d}"><input type="checkbox" value="${d}" onchange="updateSubDayCheck('${secId}','${subName}',${d})">${DAY_NAMES[d]}</label>`).join("")}
+      </div>
+      <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
+        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-${secId}-${subName}" onclick="openTimePicker('sub-tstart-${secId}-${subName}','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-${secId}-${subName}-txt">--:--</span></button></div>
+        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-${secId}-${subName}" onclick="openTimePicker('sub-tend-${secId}-${subName}','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-${secId}-${subName}-txt">--:--</span></button></div>
+        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-${secId}-${subName}" onclick="openLocPicker('sub-tloc-${secId}-${subName}')">--</button></div>
+      </div>
+      <div class="section-btn-group">
+        <button class="btn btn-success btn-sm" onclick="addSubSection('${escCode}','${escSec}','${escName}')">确认</button>
+        <button class="btn btn-outline btn-sm" onclick="hideSubInput('${escSec}','${escName}')">取消</button>
+      </div>
+    </div>`;
+}
+
+function updateSubDayCheck(secId, subName, day) {
+  const label = document.getElementById(`sub-dc-${secId}-${subName}-${day}`);
+  if (!label) return;
+  label.classList.toggle("active", label.querySelector("input").checked);
+}
+
+function showSubInput(code, secId, subName) {
+  const el = document.getElementById(`sub-inp-${secId}-${subName}`);
+  if (el) el.classList.remove("hidden");
+}
+
+function hideSubInput(secId, subName) {
+  const el = document.getElementById(`sub-inp-${secId}-${subName}`);
+  if (!el) return;
+  el.classList.add("hidden");
+  _resetTimeBtn(`sub-tstart-${secId}-${subName}`);
+  _resetTimeBtn(`sub-tend-${secId}-${subName}`);
+  _resetLocBtn(`sub-tloc-${secId}-${subName}`);
+  document.querySelectorAll(`#sub-days-${secId}-${subName} input`).forEach(cb=>{ cb.checked=false; });
+  document.querySelectorAll(`#sub-days-${secId}-${subName} label`).forEach(lb=>lb.classList.remove("active"));
+}
+
+// 弹窗询问子课程名称，然后把该子课程名加到对应 Section
+function promptAddSubCourse(code, secId) {
+  const name = prompt("请输入子课程名称（如：练习课、Tutorial）：");
+  if (!name || !name.trim()) return;
+  const trimmed = name.trim();
+  const sec = (courses[code]||[]).find(s=>s.sectionId===secId);
+  if (!sec) return;
+  if (!sec.subGroups[trimmed]) {
+    sec.subGroups[trimmed] = [];
+    sec.subCounters[trimmed] = 0;
+  }
+  saveCourses();
+  renderCourseList();
+}
+
+function addSubSection(code, secId, subName) {
+  const sec = (courses[code]||[]).find(s=>s.sectionId===secId);
+  if (!sec) return;
+  const tstart = _getTimeVal(`sub-tstart-${secId}-${subName}`);
+  const tend   = _getTimeVal(`sub-tend-${secId}-${subName}`);
+  const tloc   = _getLocVal(`sub-tloc-${secId}-${subName}`);
+  const checkedDays = [...document.querySelectorAll(`#sub-days-${secId}-${subName} input:checked`)].map(cb=>parseInt(cb.value));
+  if (!checkedDays.length) { alert("请选择至少一个上课日"); return; }
+  if (!tstart||tstart==="--:--") { alert("请选择开始时间"); return; }
+  if (!tend||tend==="--:--") { alert("请选择结束时间"); return; }
+  if (!tloc) { alert("请填写上课地点"); return; }
+  try {
+    const cnt = sec.subCounters[subName] || 0;
+    const subId = `${secId}-${cnt+1}`;
+    const ss = new SubSection(secId, subName, subId, checkedDays, tstart, tend, tloc);
+    if (!sec.subGroups[subName]) sec.subGroups[subName] = [];
+    sec.subGroups[subName].push(ss);
+    sec.subCounters[subName] = cnt + 1;
+    hideSubInput(secId, subName);
+    saveCourses();
+    renderCourseList();
+  } catch(e) { alert("添加失败：" + (e.message || e)); }
+}
+
+function delSubSection(code, secId, subName, subId) {
+  const sec = (courses[code]||[]).find(s=>s.sectionId===secId);
+  if (!sec || !sec.subGroups[subName]) return;
+  sec.subGroups[subName] = sec.subGroups[subName].filter(ss=>ss.subId!==subId);
+  if (!sec.subGroups[subName].length) {
+    if (!confirm(`子课程「${subName}」时段已清空，是否同时删除该子课程？`)) {
+      // 保留空子课程
+    } else {
+      delete sec.subGroups[subName];
+      delete sec.subCounters[subName];
+    }
+  }
+  saveCourses();
+  renderCourseList();
+}
+
+// ─── 评分与冲突 ──────────────────────────
+function locDist(a,b){ const i=LOC_INDEX[a],j=LOC_INDEX[b]; return (i==null||j==null)?0:Math.abs(i-j); }
+
+// plan 是 PlanEntry[] 数组，每个 PlanEntry = { sec: Section, subs: SubSection[] }
+function allSections(plan) {
+  const all = [];
+  plan.forEach(e=>{ all.push(e.sec); e.subs.forEach(ss=>all.push(ss)); });
+  return all;
+}
+
+function timeScore(plan){
+  let s=0;
+  allSections(plan).forEach(x=>{ if(x.isEarlyMorning()) s-=0.5; if(x.isAfternoonFirst()) s-=1; });
+  return s;
+}
+
+function locScore(plan){
+  let total=0;
+  const byDay={};
+  allSections(plan).forEach(s=>s.weekdays.forEach(d=>{ byDay[d]=byDay[d]||[]; byDay[d].push({t:s.start,l:s.location}); }));
+  Object.values(byDay).forEach(ev=>{ ev.sort((a,b)=>a.t-b.t); for(let i=0;i<ev.length-1;i++) total+=locDist(ev[i].l,ev[i+1].l); });
+  return total;
+}
+
+function score(plan,tp,lp){ return [tp?timeScore(plan):0, lp?locScore(plan):0]; }
+
+function noConflict(plan){
+  const all = allSections(plan);
+  for(let i=0;i<all.length;i++) for(let j=i+1;j<all.length;j++) if(all[i].conflictsWith(all[j])) return false;
+  return true;
+}
+
+// 对给定的 Section，枚举所有合法的子时段选择方式
+// 返回 SubSection[][] 数组，每个元素是一种子时段组合（每个子课程各选一个）
+// 若某子课程没有时段则跳过（不强制选）
+function enumSubCombinations(sec, noEarly, noNoon) {
+  const names = sec.subNames();
+  if (!names.length) return [[]]; // 无子课程 → 只有一种情况：空选
+  const groupLists = names.map(name => {
+    const list = sec.subList(name).filter(ss =>
+      !(noEarly&&ss.isEarlyMorning()) &&
+      !(noNoon&&ss.isAfternoonFirst()) &&
+      !excludedTimes.includes(ss.start) &&
+      !excludedLocations.includes(ss.location)
+    );
+    return list;
+  });
+  // 如果某子课程有时段定义但全被过滤掉了 → 无法选择 → 返回 null 表示不可行
+  for (let i=0; i<names.length; i++) {
+    if (sec.subList(names[i]).length > 0 && groupLists[i].length === 0) return null;
+  }
+  // 笛卡尔积（只对有时段的子课程）
+  const nonEmpty = groupLists.filter(l=>l.length>0);
+  if (!nonEmpty.length) return [[]];
+  const result = [];
+  function cart(idx, cur) {
+    if (idx === nonEmpty.length) { result.push([...cur]); return; }
+    for (const ss of nonEmpty[idx]) { cur.push(ss); cart(idx+1, cur); cur.pop(); }
+  }
+  cart(0, []);
+  return result;
+}
+
+function schedule(suffix){
+  const s = suffix || "";
+  const noEarly=document.getElementById("noEarly"+s).checked;
+  const noNoon=document.getElementById("noNoon"+s).checked;
+  const tp=document.getElementById("timePriority"+s).checked;
+  const lp=document.getElementById("locPriority"+s).checked;
+  const codes=Object.keys(courses);
+  // filtered[i] = 对第 i 门课过滤后的 Section 列表
+  const filtered=codes.map(c=>courses[c].filter(s=>
+    !(noEarly&&s.isEarlyMorning())&&
+    !(noNoon&&s.isAfternoonFirst())&&
+    !excludedTimes.includes(s.start)&&
+    !excludedLocations.includes(s.location)
+  ));
+  const plans=[];
+  // plan 中每项：{ sec, subs }
+  function cartesian(idx, cur){
+    if(idx===filtered.length){
+      if(noConflict(cur)) plans.push([...cur]);
+      return;
+    }
+    for(const sec of filtered[idx]){
+      const subCombos = enumSubCombinations(sec, noEarly, noNoon);
+      if (!subCombos) continue; // 子课程因过滤无法选择 → 跳过该时段
+      for (const subs of subCombos) {
+        const entry = { sec, subs };
+        cur.push(entry);
+        cartesian(idx+1, cur);
+        cur.pop();
+      }
+    }
+  }
+  cartesian(0,[]);
+  plans.sort((a,b)=>{ const sa=score(a,tp,lp),sb=score(b,tp,lp); if(sa[0]!==sb[0]) return sa[0]-sb[0]; return sa[1]-sb[1]; });
+  return plans;
+}
+
+function renderCourseList(){
+  const el=document.getElementById("courseList");
+  const el2=document.getElementById("courseList2");
+  const codes=Object.keys(courses);
+  const html=codes.length?codes.map(code=>`
+    <div class="course-card">
+      <div class="course-card-header">
+        <span class="course-code">${code}</span>
+        <div>
+          <button class="btn btn-outline btn-sm" onclick="showSectionInput('${code}')">+ 时段</button>
+          <button class="btn btn-danger btn-sm" onclick="delCourse('${code}')">删除</button>
+        </div>
+      </div>
+      <div id="sec-inp-${code}" class="section-input-area hidden">
+        <h4>添加时段 → ${code}</h4>
+        <div class="section-row" style="flex-direction:column;align-items:stretch;gap:6px;">
+          <div class="hint">上课日（必选1~7个）</div>
+          <div class="days-group" id="days-${code}">
+            ${[1,2,3,4,5,6,7].map(d=>`<label class="day-check" id="dc-${code}-${d}"><input type="checkbox" value="${d}" class="day-cb" data-code="${code}" onchange="updateDayCheck('${code}',${d})">${DAY_NAMES[d]}</label>`).join("")}
+          </div>
+        </div>
+        <div class="section-row" style="margin-top:8px;align-items:flex-end;">
+          <div style="flex:1"><div class="hint">开始</div><button class="time-picker-btn" id="tstart-${code}" onclick="openTimePicker('tstart-${code}','开始时间')"><span class="clock-icon">🕐</span><span id="tstart-${code}-txt">--:--</span></button></div>
+          <div style="flex:1"><div class="hint">结束</div><button class="time-picker-btn" id="tend-${code}" onclick="openTimePicker('tend-${code}','结束时间')"><span class="clock-icon">🕑</span><span id="tend-${code}-txt">--:--</span></button></div>
+          <div style="flex:1"><div class="hint">地点</div><button class="loc-picker-btn" id="tloc-${code}" onclick="openLocPicker('tloc-${code}')">--</button></div>
+        </div>
+        <div class="section-btn-group">
+          <button class="btn btn-primary btn-sm" onclick="addSection('${code}')">确认</button>
+          <button class="btn btn-outline btn-sm" onclick="hideSectionInput('${code}')">取消</button>
+        </div>
+      </div>
+      <div>${courses[code].map(s=>s.toListHTML()).join("")}</div>
+      ${!courses[code].length?"<div style='font-size:0.8rem;color:#94a3b8;padding:4px 0;'>暂无时段</div>":""}
+    </div>`).join(""):`<div class="empty-state" id="courseEmpty"><div class="emoji">📋</div>暂无课程<br><small>请在上方添加课程</small></div>`;
+  if(el) el.innerHTML=html;
+  if(el2) el2.innerHTML=html;
+}
+
+function addCourse2(){
+  const code=document.getElementById("courseCodeInput2").value.trim().toUpperCase();
+  if(!code){ alert("请输入课程代号"); return; }
+  if(courses[code]){ alert("课程 ["+code+"] 已存在"); return; }
+  courses[code]=[];
+  sectionCounter[code]=0;
+  document.getElementById("courseCodeInput2").value="";
+  renderCourseList();
+  saveCourses();
+}
+
+function renderResults(plans, suffix){
+  const s = suffix || "";
+  const el=document.getElementById("resultsContent"+s);
+  const max=parseInt(document.getElementById("maxDisplay"+s).value)||999;
+  const tp=document.getElementById("timePriority"+s).checked;
+  const lp=document.getElementById("locPriority"+s).checked;
+  const display=plans.slice(0,max);
+  if(!plans.length){ el.innerHTML=`<div class="results-summary empty">无满足条件的方案</div><div class="empty-state"><div class="emoji">😔</div>没有找到可行方案<br><small>尝试放宽筛选条件或增加时段</small></div>`; return; }
+  const showScores=tp||lp;
+  el.innerHTML=`<div class="results-summary">共找到 ${plans.length} 个可行方案${plans.length>max?"，显示前 "+max+" 个":""}</div>
+    ${display.map((plan,i)=>{
+      // plan = [{sec, subs}, ...]
+      // 摘要标签：主时段 + 各子时段
+      const tagHtml = plan.map(e=>{
+        const mainTag = `<span class="plan-tag">${e.sec.courseCode} ${e.sec.sectionId.replace(e.sec.courseCode+"-","")}</span>`;
+        const subTags = e.subs.map(ss=>`<span class="plan-tag-sub">↳${ss.subName} ${ss.subId.replace(e.sec.sectionId+"-","")}</span>`).join(" ");
+        return mainTag + (subTags?" "+subTags:"");
+      }).join(" <span style='color:#475569;font-weight:bold'>+</span> ");
+      // 详情行
+      const bodyHtml = plan.map(e=>{
+        return e.sec.toRowHTML() + e.subs.map(ss=>ss.toRowHTML()).join("");
+      }).join("");
+      const scoreHtml = showScores ? `<span class="plan-scores">${tp?"时间分="+timeScore(plan).toFixed(1):""}${tp&&lp?" | ":""}${lp?"地点分="+locScore(plan):""}</span>` : "";
+      return `<div class="plan-card"><div class="plan-header"><span>方案 ${i+1}</span>${scoreHtml}</div>
+    <div class="plan-summary">${tagHtml}</div>
+    <div class="plan-body">${bodyHtml}</div></div>`;
+    }).join("")}
+    ${plans.length>max?`<div style="text-align:center;color:#94a3b8;font-size:0.85rem;padding:8px">... 还有 ${plans.length-max} 个方案</div>`:""}`;
+}
+
+function addCourse(){
+  const code=document.getElementById("courseCodeInput").value.trim().toUpperCase();
+  if(!code){ alert("请输入课程代号"); return; }
+  if(courses[code]){ alert("课程 ["+code+"] 已存在"); return; }
+  courses[code]=[];
+  sectionCounter[code]=0;
+  document.getElementById("courseCodeInput").value="";
+  renderCourseList();
+  saveCourses();
+}
+
+function delCourse(code){
+  if(!confirm("删除课程 ["+code+"] 及其全部时段？")) return;
+  delete courses[code];
+  delete sectionCounter[code];
+  renderCourseList();
+  saveCourses();
+}
+
+function showSectionInput(code){ document.getElementById("sec-inp-"+code).classList.remove("hidden"); }
+
+function hideSectionInput(code){
+  document.getElementById("sec-inp-"+code).classList.add("hidden");
+  _resetTimeBtn("tstart-"+code);
+  _resetTimeBtn("tend-"+code);
+  _resetLocBtn("tloc-"+code);
+  document.querySelectorAll(`#days-${code} input`).forEach(cb=>cb.checked=false);
+  document.querySelectorAll(`#days-${code} label`).forEach(lb=>lb.classList.remove("active"));
+}
+
+function updateDayCheck(code,day){
+  const label=document.getElementById("dc-"+code+"-"+day);
+  const cb=label.querySelector("input");
+  label.classList.toggle("active",cb.checked);
+}
+
+function addSection(code){
+  const tstart=_getTimeVal("tstart-"+code);
+  const tend=_getTimeVal("tend-"+code);
+  const tloc=_getLocVal("tloc-"+code);
+  const checkedDays=[...document.querySelectorAll(`#days-${code} input:checked`)].map(cb=>parseInt(cb.value));
+  if(!checkedDays.length){ alert("请选择至少一个上课日"); return; }
+  if(!tstart||tstart==="--:--"){ alert("请选择开始时间"); return; }
+  if(!tend||tend==="--:--"){ alert("请选择结束时间"); return; }
+  if(!tloc){ alert("请填写上课地点"); return; }
+  const idx=sectionCounter[code]||0;
+  const id=`${code}-${String.fromCharCode(65+idx)}`;
+  sectionCounter[code]=idx+1;
+  try{
+    const sec=new Section(code,id,checkedDays,tstart,tend,tloc);
+    courses[code].push(sec);
+    hideSectionInput(code);
+    renderCourseList();
+    saveCourses();
+    runSchedule();
+  }catch(e){ alert("添加失败：" + (e.message || e)); }
+}
+
+function delSection(code,sectionId){
+  courses[code]=courses[code].filter(s=>s.sectionId!==sectionId);
+  renderCourseList();
+  saveCourses();
+  runSchedule();
+}
+
+function runSchedule(){
+  // 检查额度
+  if (session && session.type === "user" && session.username !== "管理员") {
+    const q = getAccountQuota(session.username);
+    if (q && q.quota < 999 && q.remaining <= 0) {
+      document.getElementById("resultsContent").innerHTML = `<div class="empty-state"><div class="emoji">😔</div>额度已用完<br><small>请联系管理员增加额度</small></div>`;
+      return;
+    }
+    // 消耗额度
+    consumeQuota(session.username);
+    // 更新显示
+    updateQuotaDisplay();
+  }
+  currentPlans=schedule();
+  renderResults(currentPlans);
+}
+
+function runSchedule2(){
+  // 检查额度
+  if (session && session.type === "user" && session.username !== "管理员") {
+    const q = getAccountQuota(session.username);
+    if (q && q.quota < 999 && q.remaining <= 0) {
+      document.getElementById("resultsContent2").innerHTML = `<div class="empty-state"><div class="emoji">😔</div>额度已用完<br><small>请联系管理员增加额度</small></div>`;
+      return;
+    }
+    // 消耗额度
+    consumeQuota(session.username);
+    // 更新显示
+    updateQuotaDisplay();
+  }
+  const plans=schedule("2");
+  renderResults(plans,"2");
+}
+
+function saveCourses(){
+  const serializeSec = s => {
+    const sgRaw = {};
+    for (const [name, subs] of Object.entries(s.subGroups)) {
+      sgRaw[name] = subs.map(ss => ({
+        parentSectionId: ss.parentSectionId,
+        subName: ss.subName,
+        subId: ss.subId,
+        weekdays: ss.weekdays,
+        startStr: ss.startStr,
+        endStr: ss.endStr,
+        location: ss.location
+      }));
+    }
+    return { courseCode: s.courseCode, sectionId: s.sectionId, weekdays: s.weekdays, startStr: s.startStr, endStr: s.endStr, location: s.location, subCounters: s.subCounters, subGroups: sgRaw };
+  };
+  const coursesRaw = {};
+  for (const [k, v] of Object.entries(courses)) coursesRaw[k] = v.map(serializeSec);
+  localStorage.setItem(COURSES_KEY, JSON.stringify({ courses: coursesRaw, sectionCounter }));
+}
+
+function loadCourses(){
+  const raw=localStorage.getItem(COURSES_KEY);
+  if(!raw) return;
+  try{
+    const data=JSON.parse(raw);
+    courses=Object.fromEntries(Object.entries(data.courses).map(([k,list])=>[k, list.map(raw=>{
+      const sec = new Section(raw.courseCode, raw.sectionId, raw.weekdays, raw.startStr, raw.endStr, raw.location);
+      sec.subCounters = raw.subCounters || {};
+      sec.subGroups = Object.fromEntries(Object.entries(raw.subGroups||{}).map(([name, subs])=>[
+        name,
+        subs.map(ss=>new SubSection(ss.parentSectionId, ss.subName, ss.subId, ss.weekdays, ss.startStr, ss.endStr, ss.location))
+      ]));
+      return sec;
+    })]));
+    sectionCounter=data.sectionCounter||{};
+  }catch(e){}
+}
+
+// ══════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════
+
+(function init(){
+  loadAccounts();
+  // 如果本地还没有账号，从 builtin-data 标签读取内置默认账号
+  if(!accounts.length){
+    try {
+      const data = JSON.parse(document.getElementById('builtin-data').textContent);
+      if (data.accounts && data.accounts.length) {
+        data.accounts.forEach(a => accounts.push(a));
+        saveAccounts();
+      }
+    } catch(e) {
+      // 兜底：如果标签读取失败，使用硬编码默认值
+      accounts.push({ username:"NC1", password:"NC1", expire:"2026-05-25", quota:999, used:0 });
+      saveAccounts();
+    }
+  } else {
+    // 迁移旧账号：为没有额度字段的账号添加默认额度
+    let changed = false;
+    accounts.forEach(a => {
+      if (a.quota === undefined) {
+        a.quota = 100;
+        a.used = 0;
+        changed = true;
+      }
+    });
+    if (changed) saveAccounts();
+  }
+  const raw=localStorage.getItem(SESSION_KEY);
+  if(raw){
+    try{
+      session=JSON.parse(raw);
+      if(session.type==="admin"){
+        switchTo("adminDash");
+        renderAdminDash();
+      }
+      enterMainApp();
+    }catch(e){
+      localStorage.removeItem(SESSION_KEY);
+    }
+  }
+})();
+
+// ══════════════════════════════════════════════
+// 时间选择器（滚轮 + 手动输入）
+// ══════════════════════════════════════════════
+
+// 常见课程时间快选（分钟步进）
+const TP_MINUTES = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+
+let _tpTargetId = null;   // 当前绑定的按钮 id
+let _tpResolve  = null;   // 暂未使用，保留
+
+// 读取按钮当前显示的时间值（如 "08:30"，未设置则 ""）
+function _getTimeVal(btnId) {
+  const el = document.getElementById(btnId + "-txt");
+  if (!el) return "";
+  const v = el.textContent.trim();
+  return (v === "--:--") ? "" : v;
+}
+
+// 重置按钮到未选择状态
+function _resetTimeBtn(btnId) {
+  const el = document.getElementById(btnId + "-txt");
+  if (el) el.textContent = "--:--";
+  const btn = document.getElementById(btnId);
+  if (btn) btn.classList.remove("active");
+}
+
+// 把时间写回按钮
+function _setTimeBtn(btnId, timeStr) {
+  const el = document.getElementById(btnId + "-txt");
+  if (el) el.textContent = timeStr;
+  const btn = document.getElementById(btnId);
+  if (btn) btn.classList.add("active");
+}
+
+// ── 滚轮初始化 ─────────────────────────────
+function _buildWheel(wheelEl, items, selectedVal, padCount) {
+  wheelEl.innerHTML = "";
+  // 前置 padding 项
+  for (let i = 0; i < padCount; i++) {
+    const d = document.createElement("div");
+    d.className = "tp-item pad"; d.textContent = "·";
+    wheelEl.appendChild(d);
+  }
+  items.forEach(val => {
+    const d = document.createElement("div");
+    d.className = "tp-item" + (val === selectedVal ? " selected" : "");
+    d.textContent = String(val).padStart(2, "0");
+    d.dataset.val = val;
+    wheelEl.appendChild(d);
+  });
+  // 后置 padding 项
+  for (let i = 0; i < padCount; i++) {
+    const d = document.createElement("div");
+    d.className = "tp-item pad"; d.textContent = "·";
+    wheelEl.appendChild(d);
+  }
+}
+
+// 滚到对应值（平滑）
+function _scrollWheelTo(wheelEl, val, smooth) {
+  const items = [...wheelEl.querySelectorAll(".tp-item:not(.pad)")];
+  const idx = items.findIndex(d => parseInt(d.dataset.val) === val);
+  if (idx < 0) return;
+  const itemH = 38;
+  const top = idx * itemH;
+  wheelEl.scrollTo({ top, behavior: smooth ? "smooth" : "instant" });
+}
+
+// 获取滚轮当前选中值
+function _getWheelVal(wheelEl) {
+  const itemH = 38;
+  const idx = Math.round(wheelEl.scrollTop / itemH);
+  const items = [...wheelEl.querySelectorAll(".tp-item:not(.pad)")];
+  const item = items[idx] || items[items.length - 1];
+  return item ? parseInt(item.dataset.val) : 0;
+}
+
+// 更新 selected 样式
+function _updateWheelHighlight(wheelEl) {
+  const itemH = 38;
+  const idx = Math.round(wheelEl.scrollTop / itemH);
+  wheelEl.querySelectorAll(".tp-item:not(.pad)").forEach((d, i) => {
+    d.classList.toggle("selected", i === idx);
+  });
+}
+
+// ── 打开选择器 ────────────────────────────
+function openTimePicker(btnId, title) {
+  _tpTargetId = btnId;
+  document.getElementById("tp-title").textContent = title || "选择时间";
+
+  // 当前值
+  const cur = _getTimeVal(btnId);
+  let initH = 8, initM = 30;
+  if (cur && cur !== "--:--") {
+    const parts = cur.split(":");
+    initH = parseInt(parts[0]) || 8;
+    initM = parseInt(parts[1]) || 0;
+  }
+
+  const hours   = Array.from({length: 24}, (_, i) => i);
+  const minutes = TP_MINUTES;
+  const padCount = 2; // 上下各空 2 项，让选中项居中
+
+  const hourWheel = document.getElementById("tp-hour-wheel");
+  const minWheel  = document.getElementById("tp-min-wheel");
+  _buildWheel(hourWheel, hours,   initH, padCount);
+  _buildWheel(minWheel,  minutes, initM, padCount);
+
+  // 初始滚动
+  setTimeout(() => {
+    _scrollWheelTo(hourWheel, initH, false);
+    _scrollWheelTo(minWheel,  initM, false);
+    _updateWheelHighlight(hourWheel);
+    _updateWheelHighlight(minWheel);
+  }, 30);
+
+  // 同步手动输入框
+  const manInp = document.getElementById("tp-manual-input");
+  manInp.value = cur && cur !== "--:--" ? cur : "";
+
+  // 滚动事件（防抖高亮）
+  [hourWheel, minWheel].forEach(w => {
+    w.onscroll = () => {
+      clearTimeout(w._scrollT);
+      w._scrollT = setTimeout(() => {
+        _snapWheel(w);
+        _syncManual();
+      }, 80);
+      _updateWheelHighlight(w);
+    };
+  });
+
+  // 手动输入同步滚轮
+  manInp.oninput = () => {
+    const v = manInp.value.replace(/[^0-9:]/g,"");
+    manInp.value = v;
+    const parts = v.split(":");
+    if (parts.length === 2) {
+      const h = parseInt(parts[0]), m = parseInt(parts[1]);
+      if (h >= 0 && h <= 23) _scrollWheelTo(hourWheel, h, true);
+      const closest = TP_MINUTES.reduce((a,b) => Math.abs(b-m) < Math.abs(a-m) ? b : a, TP_MINUTES[0]);
+      _scrollWheelTo(minWheel, closest, true);
+    }
+  };
+
+  document.getElementById("timepickerOverlay").classList.add("open");
+}
+
+// 滚动对齐（snap）
+function _snapWheel(wheelEl) {
+  const itemH = 38;
+  const idx = Math.round(wheelEl.scrollTop / itemH);
+  wheelEl.scrollTo({ top: idx * itemH, behavior: "smooth" });
+  _updateWheelHighlight(wheelEl);
+}
+
+// 把滚轮当前值同步到手动输入框
+function _syncManual() {
+  const h = _getWheelVal(document.getElementById("tp-hour-wheel"));
+  const m = _getWheelVal(document.getElementById("tp-min-wheel"));
+  const timeStr = `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+  document.getElementById("tp-manual-input").value = timeStr;
+}
+
+function tpConfirm() {
+  // 优先以手动输入框为准（若合法）
+  let timeStr = "";
+  const manVal = document.getElementById("tp-manual-input").value.trim();
+  const manParts = manVal.split(":");
+  if (manParts.length === 2) {
+    const h = parseInt(manParts[0]), m = parseInt(manParts[1]);
+    if (h >= 0 && h <= 23 && m >= 0 && m <= 59) {
+      timeStr = `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+    }
+  }
+  if (!timeStr) {
+    // 回落到滚轮值
+    const h = _getWheelVal(document.getElementById("tp-hour-wheel"));
+    const m = _getWheelVal(document.getElementById("tp-min-wheel"));
+    timeStr = `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+  }
+  if (_tpTargetId) _setTimeBtn(_tpTargetId, timeStr);
+  document.getElementById("timepickerOverlay").classList.remove("open");
+  _tpTargetId = null;
+}
+
+function tpCancel() {
+  document.getElementById("timepickerOverlay").classList.remove("open");
+  _tpTargetId = null;
+}
+
+// 点击遮罩关闭
+document.getElementById("timepickerOverlay").addEventListener("click", function(e) {
+  if (e.target === this) tpCancel();
+});
+
+// ══════════════════════════════════════════════
+// 地点选择器 JS
+// ══════════════════════════════════════════════
+
+let _lpTargetId = null;
+let _lpSelected  = "";
+
+// 读取地点按钮当前值（"" = 未选）
+function _getLocVal(btnId) {
+  const el = document.getElementById(btnId);
+  if (!el) return "";
+  const v = el.textContent.trim();
+  return (v === "--") ? "" : v;
+}
+
+// 重置地点按钮
+function _resetLocBtn(btnId) {
+  const el = document.getElementById(btnId);
+  if (el) { el.textContent = "--"; el.classList.remove("active"); }
+}
+
+// 设置地点按钮
+function _setLocBtn(btnId, val) {
+  const el = document.getElementById(btnId);
+  if (el) { el.textContent = val; el.classList.add("active"); }
+}
+
+// 打开地点选择器
+function openLocPicker(btnId) {
+  _lpTargetId = btnId;
+  _lpSelected  = _getLocVal(btnId);
+  document.getElementById("locpickerOverlay").classList.add("open");
+
+  const manInp = document.getElementById("lp-manual-inp");
+  manInp.value = _lpSelected || "";
+
+  // 互相同步：网格点击 → 清空手动输入
+  const grid = document.getElementById("lp-grid");
+  grid.innerHTML = "";
+  LOCATIONS.forEach(loc => {
+    const item = document.createElement("div");
+    item.className = "lp-item" + (loc === _lpSelected ? " selected" : "");
+    item.textContent = loc;
+    item.addEventListener("click", () => {
+      grid.querySelectorAll(".lp-item").forEach(i => i.classList.remove("selected"));
+      item.classList.add("selected");
+      _lpSelected = loc;
+      manInp.value = "";  // 清手动
+    });
+    grid.appendChild(item);
+  });
+
+  // 手动输入 → 取消网格选中 + 取消按钮选中
+  manInp.oninput = () => {
+    const v = manInp.value.trim().toUpperCase();
+    manInp.value = v;
+    if (v) {
+      grid.querySelectorAll(".lp-item").forEach(i => i.classList.remove("selected"));
+      _lpSelected = "";
+    }
+  };
+}
+
+function lpConfirm() {
+  const manVal = document.getElementById("lp-manual-inp").value.trim().toUpperCase();
+  const val = manVal || _lpSelected;
+  if (_lpTargetId && val) {
+    _setLocBtn(_lpTargetId, val);
+  }
+  document.getElementById("locpickerOverlay").classList.remove("open");
+  _lpTargetId = null;
+  _lpSelected  = "";
+}
+
+function lpCancel() {
+  document.getElementById("locpickerOverlay").classList.remove("open");
+  _lpTargetId = null;
+  _lpSelected  = "";
+}
+
+// 点击遮罩关闭
+document.getElementById("locpickerOverlay").addEventListener("click", function(e) {
+  if (e.target === this) lpCancel();
+});
+</script>
+
+
+</body></html>

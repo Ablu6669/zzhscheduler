@@ -234,12 +234,25 @@
     gap: 20px;
     max-width: 1400px;
     margin: 0 auto;
+    /* 默认用户两栏 */
+    grid-template-columns: 2fr 5fr;
+  }
+  .layout.admin-mode {
+    grid-template-columns: 1fr 2fr 3fr;
   }
   #leftPanel { display: flex; flex-direction: column; gap: 16px; }
+  #centerPanel { display: none; flex-direction: column; gap: 16px; }
+  .layout.admin-mode #centerPanel { display: flex; }
   #rightPanel { display: flex; flex-direction: column; gap: 16px; }
 
-  @media (max-width: 768px) {
-    .layout { grid-template-columns: 1fr; }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr 1fr !important; }
+    .layout.admin-mode { grid-template-columns: 1fr 1fr !important; }
+    #centerPanel { grid-column: 1 / -1; }
+  }
+  @media (max-width: 600px) {
+    .layout { grid-template-columns: 1fr !important; }
+    .layout.admin-mode { grid-template-columns: 1fr !important; }
   }
 
   .panel {
@@ -606,11 +619,47 @@
     border-radius: 6px;
     font-size: 0.72rem;
     font-weight: 700;
-    margin-right: 8px;
   }
+  #quotaDisplay {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 12px;
+  }
+  .quota-time {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background: #f1f5f9;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .quota-remaining {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .quota-ok { background: #dcfce7; color: #166534; }
+  .quota-warning { background: #fef9c3; color: #854d0e; }
+  .quota-critical { background: #fee2e2; color: #991b1b; }
 
   .badge-admin { background: var(--warning-light); color: var(--warning); }
   .badge-user { background: var(--primary-light); color: var(--primary); }
+
+  /* 账号额度显示 */
+  .account-quota {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-top: 4px;
+  }
+  .account-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+  }
 
   /* 通知按钮（醒目公告栏样式） */
   .notif-btn {
@@ -699,10 +748,19 @@
     gap: 6px;
   }
 
-  .form-row { display: flex; gap: 8px; margin-bottom: 10px; }
-  .form-row .form-group { margin-bottom: 0; flex: 1; }
+  .form-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .form-row .form-group { margin-bottom: 0; flex: 1; min-width: 0; }
   .form-row input { width: 100%; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.85rem; outline: none; }
   .form-row input:focus { border-color: var(--primary); }
+  /* 窄面板中日期+额度字段换行 */
+  #adminLeftContent .form-row:has(input[type="date"]) {
+    flex-direction: column;
+    gap: 6px;
+  }
+  #adminLeftContent .form-row:has(input[type="date"]) .form-group {
+    width: 100%;
+    flex: none;
+  }
 
   .accounts-header {
     display: flex;
@@ -926,7 +984,7 @@
   .notif-empty { text-align: center; padding: 20px; color: var(--text-muted); font-size: .85rem; }
 
   /* 新增通知表单 */
-  .notif-add-form { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--bg); border-radius: 10px; border: 1.5px dashed var(--border); }
+  .notif-add-form { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--bg); border-radius: 10px; border: 1.5px dashed var(--border); margin-bottom: 12px; }
   .notif-add-form input { padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: .85rem; outline: none; }
   .notif-add-form input:focus { border-color: var(--primary); }
 
@@ -1042,6 +1100,12 @@
             <label>过期日期</label>
             <input type="date" id="expireDate">
           </div>
+          <div class="form-group">
+            <label>使用额度</label>
+            <input type="number" id="newQuota" placeholder="如 100" min="1" max="9999" value="100">
+          </div>
+        </div>
+        <div class="form-row">
           <div class="form-group" style="display:flex;align-items:flex-end;">
             <button class="btn btn-success btn-sm" onclick="createAccount()" style="width:100%;margin:0;">生成账号</button>
           </div>
@@ -1065,6 +1129,7 @@
   <div class="topbar">
     <div class="topbar-title">📚 自动排课系统</div>
     <div class="topbar-info">
+      <span id="quotaDisplay"></span>
       <button class="notif-btn" id="notifBtn" onclick="toggleNotifPage()">
         🔔 公告栏 <span id="notifBadge" style="display:none;"></span>
       </button>
@@ -1084,18 +1149,42 @@
   </div>
   <div id="notifPageOverlay" class="notif-page-overlay" style="display:none;" onclick="toggleNotifPage()"></div>
 
+  <!-- 编辑账号弹窗 -->
+  <div id="editAccountModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;justify-content:center;align-items:center;">
+    <div style="background:#fff;border-radius:12px;padding:24px;width:340px;max-width:90%;">
+      <div style="font-weight:700;font-size:1rem;margin-bottom:16px;">✏️ 编辑账号</div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>账号</label>
+        <input type="text" id="editAccUsername" disabled style="background:#f1f5f9;color:#94a3b8;">
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>过期日期</label>
+        <input type="date" id="editAccExpire" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;">
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>使用额度</label>
+        <input type="number" id="editAccQuota" min="1" max="9999" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;">
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary" onclick="saveAccountEdit()" style="flex:1;">保存</button>
+        <button class="btn btn-outline" onclick="closeEditAccountModal()" style="flex:1;">取消</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 通知显示区已移除，改为通知页面 -->
 
   <div class="layout" id="mainLayout" style="padding:0 24px 24px;">
 
-    <!-- 左侧栏 -->
+    <!-- 左侧栏：通知管理 + 账号管理 -->
     <div id="leftPanel">
-      <!-- 管理员左侧：通知+账号（管理员时显示） -->
       <div id="adminLeftContent" style="display:none;">
-        <div class="panel" id="adminPanel" style="margin-bottom:0;">
+        <div class="panel">
           <div class="panel-title" style="margin-bottom:10px;"><span class="icon">🔔</span>通知管理</div>
           <div id="notifAdminArea"></div>
-          <div class="panel-title" style="margin-top:16px;"><span class="icon">🔑</span>账号管理</div>
+        </div>
+        <div class="panel" style="margin-top:0;">
+          <div class="panel-title" style="margin-bottom:10px;"><span class="icon">🔑</span>账号管理</div>
           <div class="admin-tools">
             <h4>创建账号</h4>
             <div class="form-row">
@@ -1107,6 +1196,12 @@
                 <label>过期日期</label>
                 <input type="date" id="expireDate2">
               </div>
+              <div class="form-group">
+                <label>使用额度</label>
+                <input type="number" id="newQuota2" placeholder="如 100" min="1" max="9999" value="100">
+              </div>
+            </div>
+            <div class="form-row">
               <div class="form-group" style="display:flex;align-items:flex-end;">
                 <button class="btn btn-success btn-sm" onclick="createAccountInApp()" style="width:100%;margin:0;">生成</button>
               </div>
@@ -1116,11 +1211,10 @@
               <span>已创建账号</span>
               <span id="accountCount2"></span>
             </div>
-            <div class="accounts-list" id="accountsList2" style="max-height:140px;"></div>
+            <div class="accounts-list" id="accountsList2" style="max-height:200px;"></div>
           </div>
         </div>
       </div>
-
       <!-- 用户左侧：课程管理+筛选排序（默认显示） -->
       <div id="userLeftContent">
         <div class="panel">
@@ -1201,21 +1295,9 @@
       </div>
     </div>
 
-    <!-- 右侧栏 -->
-    <div id="rightPanel">
-      <!-- 用户右侧：仅排课结果（默认显示） -->
-      <div id="userRightContent">
-        <div class="panel">
-          <div class="panel-title"><span class="icon">📊</span>排课结果</div>
-          <div id="resultsContent">
-            <div class="empty-state">
-              <div class="emoji">🔍</div>点击「计算排课方案」查看结果
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- 管理员右侧：课程管理+筛选排序+排课结果（管理员时显示） -->
-      <div id="adminRightContent" style="display:none;">
+    <!-- 中间栏：课程管理 + 筛选排序（管理员专用） -->
+    <div id="centerPanel">
+      <div id="adminCenterContent" style="display:none;flex-direction:column;gap:16px;">
         <div class="panel">
           <div class="panel-title"><span class="icon">📚</span>课程管理</div>
           <div class="course-input">
@@ -1228,7 +1310,7 @@
             </div>
           </div>
         </div>
-        <div class="panel" style="margin-top:16px;">
+        <div class="panel">
           <div class="panel-title"><span class="icon">⚙️</span>筛选与排序</div>
           <div class="filter-group">
             <div class="filter-row">
@@ -1273,7 +1355,25 @@
             <button class="btn btn-primary" onclick="runSchedule2()" style="flex:1">🚀 计算排课方案</button>
           </div>
         </div>
-        <div class="panel" style="margin-top:16px;">
+      </div>
+    </div>
+
+    <!-- 右侧栏：排课结果 -->
+    <div id="rightPanel">
+      <!-- 用户右侧：排课结果（默认显示） -->
+      <div id="userRightContent">
+        <div class="panel">
+          <div class="panel-title"><span class="icon">📊</span>排课结果</div>
+          <div id="resultsContent">
+            <div class="empty-state">
+              <div class="emoji">🔍</div>点击「计算排课方案」查看结果
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- 管理员右侧：仅排课结果 -->
+      <div id="adminRightContent" style="display:none;">
+        <div class="panel">
           <div class="panel-title"><span class="icon">📊</span>排课结果</div>
           <div id="resultsContent2">
             <div class="empty-state">
@@ -1297,7 +1397,7 @@ const SESSION_KEY  = "wb_scheduler_session";
 const COURSES_KEY  = "wb_scheduler_courses";
 
 let accounts = [];
-let session = null;   // { type:'admin'|'user', username, expire }
+let session = null;   // { type:'admin'|'user', username, expire, quota, used }
 let excludedTimes = [];      // 排除的时间（分钟数），如 [510] 表示排除 08:30
 let excludedLocations = [];  // 排除的地点（大写），如 ["TXA", "TB"]
 
@@ -1335,10 +1435,34 @@ function isAccountValid(username, password) {
     const match = list.find(a =>
       a.username === username &&
       a.password === password &&
-      (!a.expire || new Date(a.expire).getTime() > now)
+      (!a.expire || new Date(a.expire).getTime() > now) &&
+      (!a.quota || (a.used || 0) < a.quota)
     );
     resolve(!!match);
   });
+}
+
+// 获取当前账号的剩余额度
+function getAccountQuota(username) {
+  const raw = localStorage.getItem(ACCOUNTS_KEY);
+  const list = raw ? JSON.parse(raw) : [];
+  const acc = list.find(a => a.username === username);
+  if (!acc) return null;
+  const quota = acc.quota || 999; // 无限制默认为999
+  const used = acc.used || 0;
+  return { quota, used, remaining: quota - used };
+}
+
+// 消耗一次额度
+function consumeQuota(username) {
+  const raw = localStorage.getItem(ACCOUNTS_KEY);
+  const list = raw ? JSON.parse(raw) : [];
+  const idx = list.findIndex(a => a.username === username);
+  if (idx === -1) return false;
+  if (!list[idx].quota) return true; // 无限制
+  list[idx].used = (list[idx].used || 0) + 1;
+  localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(list));
+  return true;
 }
 
 function switchTab(tab) {
@@ -1367,10 +1491,11 @@ async function doUserLogin() {
   if (!u || !p) { document.getElementById("loginError").textContent = "请输入账号和密码"; return; }
   const valid = await isAccountValid(u, p);
   if (!valid) {
-    document.getElementById("loginError").textContent = "账号或密码错误，或账号已过期";
+    document.getElementById("loginError").textContent = "账号或密码错误，或账号已过期/额度已用完";
     return;
   }
-  session = { type: "user", username: u };
+  const q = getAccountQuota(u);
+  session = { type: "user", username: u, quota: q.quota, used: q.used };
   localStorage.setItem(SESSION_KEY, JSON.stringify(session));
   document.getElementById("loginUsername").value = "";
   document.getElementById("loginPassword").value = "";
@@ -1410,41 +1535,44 @@ function enterMainApp() {
   document.getElementById("mainApp").style.display = "block";
   const layout = document.getElementById("mainLayout");
   if (session.type === "admin") {
-    layout.style.gridTemplateColumns = "280px 1fr";
+    layout.classList.add("admin-mode");
     document.getElementById("modeBadge").className = "user-mode-badge badge-admin";
     document.getElementById("modeBadge").textContent = "管理员";
-    // 左侧显示管理功能
-    document.getElementById("adminLeftContent").style.display = "block";
+    // 管理员三栏
+    document.getElementById("adminLeftContent").style.display = "flex";
     document.getElementById("userLeftContent").style.display = "none";
-    // 右侧显示完整核心功能
+    document.getElementById("adminCenterContent").style.display = "flex";
     document.getElementById("userRightContent").style.display = "none";
-    document.getElementById("adminRightContent").style.display = "flex";
-    // 同步课程数据到管理员右侧
+    document.getElementById("adminRightContent").style.display = "block";
+    // 同步课程数据到管理员视图
     syncAdminRightCourses();
     renderAdminDash2();
     renderNotifAdmin();
   } else {
-    layout.style.gridTemplateColumns = "2fr 5fr";
+    layout.classList.remove("admin-mode");
     document.getElementById("modeBadge").className = "user-mode-badge badge-user";
     document.getElementById("modeBadge").textContent = "用户";
+    // 用户两栏
     document.getElementById("adminLeftContent").style.display = "none";
+    document.getElementById("adminCenterContent").style.display = "none";
     document.getElementById("userLeftContent").style.display = "block";
     document.getElementById("userRightContent").style.display = "block";
     document.getElementById("adminRightContent").style.display = "none";
   }
   document.getElementById("welcomeUser").textContent = session.username;
+  // 更新并显示额度信息
+  updateQuotaDisplay();
   renderNotifBanner();
   updateNotifBadge();
   loadCourses();
   renderCourseList();
-  runSchedule();
 }
 
-// 管理员右侧同步课程和筛选
+// 管理员中间栏同步课程和筛选
 function syncAdminRightCourses(){
   const el2=document.getElementById("courseList2");
   if(!el2) return;
-  // 渲染课程列表（与左侧共用 courses）
+  // 渲染课程列表
   renderCourseList();
   // 同步筛选条件
   document.getElementById("noEarly2").checked=document.getElementById("noEarly").checked;
@@ -1452,8 +1580,6 @@ function syncAdminRightCourses(){
   document.getElementById("timePriority2").checked=document.getElementById("timePriority").checked;
   document.getElementById("locPriority2").checked=document.getElementById("locPriority").checked;
   document.getElementById("maxDisplay2").value=document.getElementById("maxDisplay").value;
-  // 触发初始排课
-  runSchedule2();
 }
 
 function renderAccountList(containerId, countId) {
@@ -1468,12 +1594,21 @@ function renderAccountList(containerId, countId) {
   }
   el.innerHTML = accounts.map((a,i) => {
     const st = getExpireStatus(a.expire);
+    const q = a.quota || 999;
+    const u = a.used || 0;
+    const rem = q - u;
+    const qcls = rem <= 0 ? "quota-critical" : (rem <= q * 0.2 ? "quota-critical" : rem <= q * 0.5 ? "quota-warning" : "quota-ok");
+    const qLabel = q >= 999 ? "无限" : `${rem}/${q}`;
     return `<div class="account-item">
       <div class="account-info">
         <div class="account-user">${a.username}</div>
         <div class="account-exp ${st.cls}">${st.label} &nbsp;|&nbsp; 密码：${a.password}</div>
+        <div class="account-quota ${qcls}">📊 额度：${qLabel}</div>
       </div>
-      <button class="btn-icon" onclick="deleteAccount(${i})" title="删除">🗑️</button>
+      <div class="account-actions">
+        <button class="btn-icon" onclick="editAccount(${i})" title="编辑">✏️</button>
+        <button class="btn-icon" onclick="deleteAccount(${i})" title="删除">🗑️</button>
+      </div>
     </div>`;
   }).join("");
 }
@@ -1481,8 +1616,8 @@ function renderAccountList(containerId, countId) {
 function renderAdminDash() { renderAccountList("accountsList", "accountCount"); }
 function renderAdminDash2() { renderAccountList("accountsList2", "accountCount2"); }
 
-function createAccount() { createAccountCore("newUsername", "newPassword", "expireDate", "createError", renderAdminDash); }
-function createAccountInApp() { createAccountCore("newUsername2", "newPassword2", "expireDate2", "createError2", renderAdminDash2); }
+function createAccount() { createAccountCore("newUsername", "newPassword", "expireDate", "newQuota", "createError", renderAdminDash); }
+function createAccountInApp() { createAccountCore("newUsername2", "newPassword2", "expireDate2", "newQuota2", "createError2", renderAdminDash2); }
 
 // ══ 多通知管理 ══════════════════════════════
 const NOTIFICATIONS_KEY = "scheduler_notifications";
@@ -1587,6 +1722,49 @@ function markAllNotifsRead() {
   updateNotifBadge();
 }
 
+// 更新并显示额度信息
+function updateQuotaDisplay() {
+  const el = document.getElementById("quotaDisplay");
+  if (!el || !session || session.type === "admin") return;
+  
+  const q = getAccountQuota(session.username);
+  if (!q) return;
+  
+  // 更新session中的额度信息
+  session.quota = q.quota;
+  session.used = q.used;
+  
+  const remaining = q.remaining;
+  const isUnlimited = q.quota >= 999;
+  let html = "";
+  
+  // 获取账号过期信息
+  const raw = localStorage.getItem(ACCOUNTS_KEY);
+  const list = raw ? JSON.parse(raw) : [];
+  const acc = list.find(a => a.username === session.username);
+  
+  if (acc && acc.expire) {
+    const exp = new Date(acc.expire);
+    const now = new Date();
+    const leftDays = Math.ceil((exp - now) / 86400000);
+    if (leftDays > 0) {
+      html += `<span class="quota-time">⏰ ${leftDays}天</span>`;
+    }
+  }
+  
+  if (isUnlimited) {
+    html += `<span class="quota-remaining">💡 无限额度</span>`;
+  } else {
+    const pct = remaining / q.quota;
+    let cls = "quota-ok";
+    if (pct <= 0.2) cls = "quota-critical";
+    else if (pct <= 0.5) cls = "quota-warning";
+    html += `<span class="quota-remaining ${cls}">📊 ${remaining}/${q.quota}</span>`;
+  }
+  
+  el.innerHTML = html;
+}
+
 // 更新通知徽章（未读数量）
 function updateNotifBadge() {
   const badge = document.getElementById("notifBadge");
@@ -1611,7 +1789,6 @@ function addExcludedTime() {
     excludedTimes.push(mins);
     input.value = "";
     renderTimeTags();
-    runSchedule();
   } catch (e) {
     alert("时间格式错误，请使用 HH:MM 格式（如 08:30）");
   }
@@ -1620,7 +1797,6 @@ function addExcludedTime() {
 function removeExcludedTime(t) {
   excludedTimes = excludedTimes.filter(x => x !== t);
   renderTimeTags();
-  runSchedule();
 }
 
 function renderTimeTags() {
@@ -1641,13 +1817,11 @@ function addExcludedLocation() {
   excludedLocations.push(val);
   input.value = "";
   renderLocTags();
-  runSchedule();
 }
 
 function removeExcludedLocation(loc) {
   excludedLocations = excludedLocations.filter(x => x !== loc);
   renderLocTags();
-  runSchedule();
 }
 
 function renderLocTags() {
@@ -1684,13 +1858,13 @@ function renderNotifAdmin() {
   `).join("") : `<div class="notif-empty">暂无通知</div>`;
 
   area.innerHTML = `
-    <div class="notif-list">${listHtml}</div>
     <div class="notif-add-form">
       <div style="font-size:.8rem;font-weight:600;color:var(--text-muted);margin-bottom:4px;">+ 发送新通知</div>
       <input type="text" id="newNotifTitle" placeholder="通知标题（可选）" maxlength="50">
       <textarea id="newNotifContent" placeholder="通知内容（必填）" style="min-height:50px;resize:none;font-size:.82rem;padding:6px 8px;" maxlength="500"></textarea>
       <button class="btn btn-primary" onclick="addNotif()" style="width:100%;margin:0;">发送通知</button>
     </div>
+    <div class="notif-list">${listHtml}</div>
   `;
 }
 
@@ -1743,19 +1917,21 @@ function _escHtml(str) {
 
 // ══════════════════════════════════════════
 
-function createAccountCore(uId, pId, eId, errId, renderFn) {
+function createAccountCore(uId, pId, eId, qId, errId, renderFn) {
   const u = document.getElementById(uId).value.trim();
   const p = document.getElementById(pId).value;
   const e = document.getElementById(eId).value;
+  const q = parseInt(document.getElementById(qId).value) || 100;
   const err = document.getElementById(errId);
   if (!u) { err.textContent = "请输入账号"; return; }
   if (!p) { err.textContent = "请输入密码"; return; }
   if (accounts.some(a=>a.username===u)) { err.textContent = "账号已存在"; return; }
-  accounts.push({ username: u, password: p, expire: e || null });
+  accounts.push({ username: u, password: p, expire: e || null, quota: q, used: 0 });
   saveAccounts();
   document.getElementById(uId).value = "";
   document.getElementById(pId).value = "";
   document.getElementById(eId).value = "";
+  document.getElementById(qId).value = "100";
   err.textContent = "";
   err.style.color = "var(--success)";
   err.textContent = "账号创建成功 ✓";
@@ -1769,6 +1945,34 @@ function deleteAccount(idx) {
   saveAccounts();
   renderAccountList("accountsList", "accountCount");
   renderAccountList("accountsList2", "accountCount2");
+}
+
+let _editAccountIdx = -1; // 当前编辑的账号索引
+
+function editAccount(idx) {
+  _editAccountIdx = idx;
+  const a = accounts[idx];
+  document.getElementById("editAccUsername").value = a.username;
+  document.getElementById("editAccExpire").value = a.expire || "";
+  document.getElementById("editAccQuota").value = a.quota || 100;
+  document.getElementById("editAccountModal").style.display = "flex";
+}
+
+function closeEditAccountModal() {
+  document.getElementById("editAccountModal").style.display = "none";
+  _editAccountIdx = -1;
+}
+
+function saveAccountEdit() {
+  if (_editAccountIdx < 0) return;
+  const expire = document.getElementById("editAccExpire").value;
+  const quota = parseInt(document.getElementById("editAccQuota").value) || 100;
+  accounts[_editAccountIdx].expire = expire || null;
+  accounts[_editAccountIdx].quota = quota;
+  saveAccounts();
+  renderAccountList("accountsList", "accountCount");
+  renderAccountList("accountsList2", "accountCount2");
+  closeEditAccountModal();
 }
 
 // ══════════════════════════════════════
@@ -1960,7 +2164,6 @@ function addSubSection(code, secId, subName) {
     hideSubInput(secId, subName);
     saveCourses();
     renderCourseList();
-    runSchedule();
   } catch(e) { alert("添加失败：" + (e.message || e)); }
 }
 
@@ -1978,7 +2181,6 @@ function delSubSection(code, secId, subName, subId) {
   }
   saveCourses();
   renderCourseList();
-  runSchedule();
 }
 
 // ─── 评分与冲突 ──────────────────────────
@@ -2128,7 +2330,6 @@ function addCourse2(){
   document.getElementById("courseCodeInput2").value="";
   renderCourseList();
   saveCourses();
-  runSchedule2();
 }
 
 function renderResults(plans, suffix){
@@ -2178,7 +2379,6 @@ function delCourse(code){
   delete sectionCounter[code];
   renderCourseList();
   saveCourses();
-  runSchedule();
 }
 
 function showSectionInput(code){ document.getElementById("sec-inp-"+code).classList.remove("hidden"); }
@@ -2228,11 +2428,35 @@ function delSection(code,sectionId){
 }
 
 function runSchedule(){
+  // 检查额度
+  if (session && session.type === "user" && session.username !== "管理员") {
+    const q = getAccountQuota(session.username);
+    if (q && q.quota < 999 && q.remaining <= 0) {
+      document.getElementById("resultsContent").innerHTML = `<div class="empty-state"><div class="emoji">😔</div>额度已用完<br><small>请联系管理员增加额度</small></div>`;
+      return;
+    }
+    // 消耗额度
+    consumeQuota(session.username);
+    // 更新显示
+    updateQuotaDisplay();
+  }
   currentPlans=schedule();
   renderResults(currentPlans);
 }
 
 function runSchedule2(){
+  // 检查额度
+  if (session && session.type === "user" && session.username !== "管理员") {
+    const q = getAccountQuota(session.username);
+    if (q && q.quota < 999 && q.remaining <= 0) {
+      document.getElementById("resultsContent2").innerHTML = `<div class="empty-state"><div class="emoji">😔</div>额度已用完<br><small>请联系管理员增加额度</small></div>`;
+      return;
+    }
+    // 消耗额度
+    consumeQuota(session.username);
+    // 更新显示
+    updateQuotaDisplay();
+  }
   const plans=schedule("2");
   renderResults(plans,"2");
 }
@@ -2282,10 +2506,21 @@ function loadCourses(){
 
 (function init(){
   loadAccounts();
-  // 如果本地还没有账号，预设 NC1 账号（7天有效期：2026-05-25）
+  // 如果本地还没有账号，预设 NC1 账号（7天有效期：2026-05-25，100次额度）
   if(!accounts.length){
-    accounts.push({ username:"NC1", password:"NC1", expire:"2026-05-25" });
+    accounts.push({ username:"NC1", password:"NC1", expire:"2026-05-25", quota:100, used:0 });
     saveAccounts();
+  } else {
+    // 迁移旧账号：为没有额度字段的账号添加默认额度
+    let changed = false;
+    accounts.forEach(a => {
+      if (a.quota === undefined) {
+        a.quota = 100;
+        a.used = 0;
+        changed = true;
+      }
+    });
+    if (changed) saveAccounts();
   }
   const raw=localStorage.getItem(SESSION_KEY);
   if(raw){

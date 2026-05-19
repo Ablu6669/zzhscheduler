@@ -2535,6 +2535,39 @@ function loadCourses(){
       localStorage.removeItem(SESSION_KEY);
     }
   }
+  // 内置公告（仅添加一次，按添加顺序 unshift，后添加的排在前面）
+  try {
+    const _notifKey = "scheduler_notifications";
+    const _existing = JSON.parse(localStorage.getItem(_notifKey)) || [];
+
+    // 公告1：1.7版本更新
+    if (!_existing.some(n => n.id === "n_builtin_v17_update")) {
+      _existing.unshift({
+        id: "n_builtin_v17_update",
+        title: "1.7版本更新",
+        content: "为优化用户体验和长久发展，本系统进行1.7版本更新，更新内容如下：\n1. 新增公告栏：用户可以查看更新公告等信息；\n2. 新增子课程选项：用户可以在新建完某一课程后在任一时段后链接子课程（如Lec&tut），排课会考虑到链接课程，增加排课合理性；\n3. 优化时间地点选择方式：新增时段时将时间选择优化为滚轮滑动或手动输入，将地点选择优化为直接点击（校内）或手动输入（供校外自定义）；\n4. 地点选项增加：新增ABE地点，地点优先排序时其计算与TA同理，但本身与TA距离为1；\n5. 新增自定义排除选项：用户可以自定义不想上的时间或地点进行筛选；\n6. 优化页面布局：优化不同窗口比例，使布局更加合理；\n7. 新增使用额度：为避免同一账号多人使用，新增使用额度，每次计算方案会消耗一次使用额度，额度耗尽请联系管理员。",
+        enabled: true,
+        read: false,
+        createdAt: Date.now(),
+        type: "warning"
+      });
+    }
+
+    // 公告2：第一轮内测反馈
+    if (!_existing.some(n => n.id === "n_builtin_beta_feedback")) {
+      _existing.unshift({
+        id: "n_builtin_beta_feedback",
+        title: "第一轮内测反馈",
+        content: "欢迎各位内测用户向开发者反馈bug或优化建议！所有反馈一经采纳将获得公测高级账号（超长时间超高额度^^）！反馈方式：微信号 Ablu6669",
+        enabled: true,
+        read: false,
+        createdAt: Date.now(),
+        type: "warning"
+      });
+    }
+
+    localStorage.setItem(_notifKey, JSON.stringify(_existing));
+  } catch(e) {}
 })();
 
 // ══════════════════════════════════════════════

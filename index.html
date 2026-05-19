@@ -2506,9 +2506,9 @@ function loadCourses(){
 
 (function init(){
   loadAccounts();
-  // 如果本地还没有账号，预设 NC1 账号（7天有效期：2026-05-25，100次额度）
+  // 如果本地还没有账号，预设 NC1 账号（无限制额度，2026-05-25 过期）
   if(!accounts.length){
-    accounts.push({ username:"NC1", password:"NC1", expire:"2026-05-25", quota:100, used:0 });
+    accounts.push({ username:"NC1", password:"NC1", expire:"2026-05-25", quota:999, used:0 });
     saveAccounts();
   } else {
     // 迁移旧账号：为没有额度字段的账号添加默认额度

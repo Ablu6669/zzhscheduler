@@ -1036,6 +1036,44 @@
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   @keyframes scaleIn { from { opacity: 0; transform: scale(.95); } to { opacity: 1; transform: none; } }
 
+  /* 排序优先级区域 */
+  .sort-priority-section {
+    margin-top: 10px; padding: 10px 12px 8px;
+    background: var(--primary-light); border-radius: 10px;
+    border: 1.5px solid rgba(79,110,247,.18);
+    display: none; /* 默认隐藏，JS控制 */
+    flex-direction: column; gap: 6px;
+  }
+  .sort-priority-section.visible { display: flex; }
+  .sort-priority-title {
+    font-size: .78rem; font-weight: 700; color: var(--primary);
+    margin-bottom: 2px; letter-spacing: .02em;
+  }
+  .sort-priority-item {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--card); border-radius: 8px;
+    padding: 6px 10px; border: 1.5px solid var(--border);
+    transition: box-shadow .15s, border-color .15s;
+  }
+  .sort-priority-item:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(79,110,247,.12); }
+  .sort-priority-rank {
+    font-size: .72rem; font-weight: 700; color: #fff;
+    background: var(--primary); border-radius: 50%;
+    width: 18px; height: 18px; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .sort-priority-label { flex: 1; font-size: .83rem; color: var(--text); font-weight: 500; }
+  .sort-priority-label small { color: var(--text-muted); font-size: .72rem; display: block; }
+  .sort-priority-btns { display: flex; gap: 3px; flex-shrink: 0; }
+  .sort-priority-btn {
+    width: 24px; height: 24px; border: 1.5px solid var(--border); border-radius: 6px;
+    background: var(--bg); color: var(--text-muted); cursor: pointer;
+    font-size: .8rem; display: flex; align-items: center; justify-content: center;
+    transition: all .15s; padding: 0;
+  }
+  .sort-priority-btn:hover:not(:disabled) { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .sort-priority-btn:disabled { opacity: .3; cursor: default; }
+
   /* 权重设置弹窗 */
   .weight-overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,.55);
@@ -1402,24 +1440,29 @@
             </div>
             <div class="filter-row">
               <label class="toggle">
-                <input type="checkbox" id="timePriority" onchange="runSchedule()">
+                <input type="checkbox" id="timePriority" onchange="onSortToggle('','tp',this.checked)">
                 <span class="slider"></span>
               </label>
               <div class="filter-label">时间优先排序<span>早八/午一越少越靠前</span></div>
             </div>
             <div class="filter-row">
               <label class="toggle">
-                <input type="checkbox" id="locPriority" onchange="runSchedule()">
+                <input type="checkbox" id="locPriority" onchange="onSortToggle('','lp',this.checked)">
                 <span class="slider"></span>
               </label>
               <div class="filter-label">地点优先排序<span>相邻课程地点越近越靠前</span></div>
             </div>
             <div class="filter-row">
               <label class="toggle">
-                <input type="checkbox" id="weightPriority" onchange="runSchedule()">
+                <input type="checkbox" id="weightPriority" onchange="onSortToggle('','wp',this.checked)">
                 <span class="slider"></span>
               </label>
               <div class="filter-label">自定义权重排序<span>总权重越高越靠前</span><button class="weight-set-btn" onclick="openWeightModal()">⚖️ 设置权重</button></div>
+            </div>
+            <!-- 排序优先级排列区 -->
+            <div class="sort-priority-section" id="sortPrioritySection">
+              <div class="sort-priority-title">🏆 排序优先级（拖动 ↑↓ 调整）</div>
+              <div id="sortPriorityList"></div>
             </div>
             <div class="max-display-row">
               <label>最多显示</label>
@@ -1490,29 +1533,52 @@
             </div>
             <div class="filter-row">
               <label class="toggle">
-                <input type="checkbox" id="timePriority2" onchange="runSchedule2()">
+                <input type="checkbox" id="timePriority2" onchange="onSortToggle('2','tp',this.checked)">
                 <span class="slider"></span>
               </label>
               <div class="filter-label">时间优先排序<span>早八/午一越少越靠前</span></div>
             </div>
             <div class="filter-row">
               <label class="toggle">
-                <input type="checkbox" id="locPriority2" onchange="runSchedule2()">
+                <input type="checkbox" id="locPriority2" onchange="onSortToggle('2','lp',this.checked)">
                 <span class="slider"></span>
               </label>
               <div class="filter-label">地点优先排序<span>相邻课程地点越近越靠前</span></div>
             </div>
             <div class="filter-row">
               <label class="toggle">
-                <input type="checkbox" id="weightPriority2" onchange="runSchedule2()">
+                <input type="checkbox" id="weightPriority2" onchange="onSortToggle('2','wp',this.checked)">
                 <span class="slider"></span>
               </label>
               <div class="filter-label">自定义权重排序<span>总权重越高越靠前</span><button class="weight-set-btn" onclick="openWeightModal()">⚖️ 设置权重</button></div>
+            </div>
+            <!-- 排序优先级排列区 -->
+            <div class="sort-priority-section" id="sortPrioritySection2">
+              <div class="sort-priority-title">🏆 排序优先级（↑↓ 调整）</div>
+              <div id="sortPriorityList2"></div>
             </div>
             <div class="max-display-row">
               <label>最多显示</label>
               <input type="number" id="maxDisplay2" value="20" min="1" max="999" onchange="runSchedule2()">
               <span>个方案</span>
+            </div>
+            <!-- 自定义排除时间 -->
+            <div class="exclusion-section">
+              <div class="exclusion-section-title">🕐 排除指定时间</div>
+              <div class="exclusion-input-row">
+                <input type="text" id="excludeTimeInput2" placeholder="如 08:30" maxlength="5" onkeydown="if(event.key==='Enter'){event.preventDefault();addExcludedTime('2');}">
+                <button class="btn btn-sm btn-danger" onclick="addExcludedTime('2')">添加</button>
+              </div>
+              <div class="exclusion-tags" id="excludedTimeTags2"></div>
+            </div>
+            <!-- 自定义排除地点 -->
+            <div class="exclusion-section">
+              <div class="exclusion-section-title">📍 排除指定地点</div>
+              <div class="exclusion-input-row">
+                <input type="text" id="excludeLocInput2" placeholder="如 TXA" maxlength="10" onkeydown="if(event.key==='Enter'){event.preventDefault();addExcludedLocation('2');}">
+                <button class="btn btn-sm btn-danger" onclick="addExcludedLocation('2')">添加</button>
+              </div>
+              <div class="exclusion-tags" id="excludedLocTags2"></div>
             </div>
           </div>
           <div class="loc-ref">
@@ -1566,8 +1632,8 @@ const COURSES_KEY  = "wb_scheduler_courses";
 
 let accounts = [];
 let session = null;   // { type:'admin'|'user', username, expire, quota, used }
-let excludedTimes = [];      // 排除的时间（分钟数），如 [510] 表示排除 08:30
-let excludedLocations = [];  // 排除的地点（大写），如 ["TXA", "TB"]
+let excludedTimes = { "": [], "2": [] };      // 排除的时间（分钟数），按 suffix 分别存储
+let excludedLocations = { "": [], "2": [] };  // 排除的地点（大写），按 suffix 分别存储
 
 function sha256(s) {
   const enc = new TextEncoder();
@@ -1982,56 +2048,66 @@ function updateNotifBadge() {
 }
 
 // ── 自定义排除功能 ─────────────────────
-function addExcludedTime() {
-  const input = document.getElementById("excludeTimeInput");
+function addExcludedTime(suffix) {
+  const s = suffix || "";
+  const input = document.getElementById("excludeTimeInput" + s);
   const val = input.value.trim();
   if (!val) return;
   try {
     const mins = _toMin(val);
-    if (excludedTimes.includes(mins)) { alert("该时间已排除"); return; }
-    excludedTimes.push(mins);
+    if (excludedTimes[s].includes(mins)) { alert("该时间已排除"); return; }
+    excludedTimes[s].push(mins);
     input.value = "";
-    renderTimeTags();
+    renderTimeTags(s);
+    if (s === "") runSchedule(); else runSchedule2();
   } catch (e) {
     alert("时间格式错误，请使用 HH:MM 格式（如 08:30）");
   }
 }
 
-function removeExcludedTime(t) {
-  excludedTimes = excludedTimes.filter(x => x !== t);
-  renderTimeTags();
+function removeExcludedTime(t, suffix) {
+  const s = suffix || "";
+  excludedTimes[s] = excludedTimes[s].filter(x => x !== t);
+  renderTimeTags(s);
+  if (s === "") runSchedule(); else runSchedule2();
 }
 
-function renderTimeTags() {
-  const container = document.getElementById("excludedTimeTags");
+function renderTimeTags(suffix) {
+  const s = suffix || "";
+  const container = document.getElementById("excludedTimeTags" + s);
   if (!container) return;
-  container.innerHTML = excludedTimes.map(t => {
+  container.innerHTML = excludedTimes[s].map(t => {
     const h = String(Math.floor(t/60)).padStart(2,"0");
     const m = String(t%60).padStart(2,"0");
-    return `<span class="exclusion-tag">${h}:${m} <span class="tag-remove" onclick="removeExcludedTime(${t})">✕</span></span>`;
+    return `<span class="exclusion-tag">${h}:${m} <span class="tag-remove" onclick="removeExcludedTime(${t},'${s}')">✕</span></span>`;
   }).join("");
 }
 
-function addExcludedLocation() {
-  const input = document.getElementById("excludeLocInput");
+function addExcludedLocation(suffix) {
+  const s = suffix || "";
+  const input = document.getElementById("excludeLocInput" + s);
   const val = input.value.trim().toUpperCase();
   if (!val) return;
-  if (excludedLocations.includes(val)) { alert("该地点已排除"); return; }
-  excludedLocations.push(val);
+  if (excludedLocations[s].includes(val)) { alert("该地点已排除"); return; }
+  excludedLocations[s].push(val);
   input.value = "";
-  renderLocTags();
+  renderLocTags(s);
+  if (s === "") runSchedule(); else runSchedule2();
 }
 
-function removeExcludedLocation(loc) {
-  excludedLocations = excludedLocations.filter(x => x !== loc);
-  renderLocTags();
+function removeExcludedLocation(loc, suffix) {
+  const s = suffix || "";
+  excludedLocations[s] = excludedLocations[s].filter(x => x !== loc);
+  renderLocTags(s);
+  if (s === "") runSchedule(); else runSchedule2();
 }
 
-function renderLocTags() {
-  const container = document.getElementById("excludedLocTags");
+function renderLocTags(suffix) {
+  const s = suffix || "";
+  const container = document.getElementById("excludedLocTags" + s);
   if (!container) return;
-  container.innerHTML = excludedLocations.map(loc =>
-    `<span class="exclusion-tag">${loc} <span class="tag-remove" onclick="removeExcludedLocation('${loc}')">✕</span></span>`
+  container.innerHTML = excludedLocations[s].map(loc =>
+    `<span class="exclusion-tag">${loc} <span class="tag-remove" onclick="removeExcludedLocation('${loc}','${s}')">✕</span></span>`
   ).join("");
 }
 
@@ -2386,6 +2462,69 @@ function delSubSection(code, secId, subName, subId) {
   renderCourseList();
 }
 
+// ─── 排序优先级管理 ───────────────────────
+// sortPriority[suffix] = 已启用排序项的有序数组，元素为 "tp"/"lp"/"wp"
+// 顺序 = 用户自定义的优先级（index 0 = 第1优先）
+const sortPriority = { "": [], "2": [] };
+
+const SORT_META = {
+  tp: { label: "时间优先排序", desc: "早八/午一越少越靠前", icon: "🕐" },
+  lp: { label: "地点优先排序", desc: "相邻课程距离越近越靠前", icon: "📍" },
+  wp: { label: "自定义权重排序", desc: "总权重越高越靠前", icon: "⚖️" }
+};
+
+// 排序开关切换时调用
+function onSortToggle(s, key, checked) {
+  const arr = sortPriority[s];
+  if (checked) {
+    if (!arr.includes(key)) arr.push(key); // 新勾选追加到末位（最低优先级）
+  } else {
+    const idx = arr.indexOf(key);
+    if (idx !== -1) arr.splice(idx, 1);
+  }
+  renderSortPriority(s);
+  if (s === "") runSchedule(); else runSchedule2();
+}
+
+// 渲染优先级排列区
+function renderSortPriority(s) {
+  const suf = s || "";
+  const section = document.getElementById("sortPrioritySection" + suf);
+  const list = document.getElementById("sortPriorityList" + suf);
+  const arr = sortPriority[suf];
+  if (arr.length < 2) {
+    section.classList.remove("visible");
+    return;
+  }
+  section.classList.add("visible");
+  list.innerHTML = arr.map((key, i) => {
+    const m = SORT_META[key];
+    return `<div class="sort-priority-item" id="spi-${suf}-${key}">
+      <div class="sort-priority-rank">${i + 1}</div>
+      <div class="sort-priority-label">${m.icon} ${m.label}<small>${m.desc}</small></div>
+      <div class="sort-priority-btns">
+        <button class="sort-priority-btn" title="上移" ${i === 0 ? "disabled" : ""}
+          onclick="moveSortPriority('${suf}','${key}',-1)">▲</button>
+        <button class="sort-priority-btn" title="下移" ${i === arr.length - 1 ? "disabled" : ""}
+          onclick="moveSortPriority('${suf}','${key}',1)">▼</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// 上移或下移某排序项
+function moveSortPriority(s, key, dir) {
+  const arr = sortPriority[s];
+  const idx = arr.indexOf(key);
+  if (idx < 0) return;
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= arr.length) return;
+  arr.splice(idx, 1);
+  arr.splice(newIdx, 0, key);
+  renderSortPriority(s);
+  if (s === "") runSchedule(); else runSchedule2();
+}
+
 // ─── 权重管理 ────────────────────────────
 // weightMap: { [sectionId_or_subId]: number(1-10) }
 // 权重存储在 localStorage，key = "scheduler_weights"
@@ -2523,6 +2662,17 @@ function locScore(plan){
   return total;
 }
 
+// 按优先级数组生成得分向量（数组长度 = 已启用排序项数）
+// 每维：值越小越靠前；权重取负数使"高权重靠前"
+function scoreByPriority(plan, priorityArr) {
+  return priorityArr.map(key => {
+    if (key === "tp") return timeScore(plan);   // 越小越好（负值代表少早八）
+    if (key === "lp") return locScore(plan);    // 越小越好
+    if (key === "wp") return -planWeightScore(plan); // 越小越好（取负后高权重=小值）
+    return 0;
+  });
+}
+
 function score(plan,tp,lp,wp){ return [tp?timeScore(plan):0, lp?locScore(plan):0, wp?-planWeightScore(plan):0]; }
 
 function noConflict(plan){
@@ -2534,15 +2684,15 @@ function noConflict(plan){
 // 对给定的 Section，枚举所有合法的子时段选择方式
 // 返回 SubSection[][] 数组，每个元素是一种子时段组合（每个子课程各选一个）
 // 若某子课程没有时段则跳过（不强制选）
-function enumSubCombinations(sec, noEarly, noNoon) {
+function enumSubCombinations(sec, noEarly, noNoon, exTimes, exLocs) {
   const names = sec.subNames();
   if (!names.length) return [[]]; // 无子课程 → 只有一种情况：空选
   const groupLists = names.map(name => {
     const list = sec.subList(name).filter(ss =>
       !(noEarly&&ss.isEarlyMorning()) &&
       !(noNoon&&ss.isAfternoonFirst()) &&
-      !excludedTimes.includes(ss.start) &&
-      !excludedLocations.includes(ss.location)
+      !exTimes.includes(ss.start) &&
+      !exLocs.includes(ss.location)
     );
     return list;
   });
@@ -2569,13 +2719,15 @@ function schedule(suffix){
   const tp=document.getElementById("timePriority"+s).checked;
   const lp=document.getElementById("locPriority"+s).checked;
   const wp=document.getElementById("weightPriority"+s).checked;
+  const exTimes = excludedTimes[s] || [];
+  const exLocs  = excludedLocations[s] || [];
   const codes=Object.keys(courses);
   // filtered[i] = 对第 i 门课过滤后的 Section 列表
-  const filtered=codes.map(c=>courses[c].filter(s=>
-    !(noEarly&&s.isEarlyMorning())&&
-    !(noNoon&&s.isAfternoonFirst())&&
-    !excludedTimes.includes(s.start)&&
-    !excludedLocations.includes(s.location)
+  const filtered=codes.map(c=>courses[c].filter(sec=>
+    !(noEarly&&sec.isEarlyMorning())&&
+    !(noNoon&&sec.isAfternoonFirst())&&
+    !exTimes.includes(sec.start)&&
+    !exLocs.includes(sec.location)
   ));
   const plans=[];
   // plan 中每项：{ sec, subs }
@@ -2585,7 +2737,7 @@ function schedule(suffix){
       return;
     }
     for(const sec of filtered[idx]){
-      const subCombos = enumSubCombinations(sec, noEarly, noNoon);
+      const subCombos = enumSubCombinations(sec, noEarly, noNoon, exTimes, exLocs);
       if (!subCombos) continue; // 子课程因过滤无法选择 → 跳过该时段
       for (const subs of subCombos) {
         const entry = { sec, subs };
@@ -2596,12 +2748,18 @@ function schedule(suffix){
     }
   }
   cartesian(0,[]);
-  plans.sort((a,b)=>{
-    const sa=score(a,tp,lp,wp), sb=score(b,tp,lp,wp);
-    if(sa[0]!==sb[0]) return sa[0]-sb[0];
-    if(sa[1]!==sb[1]) return sa[1]-sb[1];
-    return sa[2]-sb[2];
-  });
+  // 按用户设定的优先级数组排序（未设定时降级为空数组，无排序依据则保持原顺序）
+  const priorityArr = sortPriority[s];
+  if (priorityArr.length > 0) {
+    plans.sort((a, b) => {
+      const sa = scoreByPriority(a, priorityArr);
+      const sb = scoreByPriority(b, priorityArr);
+      for (let i = 0; i < sa.length; i++) {
+        if (sa[i] !== sb[i]) return sa[i] - sb[i];
+      }
+      return 0;
+    });
+  }
   return plans;
 }
 
@@ -2678,9 +2836,13 @@ function renderResults(plans, suffix){
         return e.sec.toRowHTML() + e.subs.map(ss=>ss.toRowHTML()).join("");
       }).join("");
       const scoreParts = [];
-      if (tp) scoreParts.push("时间分="+timeScore(plan).toFixed(1));
-      if (lp) scoreParts.push("地点分="+locScore(plan));
-      if (wp) scoreParts.push(`<span class="plan-weight-score">⚖️ 权重=${planWeightScore(plan)}</span>`);
+      const priorityArr = sortPriority[s];
+      priorityArr.forEach((key, rank) => {
+        const rankTag = priorityArr.length > 1 ? `<sup style="color:var(--primary);font-size:.65rem">P${rank+1}</sup>` : "";
+        if (key === "tp") scoreParts.push(`时间分${rankTag}=${timeScore(plan).toFixed(1)}`);
+        if (key === "lp") scoreParts.push(`地点分${rankTag}=${locScore(plan)}`);
+        if (key === "wp") scoreParts.push(`<span class="plan-weight-score">⚖️权重${rankTag}=${planWeightScore(plan)}</span>`);
+      });
       const scoreHtml = showScores ? `<span class="plan-scores">${scoreParts.join(" | ")}</span>` : "";
       return `<div class="plan-card"><div class="plan-header"><span>方案 ${i+1}</span>${scoreHtml}</div>
     <div class="plan-summary">${tagHtml}</div>

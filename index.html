@@ -1152,6 +1152,84 @@
   .weight-set-btn:hover { background: var(--primary); color: #fff; }
   /* 方案卡权重分 */
   .plan-weight-score { font-size: .78rem; color: #f59e0b; font-weight: 600; }
+  /* ═══ 使用说明弹窗 ═══════════ */
+  .guide-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 10000;
+    display: flex; justify-content: center; align-items: center;
+  }
+  .guide-modal {
+    background: var(--card); border-radius: 14px;
+    width: 900px; max-width: 96vw; max-height: 88vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 20px 80px rgba(0,0,0,.3);
+    animation: scaleIn .2s ease;
+  }
+  .guide-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 22px; border-bottom: 1.5px solid var(--border);
+    flex-shrink: 0;
+  }
+  .guide-title { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+  .guide-close {
+    width: 32px; height: 32px; border-radius: 8px; border: none;
+    background: transparent; cursor: pointer; font-size: 1.1rem;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted); transition: all .15s;
+  }
+  .guide-close:hover { background: var(--danger-light); color: var(--danger); }
+  .guide-body {
+    display: flex; flex: 1; overflow: hidden;
+  }
+  .guide-toc {
+    width: 220px; flex-shrink: 0; border-right: 1.5px solid var(--border);
+    overflow-y: auto; padding: 10px 0;
+  }
+  .guide-toc-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 16px; cursor: pointer; font-size: .83rem;
+    color: var(--text-muted); transition: all .12s; border-left: 3px solid transparent;
+  }
+  .guide-toc-item:hover { background: var(--bg); color: var(--text); }
+  .guide-toc-item.active {
+    background: var(--primary-light); color: var(--primary); font-weight: 600;
+    border-left-color: var(--primary);
+  }
+  .guide-toc-icon { font-size: .95rem; flex-shrink: 0; }
+  .guide-content {
+    flex: 1; overflow-y: auto; padding: 20px 24px;
+    line-height: 1.7; font-size: .88rem; color: var(--text);
+  }
+  .guide-content h2 { font-size: 1.05rem; font-weight: 700; margin: 18px 0 8px; color: var(--text); }
+  .guide-content h2:first-child { margin-top: 0; }
+  .guide-content h3 { font-size: .93rem; font-weight: 600; margin: 12px 0 6px; color: var(--primary); }
+  .guide-content p { margin: 6px 0; }
+  .guide-content ul, .guide-content ol { margin: 6px 0; padding-left: 20px; }
+  .guide-content li { margin: 4px 0; }
+  .guide-content code {
+    background: var(--bg); padding: 1px 5px; border-radius: 4px;
+    font-size: .83rem; color: var(--primary);
+  }
+  .guide-content .tip-box {
+    background: var(--primary-light); border-left: 3px solid var(--primary);
+    border-radius: 0 8px 8px 0; padding: 10px 14px; margin: 10px 0;
+    font-size: .83rem; color: var(--text-muted);
+  }
+  .guide-content .warn-box {
+    background: var(--warning-light); border-left: 3px solid var(--warning);
+    border-radius: 0 8px 8px 0; padding: 10px 14px; margin: 10px 0;
+    font-size: .83rem;
+  }
+  .guide-content img {
+    max-width: 100%; border-radius: 8px; border: 1px solid var(--border);
+    margin: 8px 0;
+  }
+  .guide-img-placeholder {
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; min-height: 120px; background: var(--bg);
+    border: 2px dashed var(--border); border-radius: 8px;
+    color: var(--text-muted); font-size: .83rem; margin: 8px 0;
+    flex-direction: column; gap: 4px;
+  }
 </style>
 </head>
 <body>
@@ -1287,6 +1365,9 @@
       <button class="notif-btn" id="notifBtn" onclick="toggleNotifPage()">
         🔔 公告栏 <span id="notifBadge" style="display:none;"></span>
       </button>
+      <button class="notif-btn guide-btn" id="guideBtn" onclick="openGuide()">
+        📖 使用说明
+      </button>
       <span class="user-mode-badge" id="modeBadge"></span>
       欢迎，<span id="welcomeUser"></span>
       <button class="btn btn-outline btn-sm" onclick="doLogout()" style="margin-left:12px;width:auto;">退出登录</button>
@@ -1360,6 +1441,20 @@
       <div style="display:flex;gap:8px;">
         <button class="btn btn-primary" onclick="saveAccountEdit()" style="flex:1;">保存</button>
         <button class="btn btn-outline" onclick="closeEditAccountModal()" style="flex:1;">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 使用说明弹窗 -->
+  <div id="guideOverlay" class="guide-overlay" style="display:none;" onclick="closeGuide()">
+    <div class="guide-modal" onclick="event.stopPropagation()">
+      <div class="guide-header">
+        <div class="guide-title">📖 使用说明</div>
+        <button class="guide-close" onclick="closeGuide()">✕</button>
+      </div>
+      <div class="guide-body">
+        <div class="guide-toc" id="guideToc"></div>
+        <div class="guide-content" id="guideContent"></div>
       </div>
     </div>
   </div>
@@ -2045,6 +2140,216 @@ function updateNotifBadge() {
   } else {
     badge.style.display = "none";
   }
+}
+
+// ═════════════════════════════════════
+//  使用说明数据（新增/修改功能请同步更新此数组）
+// ═════════════════════════════════════
+// 每个条目：{ id, title, icon, content }
+//   id: 唯一标识（英文）; title: 目录显示名称; icon: emoji; content: HTML（支持图文）
+const GUIDE_DATA = [
+  {
+    id: "overview",
+    title: "系统概述",
+    icon: "📚",
+    content: `
+      <h2>欢迎使用自动排课系统</h2>
+      <p>本系统帮助您快速生成合理的课程排课方案。只需输入每门课程的可用时段，系统即可自动枚举所有可行方案，并根据您设定的筛选条件和排序偏好，给出最优排课建议。</p>
+      <h3>主要功能</h3>
+      <ul>
+        <li><strong>课程管理</strong>：添加/删除课程，为每门课程配置多个时段（支持子课程）</li>
+        <li><strong>智能筛选</strong>：不上早八、不上午一、自定义排除时间及地点</li>
+        <li><strong>多维排序</strong>：按时间、地点、自定义权重多维度排序</li>
+        <li><strong>优先级自定义</strong>：多排序项同时开启时，自由调整优先级顺序</li>
+        <li><strong>使用额度管理</strong>：管理员可创建账号并分配使用额度</li>
+        <li><strong>通知公告</strong>：系统更新通知，支持已读/未读状态管理</li>
+      </ul>
+      <h3>使用流程</h3>
+      <ol>
+        <li>在「课程管理」中添加课程和时段</li>
+        <li>在「筛选与排序」中设置筛选条件和排序偏好</li>
+        <li>点击「计算排课方案」查看所有可行方案</li>
+        <li>从方案列表中选择最适合的排课方案</li>
+      </ol>
+      <div class="tip-box">💡 提示：系统数据保存在浏览器本地 localStorage 中，清除浏览器数据会导致课程和设置丢失。</div>
+    `
+  },
+  {
+    id: "course-mgmt",
+    title: "课程管理",
+    icon: "📋",
+    content: `
+      <h2>课程管理</h2>
+      <p>在左侧「课程管理」面板中，可以管理所有课程及其可用时段。</p>
+      <h3>添加课程</h3>
+      <ol>
+        <li>在输入框中输入课程代号（如 <code>MAT1001</code>），点击「添加」</li>
+        <li>课程添加后，会在下方展开时段输入区</li>
+        <li>输入星期（1-7）、开始时间、结束时间、地点，点击「添加时段」</li>
+        <li>一门课程可以添加多个时段（A、B、C...）</li>
+        <li>如果课程有子课程（如讨论课、实验课），勾选「有子课程」，然后为子课程添加时段</li>
+      </ol>
+      <h3>删除课程/时段</h3>
+      <p>点击课程或时段卡片上的删除按钮即可。子课程时段标有 ↳ 符号，方便区分。</p>
+      <div class="tip-box">💡 提示：子课程的时段会显示在母课程下方，便于区分和管理。</div>
+    `
+  },
+  {
+    id: "filtering",
+    title: "筛选功能",
+    icon: "🔍",
+    content: `
+      <h2>筛选功能</h2>
+      <p>在「筛选与排序」面板中，可以设置多种筛选条件，过滤掉不想要的时段。</p>
+      <h3>不上早八</h3>
+      <p>开启后，系统会自动排除所有 <code>08:30</code> 开始的课程时段。</p>
+      <h3>不上午一</h3>
+      <p>开启后，系统会自动排除所有 <code>13:30</code> 开始的课程时段。</p>
+      <h3>排除指定时间</h3>
+      <ol>
+        <li>在「排除指定时间」输入框中输入时间（格式 <code>HH:MM</code>，如 <code>10:30</code>）</li>
+        <li>点击「添加」或按 Enter 键</li>
+        <li>系统会排除所有在该时间开始的时段</li>
+        <li>点击时间标签上的 ✕ 可以取消排除该时间</li>
+      </ol>
+      <h3>排除指定地点</h3>
+      <ol>
+        <li>在「排除指定地点」输入框中输入地点代码（如 <code>TXA</code>）</li>
+        <li>点击「添加」或按 Enter 键</li>
+        <li>系统会排除所有在该地点开设的时段</li>
+        <li>点击地点标签上的 ✕ 可以取消排除该地点</li>
+      </ol>
+      <div class="warn-box">⚠️ 注意：修改筛选条件后，需要点击「计算排课方案」按钮才会重新计算方案（避免浪费使用额度）。</div>
+    `
+  },
+  {
+    id: "sorting",
+    title: "排序功能",
+    icon: "📊",
+    content: `
+      <h2>排序功能</h2>
+      <p>系统支持三种排序方式，可以单独开启，也可以多项同时开启。</p>
+      <h3>时间优先排序</h3>
+      <p>开启后，排课方案会按照「早八/午一越少越好」的原则排序。系统会计算每个方案中早八和午一的数量，数量越少排名越靠前。</p>
+      <h3>地点优先排序</h3>
+      <p>开启后，排课方案会按照「相邻课程地点越近越好」的原则排序。系统根据预设的地点顺序计算相邻课程的距离得分，得分越低（距离越近）排名越靠前。</p>
+      <h3>自定义权重排序</h3>
+      <p>开启后，系统会根据您为每个时段设置的权重（1-10）对方案排序，总权重越高的方案排名越靠前。</p>
+      <p>点击「⚖️ 设置权重」按钮，可以为每门课程的每个时段（包括子课程）设置权重。权重越高表示您越希望选中该时段。</p>
+      <div class="tip-box">💡 提示：权重设置使用星星交互，点击星星或输入数字均可设置，默认权重为 5。</div>
+    `
+  },
+  {
+    id: "priority",
+    title: "排序优先级自定义",
+    icon: "🏆",
+    content: `
+      <h2>排序优先级自定义</h2>
+      <p>当同时开启 <strong>两个及以上</strong> 排序选项时，系统会显示「排序优先级」区域，允许您调整各排序条件的优先级顺序。</p>
+      <h3>如何使用</h3>
+      <ol>
+        <li>同时开启两个或三个排序开关（时间优先、地点优先、自定义权重）</li>
+        <li>面板中会显示「🏆 排序优先级」区域</li>
+        <li>每个排序条件前会显示优先级编号（1、2、3）</li>
+        <li>点击 ▲ 按钮将该条件优先级提升，点击 ▼ 按钮将优先级降低</li>
+        <li>排课时，系统会按照优先级顺序依次比较。优先级 1 的条件先比较，相同的情况下再比较优先级 2</li>
+      </ol>
+      <div class="tip-box">💡 提示：如果只开启一个排序选项，不需要调整优先级，系统会直接按该选项排序。</div>
+    `
+  },
+  {
+    id: "quota",
+    title: "使用额度",
+    icon: "🎫",
+    content: `
+      <h2>使用额度机制</h2>
+      <p>为防止滥用，系统采用使用额度机制。每次点击「计算排课方案」按钮都会消耗 1 次额度。</p>
+      <h3>额度查看</h3>
+      <p>登录后，顶部栏会显示当前剩余额度（如 <code>剩余额度：95/100</code>）。</p>
+      <h3>额度用完</h3>
+      <p>当额度用完后，点击「计算排课方案」会提示「额度已用完」，需要联系管理员增加额度。</p>
+      <h3>管理员操作</h3>
+      <p>管理员可以在左侧「账号管理」面板中创建账号、设置额度和过期日期。</p>
+      <div class="warn-box">⚠️ 注意：只有点击「计算排课方案」才会消耗额度，修改筛选条件等操作不会消耗额度。</div>
+    `
+  },
+  {
+    id: "notifications",
+    title: "通知公告",
+    icon: "🔔",
+    content: `
+      <h2>通知公告功能</h2>
+      <p>系统通过通知公告向用户传达重要更新信息和使用提示。</p>
+      <h3>查看通知</h3>
+      <ol>
+        <li>点击顶部栏的「🔔 公告栏」按钮</li>
+        <li>在弹出的通知面板中查看所有通知</li>
+        <li>未读通知会显示红点标记，点击通知后自动标记为已读</li>
+        <li>点击某条通知可以查看完整内容</li>
+      </ol>
+      <h3>管理员功能</h3>
+      <p>管理员可以在左侧「通知管理」面板中发布、编辑和删除通知（支持提醒/信息/成功/紧急四种类型）。</p>
+    `
+  },
+  {
+    id: "admin",
+    title: "管理员功能",
+    icon: "🔑",
+    content: `
+      <h2>管理员专属功能</h2>
+      <p>使用管理员密钥登录后，可以使用以下全部功能：</p>
+      <h3>账号管理</h3>
+      <ul>
+        <li>创建用户账号（设置用户名、密码、过期日期、使用额度）</li>
+        <li>编辑已有账号（修改过期日期和使用额度）</li>
+        <li>删除账号</li>
+      </ul>
+      <h3>通知管理</h3>
+      <ul>
+        <li>发布系统通知（所有用户可见）</li>
+        <li>编辑/删除已有通知</li>
+      </ul>
+      <h3>独立的管理员面板</h3>
+      <p>管理员拥有独立的课程管理面板和筛选排序面板，与用户面板完全分开，互不影响。</p>
+      <div class="tip-box">💡 提示：管理员账号本身不消耗额度，可以无限次计算排课方案。</div>
+    `
+  }
+];
+
+// ── 使用说明弹窗控制 ────────────────────
+let _guideCurrentId = null;
+
+function openGuide() {
+  _guideCurrentId = GUIDE_DATA[0].id;
+  renderGuideToc();
+  renderGuideContent(_guideCurrentId);
+  document.getElementById("guideOverlay").style.display = "flex";
+}
+
+function closeGuide() {
+  document.getElementById("guideOverlay").style.display = "none";
+}
+
+function renderGuideToc() {
+  const container = document.getElementById("guideToc");
+  if (!container) return;
+  container.innerHTML = GUIDE_DATA.map(item => `
+    <div class="guide-toc-item ${item.id === _guideCurrentId ? "active" : ""}"
+         onclick="renderGuideContent('${item.id}')">
+      <span class="guide-toc-icon">${item.icon}</span>
+      <span>${item.title}</span>
+    </div>
+  `).join("");
+}
+
+function renderGuideContent(id) {
+  const item = GUIDE_DATA.find(d => d.id === id);
+  if (!item) return;
+  _guideCurrentId = id;
+  const container = document.getElementById("guideContent");
+  if (!container) return;
+  container.innerHTML = item.content;
+  renderGuideToc();
 }
 
 // ── 自定义排除功能 ─────────────────────

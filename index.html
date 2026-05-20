@@ -1426,14 +1426,14 @@
           <div class="filter-group">
             <div class="filter-row">
               <label class="toggle">
-                <input type="checkbox" id="noEarly" onchange="runSchedule()">
+                <input type="checkbox" id="noEarly" onchange="">
                 <span class="slider"></span>
               </label>
               <div class="filter-label">不上早八<span>排除 08:30 开始的课程</span></div>
             </div>
             <div class="filter-row">
               <label class="toggle">
-                <input type="checkbox" id="noNoon" onchange="runSchedule()">
+                <input type="checkbox" id="noNoon" onchange="">
                 <span class="slider"></span>
               </label>
               <div class="filter-label">不上午一<span>排除 13:30 开始的课程</span></div>
@@ -1466,7 +1466,7 @@
             </div>
             <div class="max-display-row">
               <label>最多显示</label>
-              <input type="number" id="maxDisplay" value="20" min="1" max="999" onchange="runSchedule()">
+              <input type="number" id="maxDisplay" value="20" min="1" max="999" onchange="">
               <span>个方案</span>
             </div>
             <!-- 自定义排除时间 -->
@@ -1519,14 +1519,14 @@
           <div class="filter-group">
             <div class="filter-row">
               <label class="toggle">
-                <input type="checkbox" id="noEarly2" onchange="runSchedule2()">
+                <input type="checkbox" id="noEarly2" onchange="">
                 <span class="slider"></span>
               </label>
               <div class="filter-label">不上早八<span>排除 08:30 开始的课程</span></div>
             </div>
             <div class="filter-row">
               <label class="toggle">
-                <input type="checkbox" id="noNoon2" onchange="runSchedule2()">
+                <input type="checkbox" id="noNoon2" onchange="">
                 <span class="slider"></span>
               </label>
               <div class="filter-label">不上午一<span>排除 13:30 开始的课程</span></div>
@@ -1559,7 +1559,7 @@
             </div>
             <div class="max-display-row">
               <label>最多显示</label>
-              <input type="number" id="maxDisplay2" value="20" min="1" max="999" onchange="runSchedule2()">
+              <input type="number" id="maxDisplay2" value="20" min="1" max="999" onchange="">
               <span>个方案</span>
             </div>
             <!-- 自定义排除时间 -->
@@ -2059,7 +2059,7 @@ function addExcludedTime(suffix) {
     excludedTimes[s].push(mins);
     input.value = "";
     renderTimeTags(s);
-    if (s === "") runSchedule(); else runSchedule2();
+    // 不自动计算，等用户点击"计算排课方案"按钮
   } catch (e) {
     alert("时间格式错误，请使用 HH:MM 格式（如 08:30）");
   }
@@ -2069,7 +2069,7 @@ function removeExcludedTime(t, suffix) {
   const s = suffix || "";
   excludedTimes[s] = excludedTimes[s].filter(x => x !== t);
   renderTimeTags(s);
-  if (s === "") runSchedule(); else runSchedule2();
+  // 不自动计算，等用户点击"计算排课方案"按钮
 }
 
 function renderTimeTags(suffix) {
@@ -2092,14 +2092,14 @@ function addExcludedLocation(suffix) {
   excludedLocations[s].push(val);
   input.value = "";
   renderLocTags(s);
-  if (s === "") runSchedule(); else runSchedule2();
+  // 不自动计算，等用户点击"计算排课方案"按钮
 }
 
 function removeExcludedLocation(loc, suffix) {
   const s = suffix || "";
   excludedLocations[s] = excludedLocations[s].filter(x => x !== loc);
   renderLocTags(s);
-  if (s === "") runSchedule(); else runSchedule2();
+  // 不自动计算，等用户点击"计算排课方案"按钮
 }
 
 function renderLocTags(suffix) {
@@ -2483,7 +2483,7 @@ function onSortToggle(s, key, checked) {
     if (idx !== -1) arr.splice(idx, 1);
   }
   renderSortPriority(s);
-  if (s === "") runSchedule(); else runSchedule2();
+  // 不自动计算，等用户点击"计算排课方案"按钮
 }
 
 // 渲染优先级排列区
@@ -2522,7 +2522,7 @@ function moveSortPriority(s, key, dir) {
   arr.splice(idx, 1);
   arr.splice(newIdx, 0, key);
   renderSortPriority(s);
-  if (s === "") runSchedule(); else runSchedule2();
+  // 不自动计算，等用户点击"计算排课方案"按钮
 }
 
 // ─── 权重管理 ────────────────────────────
@@ -2905,7 +2905,7 @@ function addSection(code){
     hideSectionInput(code);
     renderCourseList();
     saveCourses();
-    runSchedule();
+    // 不自动计算，等用户点击"计算排课方案"按钮
   }catch(e){ alert("添加失败：" + (e.message || e)); }
 }
 
@@ -2913,7 +2913,7 @@ function delSection(code,sectionId){
   courses[code]=courses[code].filter(s=>s.sectionId!==sectionId);
   renderCourseList();
   saveCourses();
-  runSchedule();
+  // 不自动计算，等用户点击"计算排课方案"按钮
 }
 
 function runSchedule(){

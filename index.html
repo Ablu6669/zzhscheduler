@@ -1035,6 +1035,85 @@
   }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   @keyframes scaleIn { from { opacity: 0; transform: scale(.95); } to { opacity: 1; transform: none; } }
+
+  /* 权重设置弹窗 */
+  .weight-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.55);
+    z-index: 10000; display: flex; align-items: center; justify-content: center;
+    animation: fadeIn .15s ease;
+  }
+  .weight-modal {
+    background: var(--card); border-radius: 16px;
+    width: 580px; max-width: 94vw; max-height: 88vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 16px 64px rgba(0,0,0,.25);
+    animation: scaleIn .2s ease;
+  }
+  .weight-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 22px 14px; border-bottom: 1.5px solid var(--border); gap: 12px;
+  }
+  .weight-modal-title { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+  .weight-modal-close {
+    background: none; border: none; cursor: pointer; font-size: 1.2rem;
+    color: var(--text-muted); padding: 4px 8px; border-radius: 8px;
+    transition: background .15s; flex-shrink: 0;
+  }
+  .weight-modal-close:hover { background: var(--danger-light); color: var(--danger); }
+  .weight-modal-body { flex: 1; overflow-y: auto; padding: 16px 22px 20px; }
+  .weight-modal-hint {
+    font-size: .8rem; color: var(--text-muted); margin-bottom: 14px;
+    background: var(--primary-light); border-radius: 8px; padding: 8px 12px;
+    line-height: 1.6;
+  }
+  .weight-course-block { margin-bottom: 18px; }
+  .weight-course-title {
+    font-size: .9rem; font-weight: 700; color: var(--primary);
+    padding: 4px 0 8px; border-bottom: 1px solid var(--border); margin-bottom: 8px;
+  }
+  .weight-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 4px; border-radius: 8px; transition: background .1s;
+  }
+  .weight-row:hover { background: var(--bg); }
+  .weight-row-label {
+    flex: 1; font-size: .83rem; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .weight-row-label small { color: var(--text-muted); font-size: .75rem; margin-left: 4px; }
+  .weight-input-wrap { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .weight-input {
+    width: 62px; text-align: center; padding: 5px 6px;
+    border: 1.5px solid var(--border); border-radius: 8px;
+    font-size: .9rem; font-weight: 600; color: var(--text);
+    background: var(--card); transition: border-color .15s;
+    -moz-appearance: textfield;
+  }
+  .weight-input::-webkit-outer-spin-button,
+  .weight-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .weight-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,110,247,.15); }
+  .weight-stars {
+    display: flex; gap: 2px;
+  }
+  .weight-star {
+    font-size: .95rem; cursor: pointer; color: #d1d5db; transition: color .1s;
+    line-height: 1; user-select: none;
+  }
+  .weight-star.on { color: #f59e0b; }
+  .weight-modal-footer {
+    padding: 12px 22px 16px; border-top: 1.5px solid var(--border);
+    display: flex; gap: 10px; justify-content: flex-end;
+  }
+  /* 权重排序开关行的设置按钮 */
+  .weight-set-btn {
+    font-size: .78rem; padding: 3px 10px; border-radius: 20px;
+    border: 1.5px solid var(--primary); color: var(--primary);
+    background: var(--primary-light); cursor: pointer; font-weight: 600;
+    transition: all .15s; white-space: nowrap; margin-left: 6px;
+  }
+  .weight-set-btn:hover { background: var(--primary); color: #fff; }
+  /* 方案卡权重分 */
+  .plan-weight-score { font-size: .78rem; color: #f59e0b; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -1201,6 +1280,29 @@
     </div>
   </div>
 
+  <!-- 权重设置弹窗 -->
+  <div id="weightOverlay" class="weight-overlay" style="display:none;" onclick="closeWeightModal()">
+    <div class="weight-modal" onclick="event.stopPropagation()">
+      <div class="weight-modal-header">
+        <div class="weight-modal-title">⚖️ 自定义时段权重</div>
+        <button class="weight-modal-close" onclick="closeWeightModal()">✕</button>
+      </div>
+      <div class="weight-modal-body">
+        <div class="weight-modal-hint">
+          为每个时段（包括子课程）设置喜好权重（1–10）。排课时，将优先展示<strong>总权重最高</strong>的方案。<br>
+          ⭐ 越多星代表越喜欢这个时段，默认为 5。
+        </div>
+        <div id="weightCourseList">
+          <div style="color:var(--text-muted);font-size:.88rem;text-align:center;padding:24px 0;">暂无课程，请先添加课程和时段</div>
+        </div>
+      </div>
+      <div class="weight-modal-footer">
+        <button class="btn btn-outline btn-sm" onclick="resetAllWeights()">重置全部</button>
+        <button class="btn btn-primary btn-sm" onclick="closeWeightModal()">完成</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 编辑账号弹窗 -->
   <div id="editAccountModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;justify-content:center;align-items:center;">
     <div style="background:#fff;border-radius:12px;padding:24px;width:340px;max-width:90%;">
@@ -1312,6 +1414,13 @@
               </label>
               <div class="filter-label">地点优先排序<span>相邻课程地点越近越靠前</span></div>
             </div>
+            <div class="filter-row">
+              <label class="toggle">
+                <input type="checkbox" id="weightPriority" onchange="runSchedule()">
+                <span class="slider"></span>
+              </label>
+              <div class="filter-label">自定义权重排序<span>总权重越高越靠前</span><button class="weight-set-btn" onclick="openWeightModal()">⚖️ 设置权重</button></div>
+            </div>
             <div class="max-display-row">
               <label>最多显示</label>
               <input type="number" id="maxDisplay" value="20" min="1" max="999" onchange="runSchedule()">
@@ -1392,6 +1501,13 @@
                 <span class="slider"></span>
               </label>
               <div class="filter-label">地点优先排序<span>相邻课程地点越近越靠前</span></div>
+            </div>
+            <div class="filter-row">
+              <label class="toggle">
+                <input type="checkbox" id="weightPriority2" onchange="runSchedule2()">
+                <span class="slider"></span>
+              </label>
+              <div class="filter-label">自定义权重排序<span>总权重越高越靠前</span><button class="weight-set-btn" onclick="openWeightModal()">⚖️ 设置权重</button></div>
             </div>
             <div class="max-display-row">
               <label>最多显示</label>
@@ -2270,6 +2386,119 @@ function delSubSection(code, secId, subName, subId) {
   renderCourseList();
 }
 
+// ─── 权重管理 ────────────────────────────
+// weightMap: { [sectionId_or_subId]: number(1-10) }
+// 权重存储在 localStorage，key = "scheduler_weights"
+const WEIGHT_KEY = "scheduler_weights";
+let weightMap = {};
+
+function loadWeights() {
+  try { weightMap = JSON.parse(localStorage.getItem(WEIGHT_KEY)) || {}; } catch(e) { weightMap = {}; }
+}
+function saveWeights() {
+  localStorage.setItem(WEIGHT_KEY, JSON.stringify(weightMap));
+}
+function getWeight(id) {
+  const v = weightMap[id];
+  return (v !== undefined && v >= 1 && v <= 10) ? v : 5;
+}
+function setWeight(id, v) {
+  const n = Math.min(10, Math.max(1, Math.round(Number(v))));
+  if (!isNaN(n)) { weightMap[id] = n; saveWeights(); }
+}
+
+// 计算一个方案的总权重
+function planWeightScore(plan) {
+  let total = 0;
+  plan.forEach(e => {
+    total += getWeight(e.sec.sectionId);
+    e.subs.forEach(ss => { total += getWeight(ss.subId); });
+  });
+  return total;
+}
+
+// 打开权重设置弹窗
+function openWeightModal() {
+  renderWeightModal();
+  document.getElementById("weightOverlay").style.display = "flex";
+}
+function closeWeightModal() {
+  document.getElementById("weightOverlay").style.display = "none";
+}
+function resetAllWeights() {
+  if (!confirm("确定要重置所有时段权重为 5 吗？")) return;
+  weightMap = {};
+  saveWeights();
+  renderWeightModal();
+}
+
+// 渲染权重弹窗内容
+function renderWeightModal() {
+  const codes = Object.keys(courses);
+  const el = document.getElementById("weightCourseList");
+  if (!codes.length) {
+    el.innerHTML = `<div style="color:var(--text-muted);font-size:.88rem;text-align:center;padding:24px 0;">暂无课程，请先添加课程和时段</div>`;
+    return;
+  }
+  el.innerHTML = codes.map(code => {
+    const secs = courses[code];
+    if (!secs.length) return `<div class="weight-course-block"><div class="weight-course-title">📘 ${code}</div><div style="font-size:.8rem;color:var(--text-muted);padding:2px 4px 6px;">暂无时段</div></div>`;
+    const rows = secs.map(sec => {
+      const secW = getWeight(sec.sectionId);
+      let subRows = "";
+      sec.subNames().forEach(name => {
+        sec.subList(name).forEach(ss => {
+          const ssW = getWeight(ss.subId);
+          subRows += `<div class="weight-row" style="padding-left:18px;">
+            <div class="weight-row-label">↳ <b>${ss.subName}</b> ${ss.subId.replace(sec.sectionId+"-","")} <small>${ss.daysStr()} ${ss.startStr}-${ss.endStr} ${ss.location}</small></div>
+            <div class="weight-input-wrap">
+              <div class="weight-stars" id="stars-${_escId(ss.subId)}">${_renderStars(ssW, ss.subId)}</div>
+              <input class="weight-input" type="number" min="1" max="10" value="${ssW}" data-wid="${_escHtml(ss.subId)}"
+                oninput="onWeightInput(this)" onchange="onWeightInput(this)">
+            </div>
+          </div>`;
+        });
+      });
+      return `<div class="weight-row">
+        <div class="weight-row-label"><b>${sec.sectionId.replace(code+"-","")}</b> <small>${sec.daysStr()} ${sec.startStr}-${sec.endStr} ${sec.location}</small></div>
+        <div class="weight-input-wrap">
+          <div class="weight-stars" id="stars-${_escId(sec.sectionId)}">${_renderStars(secW, sec.sectionId)}</div>
+          <input class="weight-input" type="number" min="1" max="10" value="${secW}" data-wid="${_escHtml(sec.sectionId)}"
+            oninput="onWeightInput(this)" onchange="onWeightInput(this)">
+        </div>
+      </div>${subRows}`;
+    }).join("");
+    return `<div class="weight-course-block"><div class="weight-course-title">📘 ${code}</div>${rows}</div>`;
+  }).join("");
+}
+
+// 把 id 中的特殊字符替换为 _ 以便用作 DOM id
+function _escId(id) { return id.replace(/[^a-zA-Z0-9]/g, "_"); }
+
+// 渲染星星（1-10 映射到 5 个星，每颗星=2分，半颗=1分，用整颗代替）
+function _renderStars(w, id) {
+  return [1,2,3,4,5,6,7,8,9,10].map(i =>
+    `<span class="weight-star${i<=w?" on":""}" onclick="onStarClick('${_escHtml(id)}',${i})">★</span>`
+  ).join("");
+}
+
+function onStarClick(id, v) {
+  setWeight(id, v);
+  // 刷新这行星星
+  const starsEl = document.getElementById("stars-" + _escId(id));
+  if (starsEl) starsEl.innerHTML = _renderStars(getWeight(id), id);
+  // 同步输入框
+  const input = document.querySelector(`.weight-input[data-wid="${id}"]`);
+  if (input) input.value = getWeight(id);
+}
+
+function onWeightInput(el) {
+  const id = el.dataset.wid;
+  setWeight(id, el.value);
+  const starsEl = document.getElementById("stars-" + _escId(id));
+  if (starsEl) starsEl.innerHTML = _renderStars(getWeight(id), id);
+}
+
 // ─── 评分与冲突 ──────────────────────────
 function locDist(a,b){ const i=LOC_INDEX[a],j=LOC_INDEX[b]; return (i==null||j==null)?0:Math.abs(i-j); }
 
@@ -2294,7 +2523,7 @@ function locScore(plan){
   return total;
 }
 
-function score(plan,tp,lp){ return [tp?timeScore(plan):0, lp?locScore(plan):0]; }
+function score(plan,tp,lp,wp){ return [tp?timeScore(plan):0, lp?locScore(plan):0, wp?-planWeightScore(plan):0]; }
 
 function noConflict(plan){
   const all = allSections(plan);
@@ -2339,6 +2568,7 @@ function schedule(suffix){
   const noNoon=document.getElementById("noNoon"+s).checked;
   const tp=document.getElementById("timePriority"+s).checked;
   const lp=document.getElementById("locPriority"+s).checked;
+  const wp=document.getElementById("weightPriority"+s).checked;
   const codes=Object.keys(courses);
   // filtered[i] = 对第 i 门课过滤后的 Section 列表
   const filtered=codes.map(c=>courses[c].filter(s=>
@@ -2366,7 +2596,12 @@ function schedule(suffix){
     }
   }
   cartesian(0,[]);
-  plans.sort((a,b)=>{ const sa=score(a,tp,lp),sb=score(b,tp,lp); if(sa[0]!==sb[0]) return sa[0]-sb[0]; return sa[1]-sb[1]; });
+  plans.sort((a,b)=>{
+    const sa=score(a,tp,lp,wp), sb=score(b,tp,lp,wp);
+    if(sa[0]!==sb[0]) return sa[0]-sb[0];
+    if(sa[1]!==sb[1]) return sa[1]-sb[1];
+    return sa[2]-sb[2];
+  });
   return plans;
 }
 
@@ -2425,9 +2660,10 @@ function renderResults(plans, suffix){
   const max=parseInt(document.getElementById("maxDisplay"+s).value)||999;
   const tp=document.getElementById("timePriority"+s).checked;
   const lp=document.getElementById("locPriority"+s).checked;
+  const wp=document.getElementById("weightPriority"+s).checked;
   const display=plans.slice(0,max);
   if(!plans.length){ el.innerHTML=`<div class="results-summary empty">无满足条件的方案</div><div class="empty-state"><div class="emoji">😔</div>没有找到可行方案<br><small>尝试放宽筛选条件或增加时段</small></div>`; return; }
-  const showScores=tp||lp;
+  const showScores=tp||lp||wp;
   el.innerHTML=`<div class="results-summary">共找到 ${plans.length} 个可行方案${plans.length>max?"，显示前 "+max+" 个":""}</div>
     ${display.map((plan,i)=>{
       // plan = [{sec, subs}, ...]
@@ -2441,7 +2677,11 @@ function renderResults(plans, suffix){
       const bodyHtml = plan.map(e=>{
         return e.sec.toRowHTML() + e.subs.map(ss=>ss.toRowHTML()).join("");
       }).join("");
-      const scoreHtml = showScores ? `<span class="plan-scores">${tp?"时间分="+timeScore(plan).toFixed(1):""}${tp&&lp?" | ":""}${lp?"地点分="+locScore(plan):""}</span>` : "";
+      const scoreParts = [];
+      if (tp) scoreParts.push("时间分="+timeScore(plan).toFixed(1));
+      if (lp) scoreParts.push("地点分="+locScore(plan));
+      if (wp) scoreParts.push(`<span class="plan-weight-score">⚖️ 权重=${planWeightScore(plan)}</span>`);
+      const scoreHtml = showScores ? `<span class="plan-scores">${scoreParts.join(" | ")}</span>` : "";
       return `<div class="plan-card"><div class="plan-header"><span>方案 ${i+1}</span>${scoreHtml}</div>
     <div class="plan-summary">${tagHtml}</div>
     <div class="plan-body">${bodyHtml}</div></div>`;
@@ -2593,6 +2833,7 @@ function loadCourses(){
 
 (function init(){
   loadAccounts();
+  loadWeights();
   // 如果本地还没有账号，预设 NC1 账号（无限制额度，2026-05-25 过期）
   if(!accounts.length){
     accounts.push({ username:"NC1", password:"NC1", expire:"2026-05-25", quota:999, used:0 });

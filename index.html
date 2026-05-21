@@ -1419,6 +1419,38 @@
     </div>
   </div>
 
+  <!-- 通知编辑弹窗（管理端） -->
+  <div id="notifEditOverlay" class="notif-detail-overlay" style="display:none;" onclick="closeNotifEditModal()">
+    <div class="notif-detail-modal" onclick="event.stopPropagation()" style="max-height:90vh;">
+      <div class="notif-detail-header">
+        <div class="notif-detail-title" data-i18n="notif.editTitle">✏️ 编辑通知</div>
+        <button class="notif-detail-close" title="关闭" onclick="closeNotifEditModal()">✕</button>
+      </div>
+      <div style="padding:20px 24px;overflow-y:auto;">
+        <div class="form-group" style="margin-bottom:12px;">
+          <label data-i18n="notif.labelZhTitle">中文标题</label>
+          <input type="text" id="editNotifTitle" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;">
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label data-i18n="notif.labelZhContent">中文内容</label>
+          <textarea id="editNotifContent" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;min-height:80px;resize:vertical;"></textarea>
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label data-i18n="notif.labelEnTitle">English Title</label>
+          <input type="text" id="editNotifEnTitle" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;">
+        </div>
+        <div class="form-group" style="margin-bottom:16px;">
+          <label data-i18n="notif.labelEnContent">English Content</label>
+          <textarea id="editNotifEnContent" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;min-height:80px;resize:vertical;"></textarea>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary" onclick="saveNotifEdit()" style="flex:1;" data-i18n="dialog.save">保存</button>
+          <button class="btn btn-outline" onclick="closeNotifEditModal()" style="flex:1;" data-i18n="dialog.cancel">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 权重设置弹窗 -->
   <div id="weightOverlay" class="weight-overlay" style="display:none;" onclick="closeWeightModal()">
     <div class="weight-modal" onclick="event.stopPropagation()">
@@ -1432,12 +1464,12 @@
           <span data-i18n="weight.stars">⭐ 越多星代表越喜欢这个时段，默认为 5。</span>
         </div>
         <div id="weightCourseList">
-          <div style="color:var(--text-muted);font-size:.88rem;text-align:center;padding:24px 0;">暂无课程，请先添加课程和时段</div>
+          <div style="color:var(--text-muted);font-size:.88rem;text-align:center;padding:24px 0;" data-i18n="weight.empty">暂无课程，请先添加课程和时段</div>
         </div>
       </div>
       <div class="weight-modal-footer">
-        <button class="btn btn-outline btn-sm" onclick="resetAllWeights()">重置全部</button>
-        <button class="btn btn-primary btn-sm" onclick="closeWeightModal()">完成</button>
+        <button class="btn btn-outline btn-sm" onclick="resetAllWeights()">${T("btn.resetAll")}</button>
+        <button class="btn btn-primary btn-sm" onclick="closeWeightModal()">${T("btn.done")}</button>
       </div>
     </div>
   </div>
@@ -1987,6 +2019,18 @@ function _genNotifId() { return "n_" + Date.now().toString(36) + Math.random().t
 // 获取类型图标
 function _notifIcon(type) { return { warning:"🔔", info:"ℹ️", success:"✅", danger:"🚨" }[type] || "🔔"; }
 
+// 根据当前语言获取通知标题/内容（英文不存在时回退中文）
+function getNotifTitle(n) {
+  var lang = localStorage.getItem("wb_lang") || "zh";
+  if (lang === "en" && n.enTitle) return n.enTitle;
+  return n.title || T("notif.noTitle");
+}
+function getNotifContent(n) {
+  var lang = localStorage.getItem("wb_lang") || "zh";
+  if (lang === "en" && n.enContent) return n.enContent;
+  return n.content || "";
+}
+
 // ── 通知页面（用户入口）────────────────
 function toggleNotifPage() {
   const page = document.getElementById("notifPage");
@@ -2030,11 +2074,11 @@ function renderNotifPage() {
       <div class="notif-page-card" style="cursor:pointer;" onclick="openNotifDetail('${_escHtml(n.id)}')">
         <div class="notif-page-card-header">
           <div class="notif-page-card-title">
-            ${_escHtml(n.title || T('notif.noTitle'))}
+            ${_escHtml(getNotifTitle(n))}
           </div>
           <div class="notif-page-card-time">${_formatNotifTime(n.createdAt)}</div>
         </div>
-        <div class="notif-page-card-body">${_escHtml(n.content)}</div>
+        <div class="notif-page-card-body">${_escHtml(getNotifContent(n))}</div>
       </div>
     `).join("")}`;
 }
@@ -2054,7 +2098,7 @@ function openNotifDetail(id) {
   }
 
   // 填充内容
-  document.getElementById("notifDetailTitle").textContent = n.title || T("notif.noTitle");
+  document.getElementById("notifDetailTitle").textContent = getNotifTitle(n);
 
   const typeSpan = document.getElementById("notifDetailType");
   typeSpan.textContent = (_notifIcon(n.type) || "🔔") + " ";
@@ -2063,7 +2107,7 @@ function openNotifDetail(id) {
   document.getElementById("notifDetailTime").textContent = _formatNotifTime(n.createdAt);
 
   // 转义 HTML 并将换行符转为 <br>
-  const body = _escHtml(n.content || "").replace(/\n/g, "<br>");
+  const body = _escHtml(getNotifContent(n)).replace(/\n/g, "<br>");
   document.getElementById("notifDetailBody").innerHTML = body;
 
   document.getElementById("notifDetailOverlay").style.display = "flex";
@@ -2582,7 +2626,7 @@ function renderNotifAdmin() {
   const listHtml = list.length ? list.map(n => `
     <div class="notif-record" onclick="openNotifEditDialog('${n.id}')">
       <span class="rec-icon">🔔</span>
-      <span class="rec-title">${_escHtml(n.title || n.content || T('notif.untitled'))}</span>
+      <span class="rec-title">${_escHtml(getNotifTitle(n) || getNotifContent(n) || T('notif.untitled'))}</span>
       <div class="rec-actions" onclick="event.stopPropagation()">
         <button class="btn-del" onclick="deleteNotif('${n.id}')" title="${T('notif.withdraw')}">🗑️</button>
       </div>
@@ -2594,10 +2638,23 @@ function renderNotifAdmin() {
       <div style="font-size:.8rem;font-weight:600;color:var(--text-muted);margin-bottom:4px;" data-i18n="notif.sendNew">+ 发送新通知</div>
       <input type="text" id="newNotifTitle" placeholder="通知标题（可选）" maxlength="50" data-i18n-placeholder="notif.titlePlaceholder">
       <textarea id="newNotifContent" placeholder="通知内容（必填）" style="min-height:50px;resize:none;font-size:.82rem;padding:6px 8px;" maxlength="500" data-i18n-placeholder="notif.contentPlaceholder"></textarea>
+      <input type="text" id="newNotifEnTitle" placeholder="English title (optional)" maxlength="50" data-i18n-placeholder="notif.enTitlePlaceholder">
+      <textarea id="newNotifEnContent" placeholder="English content (optional)" style="min-height:50px;resize:none;font-size:.82rem;padding:6px 8px;" maxlength="500" data-i18n-placeholder="notif.enContentPlaceholder"></textarea>
       <button class="btn btn-primary" onclick="addNotif()" style="width:100%;margin:0;" data-i18n="notif.send">发送通知</button>
     </div>
     <div class="notif-list">${listHtml}</div>
   `;
+  // 翻译动态生成的表单元素
+  area.querySelectorAll("[data-i18n]").forEach(function(el) {
+    var key = el.getAttribute("data-i18n");
+    var text = window.T(key);
+    if (text !== key) el.textContent = text;
+  });
+  area.querySelectorAll("[data-i18n-placeholder]").forEach(function(el) {
+    var key = el.getAttribute("data-i18n-placeholder");
+    var text = window.T(key);
+    if (text !== key) el.setAttribute("placeholder", text);
+  });
 }
 
 // 添加通知
@@ -2605,25 +2662,47 @@ function addNotif() {
   const title = document.getElementById("newNotifTitle").value.trim();
   const content = document.getElementById("newNotifContent").value.trim();
   if (!content) { alert(T("alert.enterNotifContent")); return; }
+  const enTitle = (document.getElementById("newNotifEnTitle")?.value || "").trim();
+  const enContent = (document.getElementById("newNotifEnContent")?.value || "").trim();
   const list = getNotifs();
-  list.unshift({ id: _genNotifId(), title, content, enabled: true, read: false, createdAt: Date.now() });
+  list.unshift({ id: _genNotifId(), title, content, enTitle, enContent, enabled: true, read: false, createdAt: Date.now() });
   saveNotifs(list);
   renderNotifAdmin();
   updateNotifBadge();
 }
+
+// 当前正在编辑的通知ID
+let _editingNotifId = null;
 
 // 打开通知编辑弹窗
 function openNotifEditDialog(id) {
   const list = getNotifs();
   const n = list.find(x => x.id === id);
   if (!n) return;
-  const newTitle = prompt(T("prompt.editTitle"), n.title || "");
-  if (newTitle === null) return;
-  const newContent = prompt(T("prompt.editContent"), n.content);
-  if (newContent === null) return;
-  n.title = newTitle.trim();
-  n.content = newContent.trim();
+  _editingNotifId = id;
+  document.getElementById("editNotifTitle").value = n.title || "";
+  document.getElementById("editNotifContent").value = n.content || "";
+  document.getElementById("editNotifEnTitle").value = n.enTitle || "";
+  document.getElementById("editNotifEnContent").value = n.enContent || "";
+  document.getElementById("notifEditOverlay").style.display = "flex";
+}
+
+function closeNotifEditModal() {
+  document.getElementById("notifEditOverlay").style.display = "none";
+  _editingNotifId = null;
+}
+
+function saveNotifEdit() {
+  if (!_editingNotifId) return;
+  const list = getNotifs();
+  const n = list.find(x => x.id === _editingNotifId);
+  if (!n) return;
+  n.title = document.getElementById("editNotifTitle").value.trim();
+  n.content = document.getElementById("editNotifContent").value.trim();
+  n.enTitle = document.getElementById("editNotifEnTitle").value.trim();
+  n.enContent = document.getElementById("editNotifEnContent").value.trim();
   saveNotifs(list);
+  closeNotifEditModal();
   renderNotifAdmin();
 }
 
@@ -3225,7 +3304,7 @@ function renderCourseList(){
       <div class="course-card-header">
         <span class="course-code">${code}</span>
         <div>
-          <button class="btn btn-outline btn-sm" onclick="showSectionInput('${code}')">+ 时段</button>
+          <button class="btn btn-outline btn-sm" onclick="showSectionInput('${code}')">+ ${T("btn.session")}</button>
           <button class="btn btn-danger btn-sm" onclick="delCourse('${code}')">${T("btn.delete")}</button>
         </div>
       </div>
@@ -3273,9 +3352,11 @@ function renderResults(plans, suffix){
   const lp=document.getElementById("locPriority"+s).checked;
   const wp=document.getElementById("weightPriority"+s).checked;
   const display=plans.slice(0,max);
-  if(!plans.length){ el.innerHTML=`<div class="results-summary empty">无满足条件的方案</div><div class="empty-state"><div class="emoji">😔</div>没有找到可行方案<br><small>尝试放宽筛选条件或增加时段</small></div>`; return; }
+  if(!plans.length){ el.innerHTML=`<div class="results-summary empty">${T("results.noPlans")}</div><div class="empty-state"><div class="emoji">😔</div>${T("results.noPlansFound")}<br><small>${T("results.relaxFilters")}</small></div>`; return; }
   const showScores=tp||lp||wp;
-  el.innerHTML=`<div class="results-summary">共找到 ${plans.length} 个可行方案${plans.length>max?"，显示前 "+max+" 个":""}</div>
+  const totalText = T("results.totalPlans").replace("{n}", plans.length);
+  const showingText = plans.length>max ? T("results.showingTop").replace("{n}", max) : "";
+  el.innerHTML=`<div class="results-summary">${totalText}${showingText}</div>
     ${display.map((plan,i)=>{
       // plan = [{sec, subs}, ...]
       // 摘要标签：主时段 + 各子时段
@@ -3292,16 +3373,16 @@ function renderResults(plans, suffix){
       const priorityArr = sortPriority[s];
       priorityArr.forEach((key, rank) => {
         const rankTag = priorityArr.length > 1 ? `<sup style="color:var(--primary);font-size:.65rem">P${rank+1}</sup>` : "";
-        if (key === "tp") scoreParts.push(`时间分${rankTag}=${timeScore(plan).toFixed(1)}`);
-        if (key === "lp") scoreParts.push(`地点分${rankTag}=${locScore(plan)}`);
-        if (key === "wp") scoreParts.push(`<span class="plan-weight-score">⚖️权重${rankTag}=${planWeightScore(plan)}</span>`);
+        if (key === "tp") scoreParts.push(`${T("results.timeLabel")}${rankTag}=${timeScore(plan).toFixed(1)}`);
+        if (key === "lp") scoreParts.push(`${T("results.locLabel")}${rankTag}=${locScore(plan)}`);
+        if (key === "wp") scoreParts.push(`<span class="plan-weight-score">⚖️${T("results.weightLabel")}${rankTag}=${planWeightScore(plan)}</span>`);
       });
       const scoreHtml = showScores ? `<span class="plan-scores">${scoreParts.join(" | ")}</span>` : "";
-      return `<div class="plan-card"><div class="plan-header"><span>方案 ${i+1}</span>${scoreHtml}</div>
+      return `<div class="plan-card"><div class="plan-header"><span>${T("results.planLabel").replace("{n}", i+1)}</span>${scoreHtml}</div>
     <div class="plan-summary">${tagHtml}</div>
     <div class="plan-body">${bodyHtml}</div></div>`;
     }).join("")}
-    ${plans.length>max?`<div style="text-align:center;color:#94a3b8;font-size:0.85rem;padding:8px">... 还有 ${plans.length-max} 个方案</div>`:""}`;
+    ${plans.length>max?`<div style="text-align:center;color:#94a3b8;font-size:0.85rem;padding:8px">${T("results.morePlans").replace("{n}", plans.length-max)}</div>`:""}`;
 }
 
 function addCourse(){
@@ -3506,12 +3587,16 @@ function loadCourses(){
 
     // 公告1：1.1.0版本更新（原1.7版本更新，更新标题和内容）
     // 迁移：如果旧ID存在，更新其ID、标题和内容；否则如果新ID不存在，添加新公告
+    const _v110EnTitle = "Version 1.1.0 Update";
+    const _v110EnContent = "To optimize user experience and long-term development, the system has been updated to version 1.1.0 with the following changes:\n1. New Notification Panel: Users can now view update announcements and other info;\n2. New Sub-course Option: After creating a course, users can link sub-courses (e.g., Lec & Tut) to any session. The scheduler will consider linked courses for more reasonable timetables;\n3. Improved Time & Location Selection: Time selection now uses a scroll wheel or manual input; location selection offers direct clicking (on-campus) or manual entry (off-campus);\n4. New Location Options: Added ABE location. When sorting by location priority, its calculation is similar to TA, but the distance to TA is 1;\n5. New Custom Exclusion Options: Users can exclude specific times or locations;\n6. Improved Page Layout: Optimized for different window ratios;\n7. New Usage Quota: To prevent account sharing, each schedule calculation consumes one quota. Contact admin when quota runs out.";
     const _v110Idx = _existing.findIndex(n => n.id === "n_builtin_v17_update");
     if (_v110Idx !== -1) {
       // 存在旧公告，更新ID、标题和内容，保持原发送时间
       _existing[_v110Idx].id = "n_builtin_v110_update";
       _existing[_v110Idx].title = "1.1.0版本更新";
       _existing[_v110Idx].content = "为优化用户体验和长久发展，本系统进行1.1.0版本更新，更新内容如下：\n1.新增公告栏：用户可以查看更新公告等信息；\n2.新增子课程选项：用户可以在新建完某一课程后在任一时段后链接子课程（如Lec&tut）,排课会考虑到链接课程，增加排课合理性；\n3.优化时间地点选择方式：新增时段时将时间选择优化为滚轮滑动或手动输入，将地点选择优化为直接点击（校内）或手动输入（供校外自定义）；\n4.地点选项增加：新增ABE地点，地点优先排序时其计算与TA同理，但本身与TA距离为1；\n5.新增自定义排除选项：用户可以自定义不想上的时间或地点进行筛选；\n6.优化页面布局：优化不同窗口比例，使布局更加合理；\n7.新增使用额度：为避免同一账号多人使用，新增使用额度，每次计算方案会消耗一次使用额度，额度耗尽请联系管理员。";
+      _existing[_v110Idx].enTitle = _v110EnTitle;
+      _existing[_v110Idx].enContent = _v110EnContent;
       _existing[_v110Idx].type = "warning";
     } else if (!_existing.some(n => n.id === "n_builtin_v110_update")) {
       // 不存在旧公告，也不存在新ID，添加新公告
@@ -3519,6 +3604,8 @@ function loadCourses(){
         id: "n_builtin_v110_update",
         title: "1.1.0版本更新",
         content: "为优化用户体验和长久发展，本系统进行1.1.0版本更新，更新内容如下：\n1.新增公告栏：用户可以查看更新公告等信息；\n2.新增子课程选项：用户可以在新建完某一课程后在任一时段后链接子课程（如Lec&tut）,排课会考虑到链接课程，增加排课合理性；\n3.优化时间地点选择方式：新增时段时将时间选择优化为滚轮滑动或手动输入，将地点选择优化为直接点击（校内）或手动输入（供校外自定义）；\n4.地点选项增加：新增ABE地点，地点优先排序时其计算与TA同理，但本身与TA距离为1；\n5.新增自定义排除选项：用户可以自定义不想上的时间或地点进行筛选；\n6.优化页面布局：优化不同窗口比例，使布局更加合理；\n7.新增使用额度：为避免同一账号多人使用，新增使用额度，每次计算方案会消耗一次使用额度，额度耗尽请联系管理员。",
+        enTitle: _v110EnTitle,
+        enContent: _v110EnContent,
         enabled: true,
         read: false,
         createdAt: Date.now(),
@@ -3527,11 +3614,15 @@ function loadCourses(){
     }
 
     // 公告2：第一轮内测反馈
+    const _beta1EnTitle = "First Beta Feedback";
+    const _beta1EnContent = "Welcome beta testers to report bugs or suggest optimizations! All feedback that gets adopted will be rewarded with a premium public-beta account (super long duration & super high quota^^)! Feedback: WeChat Ablu6669";
     if (!_existing.some(n => n.id === "n_builtin_beta_feedback")) {
       _existing.unshift({
         id: "n_builtin_beta_feedback",
         title: "第一轮内测反馈",
         content: "欢迎各位内测用户向开发者反馈bug或优化建议！所有反馈一经采纳将获得公测高级账号（超长时间超高额度^^）！反馈方式：微信号 Ablu6669",
+        enTitle: _beta1EnTitle,
+        enContent: _beta1EnContent,
         enabled: true,
         read: false,
         createdAt: Date.now(),
@@ -3540,17 +3631,23 @@ function loadCourses(){
     }
 
     // 公告3：1.2.1版本更新
+    const _v121EnTitle = "Version 1.2.1 Update";
+    const _v121EnContent = "To optimize user experience and long-term development, the system improved version numbering and was updated to 1.2.1:\n1. Improved Notification Viewing: Users can tap a notification in My Notifications to enlarge it fullscreen;\n2. Fixed Multi-device Sync Issue: Urgently fixed an issue where notifications published from one admin session didn't sync to other sessions. Restored a clean version and implemented an alternative publishing method;\n3. Optimized Version Numbering: Each test = 1, each content update = 0.1, each bugfix = 0.01. Calculated upon release.";
     const _v121Idx = _existing.findIndex(n => n.id === "n_builtin_v121_update");
     if (_v121Idx !== -1) {
       // 已存在，更新内容（修正错别字等）
       _existing[_v121Idx].title = "1.2.1版本更新";
       _existing[_v121Idx].content = "为优化用户体验和长久发展，本系统优化了版本号计算方式并进行1.2.1版本更新，更新内容如下：\n1. 优化通知查看：用户可以在我的通知页面再次点击某一通知进行全屏放大，便于用户查看；\n2. 修复多端发布不同步问题：夜间紧急修复某一端登录管理员账号发布通知其他端无法同时更新问题，紧急恢复未被增生BUG污染版本并采取其他方式实现发布内容；\n3. 优化版本号计算方式：将每次测试定为1，每次内容更新定为0.1，每次debug定为0.01，计算时以发布为准。";
+      _existing[_v121Idx].enTitle = _v121EnTitle;
+      _existing[_v121Idx].enContent = _v121EnContent;
       _existing[_v121Idx].type = "info";
     } else {
       _existing.push({
         id: "n_builtin_v121_update",
         title: "1.2.1版本更新",
         content: "为优化用户体验和长久发展，本系统优化了版本号计算方式并进行1.2.1版本更新，更新内容如下：\n1. 优化通知查看：用户可以在我的通知页面再次点击某一通知进行全屏放大，便于用户查看；\n2. 修复多端发布不同步问题：夜间紧急修复某一端登录管理员账号发布通知其他端无法同时更新问题，紧急恢复未被增生BUG污染版本并采取其他方式实现发布内容；\n3. 优化版本号计算方式：将每次测试定为1，每次内容更新定为0.1，每次debug定为0.01，计算时以发布为准。",
+        enTitle: _v121EnTitle,
+        enContent: _v121EnContent,
         enabled: true,
         read: false,
         createdAt: Date.now(),
@@ -3559,16 +3656,22 @@ function loadCourses(){
     }
 
     // 公告4：1.3.1版本更新
+    const _v131EnTitle = "Version 1.3.1 Update";
+    const _v131EnContent = "To optimize user experience and long-term development, the system was updated to 1.3.1:\n1. New Custom Weight Sorting: Users can set preference weights (1–10) for each session of every course (e.g., based on professor preference). When enabled, schedules are sorted by total weight;\n2. New Multi-filter Priority Sorting: When multiple filters are active, users can adjust their priority order;\n3. Fixed Auto-update Schedule Bug: Urgently fixed a bug where changing filter options automatically triggered schedule recalculation and consumed quota. Prevents accidental quota waste;\n4. New User Guide: Users can find a User Guide in the top navigation bar with detailed feature introductions.";
     const _v131Idx = _existing.findIndex(n => n.id === "n_builtin_v131_update");
     if (_v131Idx !== -1) {
       _existing[_v131Idx].title = "1.3.1版本更新";
       _existing[_v131Idx].content = "为优化用户体验和长久发展，本系统进行1.3.1版本更新，更新内容如下：\n1.新增自定义权重排序选项：用户可以给每门课程的每个时段设置权重（比如根据对授课教授的喜爱程度等），选择该选项之后系统会根据方案总权重进行排序；\n2.新增多筛选选项优先级排序：当多个筛选项同时开启时，用户可以进行优先级排序；\n3.修复自动更新方案问题：夜间紧急修复用户更改筛选选项系统自动输出最新方案并扣除使用额度的BUG，避免造成用户额度浪费；\n4.新增使用说明：用户可以在顶部导航栏找到使用说明并查看所有功能的详细介绍；";
+      _existing[_v131Idx].enTitle = _v131EnTitle;
+      _existing[_v131Idx].enContent = _v131EnContent;
       _existing[_v131Idx].type = "info";
     } else {
       _existing.unshift({
         id: "n_builtin_v131_update",
         title: "1.3.1版本更新",
         content: "为优化用户体验和长久发展，本系统进行1.3.1版本更新，更新内容如下：\n1.新增自定义权重排序选项：用户可以给每门课程的每个时段设置权重（比如根据对授课教授的喜爱程度等），选择该选项之后系统会根据方案总权重进行排序；\n2.新增多筛选选项优先级排序：当多个筛选项同时开启时，用户可以进行优先级排序；\n3.修复自动更新方案问题：夜间紧急修复用户更改筛选选项系统自动输出最新方案并扣除使用额度的BUG，避免造成用户额度浪费；\n4.新增使用说明：用户可以在顶部导航栏找到使用说明并查看所有功能的详细介绍；",
+        enTitle: _v131EnTitle,
+        enContent: _v131EnContent,
         enabled: true,
         read: false,
         createdAt: Date.now(),
@@ -3577,16 +3680,22 @@ function loadCourses(){
     }
 
     // 公告5：第二轮内测开启
+    const _beta2EnTitle = "Second Beta Round Open";
+    const _beta2EnContent = "After the first beta round, the system has been optimized through three versions. Huge thanks to friends who provided positive suggestions during the first beta! The second beta round is now officially open. Welcome beta users to report bugs or suggest optimizations! All adopted feedback will be rewarded with a premium public-beta account (super long duration & super high quota^^)!\nFeedback: Email 15562886669@163.com";
     const _beta2Idx = _existing.findIndex(n => n.id === "n_builtin_beta2_open");
     if (_beta2Idx !== -1) {
       _existing[_beta2Idx].title = "第二轮内测开启";
       _existing[_beta2Idx].content = "经过第一轮内测，本系统进行了三个版本的优化，非常感谢在第一轮内测中提出积极改进建议的朋友们！同时我们第二轮内测正式开启，欢迎各位内测用户向开发者反馈bug或优化建议！所有反馈一经采纳将获得公测高级账号（超长时间超高额度^^）！\n反馈方式：邮箱15562886669@163.com";
+      _existing[_beta2Idx].enTitle = _beta2EnTitle;
+      _existing[_beta2Idx].enContent = _beta2EnContent;
       _existing[_beta2Idx].type = "warning";
     } else {
       _existing.unshift({
         id: "n_builtin_beta2_open",
         title: "第二轮内测开启",
         content: "经过第一轮内测，本系统进行了三个版本的优化，非常感谢在第一轮内测中提出积极改进建议的朋友们！同时我们第二轮内测正式开启，欢迎各位内测用户向开发者反馈bug或优化建议！所有反馈一经采纳将获得公测高级账号（超长时间超高额度^^）！\n反馈方式：邮箱15562886669@163.com",
+        enTitle: _beta2EnTitle,
+        enContent: _beta2EnContent,
         enabled: true,
         read: false,
         createdAt: Date.now(),
@@ -3925,11 +4034,23 @@ window.TRANSLATIONS = {
     "filter.weightSort": "自定义权重排序",
     "filter.weightHint": "总权重越高越靠前",
     "btn.setWeight": "设置权重",
+    "btn.resetAll": "重置全部",
+    "btn.done": "完成",
     "sortPriority.title": "🏆 排序优先级（拖动 ↑↓ 调整）",
     "label.maxDisplay": "最多显示",
     "label.plans": "个方案",
     "exclusion.timeTitle": "🕐 排除指定时间",
     "exclusion.locTitle": "📍 排除指定地点",
+    "results.noPlans": "无满足条件的方案",
+    "results.noPlansFound": "没有找到可行方案",
+    "results.relaxFilters": "尝试放宽筛选条件或增加时段",
+    "results.totalPlans": "共找到 {n} 个可行方案",
+    "results.showingTop": "，显示前 {n} 个",
+    "results.planLabel": "方案 {n}",
+    "results.morePlans": "... 还有 {n} 个方案",
+    "results.timeLabel": "时间分",
+    "results.locLabel": "地点分",
+    "results.weightLabel": "权重",
     "weight.modalTitle": "⚖️ 自定义时段权重",
     "editAccount.title": "✏️ 编辑账号",
     "dialog.addSession": "添加时段",
@@ -3973,6 +4094,14 @@ window.TRANSLATIONS = {
     "notif.untitled": "无标题",
     "notif.withdraw": "撤回",
     "notif.noTitle": "通知",
+    "notif.enTitlePlaceholder": "英文标题（可选）",
+    "notif.enContentPlaceholder": "英文内容（可选）",
+    "notif.editTitle": "✏️ 编辑通知",
+    "notif.labelZhTitle": "中文标题",
+    "notif.labelZhContent": "中文内容",
+    "notif.labelEnTitle": "English Title",
+    "notif.labelEnContent": "English Content",
+    "dialog.save": "保存",
     "alert.timeExcluded": "该时间已排除",
     "alert.timeFormatError": "时间格式错误，请使用 HH:MM 格式（如 08:30）",
     "alert.locExcluded": "该地点已排除",
@@ -4050,11 +4179,23 @@ window.TRANSLATIONS = {
     "filter.weightSort": "Custom weight sort",
     "filter.weightHint": "Higher total weight first",
     "btn.setWeight": "Set weights",
+    "btn.resetAll": "Reset All",
+    "btn.done": "Done",
     "sortPriority.title": "🏆 Sort Priority (drag to adjust)",
     "label.maxDisplay": "Show max",
     "label.plans": "plans",
     "exclusion.timeTitle": "🕐 Exclude specified times",
     "exclusion.locTitle": "📍 Exclude specified locations",
+    "results.noPlans": "No plans meet the criteria",
+    "results.noPlansFound": "No feasible plans found",
+    "results.relaxFilters": "Try relaxing filters or adding more sessions",
+    "results.totalPlans": "Found {n} feasible plans",
+    "results.showingTop": ", showing top {n}",
+    "results.planLabel": "Plan {n}",
+    "results.morePlans": "... {n} more plans",
+    "results.timeLabel": "Time score",
+    "results.locLabel": "Loc score",
+    "results.weightLabel": "Weight",
     "weight.modalTitle": "⚖️ Custom Section Weights",
     "editAccount.title": "✏️ Edit Account",
     "dialog.addSession": "Add Session",
@@ -4098,6 +4239,14 @@ window.TRANSLATIONS = {
     "notif.untitled": "Untitled",
     "notif.withdraw": "Withdraw",
     "notif.noTitle": "Notification",
+    "notif.enTitlePlaceholder": "English title (optional)",
+    "notif.enContentPlaceholder": "English content (optional)",
+    "notif.editTitle": "✏️ Edit Notification",
+    "notif.labelZhTitle": "Chinese Title",
+    "notif.labelZhContent": "Chinese Content",
+    "notif.labelEnTitle": "English Title",
+    "notif.labelEnContent": "English Content",
+    "dialog.save": "Save",
     "alert.timeExcluded": "This time is already excluded",
     "alert.timeFormatError": "Invalid time format. Use HH:MM (e.g. 08:30)",
     "alert.locExcluded": "This location is already excluded",
@@ -4158,6 +4307,11 @@ function applyLanguage(lang) {
     var text = window.T(key);
     if (text !== key) el.setAttribute("placeholder", text);
   });
+  // 通知页面若打开，刷新内容以切换语言
+  var notifPage = document.getElementById("notifPage");
+  if (notifPage && notifPage.style.display !== "none") renderNotifPage();
+  // 管理端通知列表若已渲染，刷新内容
+  if (_notifAdminRendered) renderNotifAdmin();
 }
 
 // 应用保存的语言偏好

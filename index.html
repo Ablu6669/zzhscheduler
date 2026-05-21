@@ -566,6 +566,22 @@
   .section-item:last-child { border-bottom: none; }
   .section-item-row { display: flex; align-items: center; width: 100%; gap: 6px; }
   .section-item-row span { flex: 1; color: var(--text-muted); font-size: 0.82rem; }
+  /* 参与排课勾选框 */
+  .section-schedule-toggle { display: flex; align-items: center; gap: 4px; flex-shrink: 0; cursor: pointer; user-select: none; }
+  .section-schedule-toggle input[type="checkbox"] { display: none; }
+  .section-schedule-check {
+    width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: #fff; transition: all 0.15s; background: var(--primary);
+  }
+  .section-schedule-toggle input[type="checkbox"]:not(:checked) + .section-schedule-check {
+    background: var(--border); border-color: var(--border);
+  }
+  .section-schedule-label { font-size: 0.72rem; color: var(--text-muted); white-space: nowrap; }
+  .section-item.disabled-section { opacity: 0.45; }
+  .section-item.disabled-section .section-item-row span { text-decoration: line-through; }
+  .sub-item.disabled-sub { opacity: 0.45; }
+  .sub-item.disabled-sub span { text-decoration: line-through; }
   .sub-list { width: 100%; padding-left: 14px; margin-top: 4px; }
   .sub-item { display: flex; align-items: center; gap: 6px; padding: 3px 0; border-left: 2px solid var(--success); padding-left: 8px; margin-bottom: 2px; font-size: 0.79rem; color: var(--text-muted); }
   .sub-item span { flex: 1; }
@@ -2826,6 +2842,8 @@ class SubSection {
     this.location = location.toUpperCase();
     this.startStr = _norm(startRaw);
     this.endStr = _norm(endRaw);
+    // 参与排课开关，默认为 true
+    this.enabled = true;
   }
   isEarlyMorning() { return this.start === 8*60+30; }
   isAfternoonFirst() { return this.start === 13*60+30; }
@@ -2852,6 +2870,8 @@ class Section {
     // 结构: { "练习课": [SubSection, SubSection, ...], ... }
     this.subGroups = {};
     this.subCounters = {};
+    // 参与排课开关，默认为 true（新添加的时段默认参与排课）
+    this.enabled = true;
   }
   _toMin(t) { return _toMin(t); }
   _norm(t)   { return _norm(t); }
@@ -2869,11 +2889,21 @@ class Section {
   }
   toListHTML() {
     const secKey = this.sectionId;
+    const enabledChecked = this.enabled ? "checked" : "";
+    const disabledClass = this.enabled ? "" : " disabled-section";
     const subNamesHtml = this.subNames().map(name => {
       const subs = this.subList(name);
-      const subsHtml = subs.map(ss =>
-        `<div class="sub-item"><span>${ss.daysStr()} &nbsp;${ss.startStr}-${ss.endStr} &nbsp;${ss.location}</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('${this.courseCode}','${secKey}','${name}','${ss.subId}')">×</button></div>`
-      ).join("");
+      const subsHtml = subs.map(ss => {
+        const subEnabledChecked = ss.enabled ? "checked" : "";
+        return `<div class="sub-item ${ss.enabled ? '' : 'disabled-sub'}">
+          <label class="section-schedule-toggle" title="${T("label.scheduleToggle")}" style="margin-right:4px;">
+            <input type="checkbox" ${subEnabledChecked} onchange="toggleSubSectionSchedule('${this.courseCode}','${secKey}','${name}','${ss.subId}',this.checked)">
+            <span class="section-schedule-check">✓</span>
+          </label>
+          <span style="flex:1;">${ss.daysStr()} &nbsp;${ss.startStr}-${ss.endStr} &nbsp;${ss.location}</span>
+          <button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('${this.courseCode}','${secKey}','${name}','${ss.subId}')">×</button>
+        </div>`;
+      }).join("");
       return `<div class="sub-list">
         <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ ${name} <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('${this.courseCode}','${secKey}','${name}')">+ ${T("btn.session")}</button></div>
         ${subsHtml}
@@ -2882,8 +2912,13 @@ class Section {
         </div>
       </div>`;
     }).join("");
-    return `<div class="section-item">
+    return `<div class="section-item${disabledClass}">
       <div class="section-item-row">
+        <label class="section-schedule-toggle" title="${T("label.scheduleToggle")}">
+          <input type="checkbox" ${enabledChecked} onchange="toggleSectionSchedule('${this.courseCode}','${secKey}',this.checked)">
+          <span class="section-schedule-check">✓</span>
+          <span class="section-schedule-label">${T("label.scheduleToggleShort")}</span>
+        </label>
         <span><b>${this.sectionId.replace(this.courseCode+"-","")}</b> &nbsp;${this.daysStr()} &nbsp;${this.startStr}-${this.endStr} &nbsp;${this.location}</span>
         <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('${this.courseCode}','${secKey}')">+ ${T("btn.subcourse")}</button>
         <button class="btn btn-danger btn-sm" onclick="delSection('${this.courseCode}','${secKey}')">×</button>
@@ -3221,6 +3256,7 @@ function enumSubCombinations(sec, noEarly, noNoon, exTimes, exLocs) {
   if (!names.length) return [[]]; // 无子课程 → 只有一种情况：空选
   const groupLists = names.map(name => {
     const list = sec.subList(name).filter(ss =>
+      ss.enabled &&
       !(noEarly&&ss.isEarlyMorning()) &&
       !(noNoon&&ss.isAfternoonFirst()) &&
       !exTimes.includes(ss.start) &&
@@ -3256,6 +3292,7 @@ function schedule(suffix){
   const codes=Object.keys(courses);
   // filtered[i] = 对第 i 门课过滤后的 Section 列表
   const filtered=codes.map(c=>courses[c].filter(sec=>
+    sec.enabled &&
     !(noEarly&&sec.isEarlyMorning())&&
     !(noNoon&&sec.isAfternoonFirst())&&
     !exTimes.includes(sec.start)&&
@@ -3450,6 +3487,27 @@ function delSection(code,sectionId){
   // 不自动计算，等用户点击"计算排课方案"按钮
 }
 
+// 切换某时段的"参与排课"开关
+function toggleSectionSchedule(code, sectionId, enabled) {
+  const sec = (courses[code]||[]).find(s=>s.sectionId===sectionId);
+  if (!sec) return;
+  sec.enabled = enabled;
+  saveCourses();
+  renderCourseList();
+}
+
+// 切换某子时段的"参与排课"开关
+function toggleSubSectionSchedule(code, secId, subName, subId, enabled) {
+  const sec = (courses[code]||[]).find(s=>s.sectionId===secId);
+  if (!sec) return;
+  const subs = sec.subGroups[subName] || [];
+  const sub = subs.find(s => s.subId === subId);
+  if (!sub) return;
+  sub.enabled = enabled;
+  saveCourses();
+  renderCourseList();
+}
+
 function runSchedule(){
   // 检查额度
   if (session && session.type === "user" && session.username !== "管理员") {
@@ -3512,10 +3570,15 @@ function loadCourses(){
     const data=JSON.parse(raw);
     courses=Object.fromEntries(Object.entries(data.courses).map(([k,list])=>[k, list.map(raw=>{
       const sec = new Section(raw.courseCode, raw.sectionId, raw.weekdays, raw.startStr, raw.endStr, raw.location);
+      sec.enabled = raw.enabled !== false; // 恢复 enabled，旧数据默认 true
       sec.subCounters = raw.subCounters || {};
       sec.subGroups = Object.fromEntries(Object.entries(raw.subGroups||{}).map(([name, subs])=>[
         name,
-        subs.map(ss=>new SubSection(ss.parentSectionId, ss.subName, ss.subId, ss.weekdays, ss.startStr, ss.endStr, ss.location))
+        subs.map(ss=>{
+          const sub = new SubSection(ss.parentSectionId, ss.subName, ss.subId, ss.weekdays, ss.startStr, ss.endStr, ss.location);
+          sub.enabled = ss.enabled !== false; // 恢复 enabled，旧数据默认 true
+          return sub;
+        })
       ]));
       return sec;
     })]));
@@ -4039,6 +4102,8 @@ window.TRANSLATIONS = {
     "btn.session": "时段",
     "btn.edit": "编辑",
     "btn.rename": "重命名",
+    "label.scheduleToggle": "参与排课",
+    "label.scheduleToggleShort": "排课",
     "weight.title": "🎚️ 自定义权重",
     "weight.hint": "为每个时段（包括子课程）设置喜好权重（1–10）。排课时，将优先展示总权重最高的方案。",
     "weight.stars": "⭐ 越多星代表越喜欢这个时段，默认为 5。",
@@ -4184,6 +4249,8 @@ window.TRANSLATIONS = {
     "btn.session": "Session",
     "btn.edit": "Edit",
     "btn.rename": "Rename",
+    "label.scheduleToggle": "Include in Scheduling",
+    "label.scheduleToggleShort": "Sched",
     "weight.title": "🎚️ Custom Weights",
     "weight.hint": "Set preference weights (1–10) for each session. Higher total weights appear first.",
     "weight.stars": "More stars = stronger preference. Default is 5.",

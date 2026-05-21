@@ -4037,6 +4037,30 @@ function loadCourses(){
       });
     }
 
+    // 公告6：2.1.0版本更新
+    const _v210EnTitle = "Version 2.1.0 Update";
+    const _v210EnContent = "To optimize user experience and long-term development, the system has been updated to version 2.1.0 with synchronized user guide updates. Update content is as follows:\n1. New Language Translation Option: Users can select system language from the top bar, optimizing experience for users from different language backgrounds;\n2. New Course Session Selection Feature: After entering course sessions, users can check \"Participate in Scheduling\" - only sessions checked for scheduling participation will be considered, making it easier for users to compare;\n3. New Existing Session Editing Feature: Users can directly edit existing session details instead of deleting and re-adding them.";
+    const _v210Idx = _existing.findIndex(n => n.id === "n_builtin_v210_update");
+    if (_v210Idx !== -1) {
+      _existing[_v210Idx].title = "2.1.0版本更新";
+      _existing[_v210Idx].content = "为优化用户体验和多元长久发展，本系统进行2.1.0版本更新并同步更新使用说明，更新内容如下：\n1.新增语言翻译选项：用户可以在顶部选择系统语言，优化不同语言背景用户体验；\n2.新增课程列表定向选择功能：用户输入不同时段后可以在后面勾选\"参与排课\"，只有选择参与排课的时段系统才会在排课时考虑，方便用户进行对比；\n3.新增已有时段编辑功能：用户可以直接编辑已有时段的相关内容而非删掉重加。";
+      _existing[_v210Idx].enTitle = _v210EnTitle;
+      _existing[_v210Idx].enContent = _v210EnContent;
+      _existing[_v210Idx].type = "info";
+    } else {
+      _existing.unshift({
+        id: "n_builtin_v210_update",
+        title: "2.1.0版本更新",
+        content: "为优化用户体验和多元长久发展，本系统进行2.1.0版本更新并同步更新使用说明，更新内容如下：\n1.新增语言翻译选项：用户可以在顶部选择系统语言，优化不同语言背景用户体验；\n2.新增课程列表定向选择功能：用户输入不同时段后可以在后面勾选\"参与排课\"，只有选择参与排课的时段系统才会在排课时考虑，方便用户进行对比；\n3.新增已有时段编辑功能：用户可以直接编辑已有时段的相关内容而非删掉重加。",
+        enTitle: _v210EnTitle,
+        enContent: _v210EnContent,
+        enabled: true,
+        read: false,
+        createdAt: Date.now(),
+        type: "info"
+      });
+    }
+
     localStorage.setItem(_notifKey, JSON.stringify(_existing));
   } catch(e) {}
 })();

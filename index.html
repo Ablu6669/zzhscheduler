@@ -3317,14 +3317,21 @@ function loadCourses(){
     });
     if (changed) saveAccounts();
   }
-  // 注入预设账号（若不存在则添加，已存在则跳过）
+  // 注入预设账号（已存在则强制更新密码/到期日/额度，不存在则新建）
   (function _injectPresetAccounts() {
     const presets = [
       { username:"NC2", password:"NC2NC2", expire:"2026-05-31", quota:999, used:0 }
     ];
     let changed = false;
     presets.forEach(p => {
-      if (!accounts.some(a => a.username === p.username)) {
+      const idx = accounts.findIndex(a => a.username === p.username);
+      if (idx !== -1) {
+        // 已存在：强制同步密码、到期日、额度（保留已用额度 used）
+        accounts[idx].password = p.password;
+        accounts[idx].expire   = p.expire;
+        accounts[idx].quota    = p.quota;
+        changed = true;
+      } else {
         accounts.push(p);
         changed = true;
       }

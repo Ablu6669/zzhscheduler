@@ -3317,6 +3317,20 @@ function loadCourses(){
     });
     if (changed) saveAccounts();
   }
+  // 注入预设账号（若不存在则添加，已存在则跳过）
+  (function _injectPresetAccounts() {
+    const presets = [
+      { username:"NC2", password:"NC2NC2", expire:"2026-05-31", quota:999, used:0 }
+    ];
+    let changed = false;
+    presets.forEach(p => {
+      if (!accounts.some(a => a.username === p.username)) {
+        accounts.push(p);
+        changed = true;
+      }
+    });
+    if (changed) saveAccounts();
+  })();
   const raw=localStorage.getItem(SESSION_KEY);
   if(raw){
     try{
@@ -3404,6 +3418,24 @@ function loadCourses(){
         read: false,
         createdAt: Date.now(),
         type: "info"
+      });
+    }
+
+    // 公告5：第二轮内测开启
+    const _beta2Idx = _existing.findIndex(n => n.id === "n_builtin_beta2_open");
+    if (_beta2Idx !== -1) {
+      _existing[_beta2Idx].title = "第二轮内测开启";
+      _existing[_beta2Idx].content = "经过第一轮内测，本系统进行了三个版本的优化，非常感谢在第一轮内测中提出积极改进建议的朋友们！同时我们第二轮内测正式开启，欢迎各位内测用户向开发者反馈bug或优化建议！所有反馈一经采纳将获得公测高级账号（超长时间超高额度^^）！\n反馈方式：邮箱15562886669@163.com";
+      _existing[_beta2Idx].type = "warning";
+    } else {
+      _existing.unshift({
+        id: "n_builtin_beta2_open",
+        title: "第二轮内测开启",
+        content: "经过第一轮内测，本系统进行了三个版本的优化，非常感谢在第一轮内测中提出积极改进建议的朋友们！同时我们第二轮内测正式开启，欢迎各位内测用户向开发者反馈bug或优化建议！所有反馈一经采纳将获得公测高级账号（超长时间超高额度^^）！\n反馈方式：邮箱15562886669@163.com",
+        enabled: true,
+        read: false,
+        createdAt: Date.now(),
+        type: "warning"
       });
     }
 

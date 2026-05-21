@@ -308,6 +308,17 @@
 
   .section-input-area.hidden { display: none; }
 
+  /* 时段编辑区域 */
+  .section-edit-area {
+    background: #f0f4ff;
+    border-radius: 10px;
+    padding: 14px;
+    margin: 8px 0 4px 0;
+    border: 1.5px dashed #668cf0;
+  }
+  .section-edit-area.hidden { display: none; }
+  .section-edit-area h5 { font-size:0.82rem; color:var(--primary); margin-bottom:8px; }
+
   .section-input-area h4 {
     font-size: 0.85rem;
     color: var(--primary);
@@ -2244,12 +2255,14 @@ const GUIDE_DATA = [
       <p>本系统帮助您快速生成合理的课程排课方案。只需输入每门课程的可用时段，系统即可自动枚举所有可行方案，并根据您设定的筛选条件和排序偏好，给出最优排课建议。</p>
       <h3>主要功能</h3>
       <ul>
-        <li><strong>课程管理</strong>：添加/删除课程，为每门课程配置多个时段（支持子课程）</li>
+        <li><strong>课程管理</strong>：添加/删除课程，为每门课程配置多个时段（支持子课程），可直接编辑时段、控制参与排课</li>
         <li><strong>智能筛选</strong>：不上早八、不上午一、自定义排除时间及地点</li>
         <li><strong>多维排序</strong>：按时间、地点、自定义权重多维度排序</li>
         <li><strong>优先级自定义</strong>：多排序项同时开启时，自由调整优先级顺序</li>
+        <li><strong>参与排课开关</strong>：灵活控制每个时段是否纳入排课计算</li>
         <li><strong>使用额度管理</strong>：管理员可创建账号并分配使用额度</li>
         <li><strong>通知公告</strong>：系统更新通知，支持已读/未读状态管理</li>
+        <li><strong>多语言支持</strong>：支持中文/英文界面切换</li>
       </ul>
       <h3>使用流程</h3>
       <ol>
@@ -2265,12 +2278,14 @@ const GUIDE_DATA = [
       <p>This system helps you quickly generate optimal course schedules. Simply enter available time slots for each course, and the system will enumerate all feasible options, applying your filters and sorting preferences to suggest the best schedules.</p>
       <h3>Key Features</h3>
       <ul>
-        <li><strong>Course Management</strong>: Add/delete courses and configure multiple sessions (including sub-courses)</li>
+        <li><strong>Course Management</strong>: Add/delete courses, configure multiple sessions (including sub-courses), edit sessions directly, toggle scheduling participation</li>
         <li><strong>Smart Filtering</strong>: Exclude early morning, noon classes, custom time/location exclusions</li>
         <li><strong>Multi-dimensional Sorting</strong>: Sort by time, location, or custom weights</li>
         <li><strong>Priority Customization</strong>: Adjust sort priority order when multiple options are enabled</li>
+        <li><strong>Schedule Toggle</strong>: Control which sessions are included in schedule calculation</li>
         <li><strong>Quota Management</strong>: Admins can create accounts and allocate usage quotas</li>
         <li><strong>Notifications</strong>: System updates with read/unread status tracking</li>
+        <li><strong>Multi-language Support</strong>: Switch between Chinese and English interface</li>
       </ul>
       <h3>Workflow</h3>
       <ol>
@@ -2298,6 +2313,10 @@ const GUIDE_DATA = [
       </ol>
       <h3>删除课程/时段</h3>
       <p>点击课程或时段卡片上的删除按钮即可。子课程时段标有 ↳ 符号，方便区分。</p>
+      <h3>编辑时段</h3>
+      <p>点击时段行右侧的「✏️ 编辑」按钮，可直接修改时间、地点和上课日，无需删除后重新添加。</p>
+      <h3>参与排课开关</h3>
+      <p>每个时段行左侧有一个「☑️ 排课」勾选框，取消勾选后该时段将不参与排课计算（时段数据仍保留，可随时重新勾选）。</p>
       <div class="tip-box">💡 提示：子课程的时段会显示在母课程下方，便于区分和管理。</div>
     `,
     en_content: `
@@ -2313,7 +2332,87 @@ const GUIDE_DATA = [
       </ol>
       <h3>Deleting Courses/Sessions</h3>
       <p>Click the delete button on any course or session card. Sub-course sessions are marked with ↳ for easy identification.</p>
+      <h3>Editing Sessions</h3>
+      <p>Click the "✏️ Edit" button on the right side of any session row to directly modify time, location and weekdays, without deleting and re-adding.</p>
+      <h3>Schedule Toggle</h3>
+      <p>Each session row has a "☑️ Schedule" checkbox on the left. Uncheck it to exclude the session from scheduling (session data is preserved, re-check to restore).</p>
       <div class="tip-box">💡 Tip: Sub-course sessions are displayed under their parent course for easy management.</div>
+    `
+  },
+  {
+    id: "edit-session", icon: "✏️",
+    zh_title: "编辑时段", en_title: "Edit Sessions",
+    zh_content: `
+      <h2>编辑时段</h2>
+      <p>现在可以直接编辑已有课程时段，无需删除后重新添加。</p>
+      <h3>编辑主课程时段</h3>
+      <ol>
+        <li>在课程卡片的时段行右侧，点击「✏️ 编辑」按钮</li>
+        <li>时段下方会展开编辑表单，预填当前的时间、地点、上课日</li>
+        <li>修改所需内容后，点击「保存」即可更新</li>
+        <li>点击「取消」或再次点击「✏️ 编辑」可收起编辑表单</li>
+      </ol>
+      <h3>编辑子课程时段</h3>
+      <ol>
+        <li>在子课程时段（标有 ↳ 符号）行右侧，点击「✏️ 编辑」按钮</li>
+        <li>同样会展开编辑表单，修改后点击「保存」</li>
+      </ol>
+      <div class="tip-box">💡 提示：编辑功能支持中英文界面，切换语言后编辑表单会自动更新。</div>
+    `,
+    en_content: `
+      <h2>Edit Sessions</h2>
+      <p>You can now edit existing course sessions directly, without deleting and re-adding them.</p>
+      <h3>Edit Main Course Sessions</h3>
+      <ol>
+        <li>In the course card, click the "✏️ Edit" button on the right side of the session row</li>
+        <li>An edit form will expand below the session, pre-filled with current time, location, and weekdays</li>
+        <li>Modify the content as needed, then click "Save" to update</li>
+        <li>Click "Cancel" or click "✏️ Edit" again to collapse the form</li>
+      </ol>
+      <h3>Edit Sub-course Sessions</h3>
+      <ol>
+        <li>In the sub-course session row (marked with ↳), click the "✏️ Edit" button</li>
+        <li>The edit form will also expand; click "Save" after making changes</li>
+      </ol>
+      <div class="tip-box">💡 Tip: The edit feature supports both Chinese and English. The form updates automatically when you switch languages.</div>
+    `
+  },
+  {
+    id: "schedule-toggle", icon: "☑️",
+    zh_title: "参与排课开关", en_title: "Schedule Toggle",
+    zh_content: `
+      <h2>参与排课开关</h2>
+      <p>每个时段（包括子课程时段）新增了「参与排课」勾选框，您可以灵活控制哪些时段参与排课计算。</p>
+      <h3>如何使用</h3>
+      <ol>
+        <li>在课程卡片的每个时段行左侧，可以看到「☑️ 排课」勾选框</li>
+        <li>勾选后，该时段会参与排课计算</li>
+        <li>取消勾选后，该时段将被排除在排课计算之外（但时段数据仍保留）</li>
+        <li>默认情况下，所有时段均为「参与排课」状态</li>
+      </ol>
+      <h3>使用场景</h3>
+      <ul>
+        <li>某时段时间冲突，暂时不想删除，可以先取消「参与排课」</li>
+        <li>只想从部分时段中生成排课方案，可以只勾选需要的时段</li>
+      </ul>
+      <div class="tip-box">💡 提示：取消「参与排课」不会删除时段数据，重新勾选即可恢复。</div>
+    `,
+    en_content: `
+      <h2>Schedule Toggle</h2>
+      <p>Each session (including sub-course sessions) now has a "Participate in Scheduling" checkbox, allowing you to control which sessions are included in schedule calculation.</p>
+      <h3>How to Use</h3>
+      <ol>
+        <li>On the left side of each session row in the course card, you'll see a "☑️ Schedule" checkbox</li>
+        <li>When checked, the session participates in schedule calculation</li>
+        <li>When unchecked, the session is excluded from scheduling (but the session data is preserved)</li>
+        <li>By default, all sessions are set to "Participate in Scheduling"</li>
+      </ol>
+      <h3>Use Cases</h3>
+      <ul>
+        <li>If a session has a time conflict but you don't want to delete it yet, uncheck "Participate in Scheduling"</li>
+        <li>If you only want to generate schedules from selected sessions, only check the ones you need</li>
+      </ul>
+      <div class="tip-box">💡 Tip: Unchecking "Participate in Scheduling" does not delete the session data. Re-check to restore it.</div>
     `
   },
   {
@@ -2895,12 +2994,13 @@ class Section {
       const subs = this.subList(name);
       const subsHtml = subs.map(ss => {
         const subEnabledChecked = ss.enabled ? "checked" : "";
-        return `<div class="sub-item ${ss.enabled ? '' : 'disabled-sub'}">
+        return `<div class="sub-item ${ss.enabled ? '' : 'disabled-sub'}" data-subid="${ss.subId}">
           <label class="section-schedule-toggle" title="${T("label.scheduleToggle")}" style="margin-right:4px;">
             <input type="checkbox" ${subEnabledChecked} onchange="toggleSubSectionSchedule('${this.courseCode}','${secKey}','${name}','${ss.subId}',this.checked)">
             <span class="section-schedule-check">✓</span>
           </label>
           <span style="flex:1;">${ss.daysStr()} &nbsp;${ss.startStr}-${ss.endStr} &nbsp;${ss.location}</span>
+          <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.68rem;color:var(--primary);border-color:var(--primary);white-space:nowrap;" onclick="showEditSubSection('${this.courseCode}','${secKey}','${name}','${ss.subId}')">✏️ ${T("btn.edit")}</button>
           <button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('${this.courseCode}','${secKey}','${name}','${ss.subId}')">×</button>
         </div>`;
       }).join("");
@@ -2912,7 +3012,7 @@ class Section {
         </div>
       </div>`;
     }).join("");
-    return `<div class="section-item${disabledClass}">
+    return `<div class="section-item${disabledClass}" id="sec-item-${secKey}">
       <div class="section-item-row">
         <label class="section-schedule-toggle" title="${T("label.scheduleToggle")}">
           <input type="checkbox" ${enabledChecked} onchange="toggleSectionSchedule('${this.courseCode}','${secKey}',this.checked)">
@@ -2920,10 +3020,12 @@ class Section {
           <span class="section-schedule-label">${T("label.scheduleToggleShort")}</span>
         </label>
         <span><b>${this.sectionId.replace(this.courseCode+"-","")}</b> &nbsp;${this.daysStr()} &nbsp;${this.startStr}-${this.endStr} &nbsp;${this.location}</span>
+        <button class="btn btn-outline btn-sm" style="font-size:0.72rem;color:var(--primary);border-color:var(--primary);white-space:nowrap;" onclick="showEditSection('${this.courseCode}','${secKey}')">✏️ ${T("btn.edit")}</button>
         <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('${this.courseCode}','${secKey}')">+ ${T("btn.subcourse")}</button>
         <button class="btn btn-danger btn-sm" onclick="delSection('${this.courseCode}','${secKey}')">×</button>
       </div>
       ${subNamesHtml}
+      <div id="edit-sec-${secKey}" class="section-edit-area hidden"></div>
     </div>`;
   }
 }
@@ -3485,6 +3587,163 @@ function delSection(code,sectionId){
   renderCourseList();
   saveCourses();
   // 不自动计算，等用户点击"计算排课方案"按钮
+}
+
+// ─── 时段编辑功能 ──────────────────────
+function showEditSection(code, secId) {
+  const sec = (courses[code]||[]).find(s=>s.sectionId===secId);
+  if (!sec) return;
+  const container = document.getElementById(`edit-sec-${secId}`);
+  if (!container) return;
+  // 如果已经展开则关闭
+  if (!container.classList.contains("hidden")) {
+    hideEditSection(secId);
+    return;
+  }
+  // 生成星期选择 HTML
+  const dayChecks = [1,2,3,4,5,6,7].map(d => {
+    const checked = sec.weekdays.includes(d) ? "checked" : "";
+    const activeClass = sec.weekdays.includes(d) ? "active" : "";
+    return `<label class="day-check ${activeClass}" id="edit-dc-${secId}-${d}"><input type="checkbox" value="${d}" ${checked} onchange="updateEditDayCheck('${secId}',${d})">${DAY_NAMES[d]}</label>`;
+  }).join("");
+  container.innerHTML = `
+    <h5>${T("dialog.editSession")}</h5>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div class="hint">${T("label.classDay")}</div>
+      <div class="days-group" id="edit-days-${secId}">
+        ${dayChecks}
+      </div>
+      <div style="display:flex;gap:6px;align-items:flex-end;">
+        <div><div class="hint">${T("label.start")}</div><button class="time-picker-btn" id="edit-tstart-${secId}" onclick="openTimePicker('edit-tstart-${secId}','${T("label.start")}')"><span class="clock-icon">🕐</span><span id="edit-tstart-${secId}-txt">${sec.startStr}</span></button></div>
+        <div><div class="hint">${T("label.end")}</div><button class="time-picker-btn" id="edit-tend-${secId}" onclick="openTimePicker('edit-tend-${secId}','${T("label.end")}')"><span class="clock-icon">🕑</span><span id="edit-tend-${secId}-txt">${sec.endStr}</span></button></div>
+        <div><div class="hint">${T("label.location")}</div><button class="loc-picker-btn" id="edit-tloc-${secId}" onclick="openLocPicker('edit-tloc-${secId}')">${sec.location||'--'}</button></div>
+      </div>
+      <div class="section-btn-group">
+        <button class="btn btn-primary btn-sm" onclick="editSection('${code}','${secId}')">${T("btn.save")}</button>
+        <button class="btn btn-outline btn-sm" onclick="hideEditSection('${secId}')">${T("dialog.cancel")}</button>
+      </div>
+    </div>`;
+  container.classList.remove("hidden");
+  // 滚动到编辑区域
+  container.scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+
+function updateEditDayCheck(secId, day) {
+  const label = document.getElementById(`edit-dc-${secId}-${day}`);
+  if (!label) return;
+  label.classList.toggle("active", label.querySelector("input").checked);
+}
+
+function hideEditSection(secId) {
+  const el = document.getElementById(`edit-sec-${secId}`);
+  if (el) { el.classList.add("hidden"); el.innerHTML = ""; }
+}
+
+function editSection(code, secId) {
+  const sec = (courses[code]||[]).find(s=>s.sectionId===secId);
+  if (!sec) return;
+  const tstart = _getTimeVal(`edit-tstart-${secId}`);
+  const tend   = _getTimeVal(`edit-tend-${secId}`);
+  const tloc   = _getLocVal(`edit-tloc-${secId}`);
+  const checkedDays = [...document.querySelectorAll(`#edit-days-${secId} input:checked`)].map(cb=>parseInt(cb.value));
+  if (!checkedDays.length) { alert(T("alert.selectDay")); return; }
+  if (!tstart || tstart==="--:--") { alert(T("alert.selectStart")); return; }
+  if (!tend || tend==="--:--") { alert(T("alert.selectEnd")); return; }
+  if (!tloc) { alert(T("alert.fillLocation")); return; }
+  // 更新时段数据
+  sec.weekdays  = checkedDays;
+  sec.start     = tstart;
+  sec.end       = tend;
+  sec.startStr  = _norm(tstart);
+  sec.endStr    = _norm(tend);
+  sec.location  = tloc;
+  hideEditSection(secId);
+  renderCourseList();
+  saveCourses();
+}
+
+// 子时段编辑
+function showEditSubSection(code, secId, subName, subId) {
+  const sec = (courses[code]||[]).find(s=>s.sectionId===secId);
+  if (!sec) return;
+  const subs = sec.subGroups[subName] || [];
+  const sub = subs.find(s=>s.subId===subId);
+  if (!sub) return;
+  const containerId = `edit-sub-${subId}`;
+  let container = document.getElementById(containerId);
+  if (!container) {
+    // 在子项后面插入编辑区域
+    const subItem = document.querySelector(`[data-subid="${subId}"]`);
+    if (!subItem) return;
+    container = document.createElement("div");
+    container.id = containerId;
+    container.className = "section-edit-area";
+    subItem.parentNode.insertBefore(container, subItem.nextSibling);
+  }
+  if (!container.classList.contains("hidden") && container.innerHTML) {
+    container.classList.add("hidden"); container.innerHTML = "";
+    return;
+  }
+  const dayChecks = [1,2,3,4,5,6,7].map(d => {
+    const checked = sub.weekdays.includes(d) ? "checked" : "";
+    const activeClass = sub.weekdays.includes(d) ? "active" : "";
+    return `<label class="day-check ${activeClass}" id="edit-sub-dc-${subId}-${d}"><input type="checkbox" value="${d}" ${checked} onchange="updateEditSubDayCheck('${subId}',${d})">${DAY_NAMES[d]}</label>`;
+  }).join("");
+  container.innerHTML = `
+    <h5>${T("dialog.editSubSession")}</h5>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div class="hint">${T("label.classDay")}</div>
+      <div class="days-group" id="edit-sub-days-${subId}">
+        ${dayChecks}
+      </div>
+      <div style="display:flex;gap:6px;align-items:flex-end;">
+        <div><div class="hint">${T("label.start")}</div><button class="time-picker-btn" id="edit-sub-tstart-${subId}" onclick="openTimePicker('edit-sub-tstart-${subId}','${T("label.start")}')"><span class="clock-icon">🕐</span><span id="edit-sub-tstart-${subId}-txt">${sub.startStr}</span></button></div>
+        <div><div class="hint">${T("label.end")}</div><button class="time-picker-btn" id="edit-sub-tend-${subId}" onclick="openTimePicker('edit-sub-tend-${subId}','${T("label.end")}')"><span class="clock-icon">🕑</span><span id="edit-sub-tend-${subId}-txt">${sub.endStr}</span></button></div>
+        <div><div class="hint">${T("label.location")}</div><button class="loc-picker-btn" id="edit-sub-tloc-${subId}" onclick="openLocPicker('edit-sub-tloc-${subId}')">${sub.location||'--'}</button></div>
+      </div>
+      <div class="section-btn-group">
+        <button class="btn btn-primary btn-sm" onclick="editSubSection('${code}','${secId}','${subName}','${subId}')">${T("btn.save")}</button>
+        <button class="btn btn-outline btn-sm" onclick="hideEditSubSection('${subId}')">${T("dialog.cancel")}</button>
+      </div>
+    </div>`;
+  container.classList.remove("hidden");
+  container.scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+
+function updateEditSubDayCheck(subId, day) {
+  const label = document.getElementById(`edit-sub-dc-${subId}-${day}`);
+  if (!label) return;
+  label.classList.toggle("active", label.querySelector("input").checked);
+}
+
+function hideEditSubSection(subId) {
+  const el = document.getElementById(`edit-sub-${subId}`);
+  if (el) { el.classList.add("hidden"); el.innerHTML = ""; }
+}
+
+function editSubSection(code, secId, subName, subId) {
+  const sec = (courses[code]||[]).find(s=>s.sectionId===secId);
+  if (!sec) return;
+  const subs = sec.subGroups[subName] || [];
+  const sub = subs.find(s=>s.subId===subId);
+  if (!sub) return;
+  const tstart = _getTimeVal(`edit-sub-tstart-${subId}`);
+  const tend   = _getTimeVal(`edit-sub-tend-${subId}`);
+  const tloc   = _getLocVal(`edit-sub-tloc-${subId}`);
+  const checkedDays = [...document.querySelectorAll(`#edit-sub-days-${subId} input:checked`)].map(cb=>parseInt(cb.value));
+  if (!checkedDays.length) { alert(T("alert.selectDay")); return; }
+  if (!tstart || tstart==="--:--") { alert(T("alert.selectStart")); return; }
+  if (!tend || tend==="--:--") { alert(T("alert.selectEnd")); return; }
+  if (!tloc) { alert(T("alert.fillLocation")); return; }
+  sub.weekdays = checkedDays;
+  sub.start    = tstart;
+  sub.end      = tend;
+  sub.startStr = _norm(tstart);
+  sub.endStr   = _norm(tend);
+  sub.location = tloc;
+  hideEditSubSection(subId);
+  renderCourseList();
+  saveCourses();
 }
 
 // 切换某时段的"参与排课"开关
@@ -4132,6 +4391,8 @@ window.TRANSLATIONS = {
     "editAccount.title": "✏️ 编辑账号",
     "dialog.addSession": "添加时段",
     "dialog.addSubSession": "新增 {name} 时段",
+    "dialog.editSession": "编辑时段",
+    "dialog.editSubSession": "编辑子课程时段",
     "label.classDay": "上课日",
     "label.start": "开始",
     "label.end": "结束",
@@ -4279,6 +4540,8 @@ window.TRANSLATIONS = {
     "editAccount.title": "✏️ Edit Account",
     "dialog.addSession": "Add Session",
     "dialog.addSubSession": "Add {name} Session",
+    "dialog.editSession": "Edit Session",
+    "dialog.editSubSession": "Edit Sub-course Session",
     "label.classDay": "Class Day",
     "label.start": "Start",
     "label.end": "End",
@@ -4391,6 +4654,15 @@ function applyLanguage(lang) {
   if (notifPage && notifPage.style.display !== "none") renderNotifPage();
   // 管理端通知列表若已渲染，刷新内容
   if (_notifAdminRendered) renderNotifAdmin();
+  // 刷新额度显示（天数/额度标签需重新渲染）
+  updateQuotaDisplay();
+  // 刷新用户/管理员模式标签
+  var modeBadge = document.getElementById("modeBadge");
+  if (modeBadge && session) {
+    modeBadge.textContent = session.type === "admin" ? T("topbar.mode.admin") : T("topbar.mode.user");
+  }
+  // 刷新课程列表（按钮标签等动态内容需重新渲染）
+  renderCourseList();
 }
 
 // 应用保存的语言偏好

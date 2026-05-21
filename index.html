@@ -613,6 +613,22 @@
   .topbar-info { font-size: 0.82rem; color: var(--text-muted); }
   .topbar-info span { font-weight: 600; color: var(--primary); }
 
+  /* 语言切换 */
+  .lang-select {
+    margin-left: 10px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1.5px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 0.82rem;
+    cursor: pointer;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .lang-select:hover { border-color: var(--primary); }
+  .lang-select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(79,110,247,.15); }
+
   .user-mode-badge {
     display: inline-block;
     padding: 2px 8px;
@@ -1250,12 +1266,12 @@
       </div>
     </div>
     <div class="tp-manual">
-      <label>手动输入</label>
+      <label data-i18n="picker.manualInput">手动输入</label>
       <input type="text" id="tp-manual-input" placeholder="08:30" maxlength="5">
     </div>
     <div class="tp-actions">
-      <button class="tp-cancel" onclick="tpCancel()">取消</button>
-      <button class="tp-confirm" onclick="tpConfirm()">确认</button>
+      <button class="tp-cancel" onclick="tpCancel()" data-i18n="dialog.cancel">取消</button>
+      <button class="tp-confirm" onclick="tpConfirm()" data-i18n="dialog.confirm">确认</button>
     </div>
   </div>
 </div>
@@ -1263,13 +1279,13 @@
 <!-- ══ 地点选择器弹窗 ═════════════════ -->
 <div id="locpickerOverlay">
   <div class="lp-modal">
-    <div class="lp-title">选择地点</div>
+    <div class="lp-title" data-i18n="picker.selectLoc">选择地点</div>
     <div class="lp-grid" id="lp-grid"></div>
-    <div class="lp-divider">或手动输入</div>
-    <input type="text" class="lp-manual-inp" id="lp-manual-inp" placeholder="输入自定义地点，如 ZX" maxlength="3">
+    <div class="lp-divider" data-i18n="picker.orManual">或手动输入</div>
+    <input type="text" class="lp-manual-inp" id="lp-manual-inp" placeholder="输入自定义地点，如 ZX" maxlength="3" data-i18n-placeholder="picker.locPlaceholder">
     <div class="lp-actions">
-      <button class="lp-cancel" onclick="lpCancel()">取消</button>
-      <button class="lp-confirm" onclick="lpConfirm()">确认</button>
+      <button class="lp-cancel" onclick="lpCancel()" data-i18n="dialog.cancel">取消</button>
+      <button class="lp-confirm" onclick="lpConfirm()" data-i18n="dialog.confirm">确认</button>
     </div>
   </div>
 </div>
@@ -1280,73 +1296,73 @@
 <div id="authScreen">
   <div class="auth-box">
     <div class="auth-logo">📚</div>
-    <div class="auth-title">自动排课系统</div>
-    <div class="auth-subtitle">智能排课 · 安全访问</div>
+    <div class="auth-title" data-i18n="auth.title">自动排课系统</div>
+    <div class="auth-subtitle" data-i18n="auth.subtitle">智能排课 · 安全访问</div>
 
     <div class="auth-tabs">
-      <button class="auth-tab active" id="tabUser" onclick="switchTab('user')">用户登录</button>
-      <button class="auth-tab" id="tabAdmin" onclick="switchTab('admin')">管理员入口</button>
+      <button class="auth-tab active" id="tabUser" onclick="switchTab('user')" data-i18n="auth.userLogin">用户登录</button>
+      <button class="auth-tab" id="tabAdmin" onclick="switchTab('admin')" data-i18n="auth.adminEntry">管理员入口</button>
     </div>
 
     <!-- User login panel -->
     <div class="auth-panel active" id="panelUser">
       <div class="form-group">
-        <label>账号</label>
-        <input type="text" id="loginUsername" placeholder="请输入账号" autocomplete="off">
+        <label data-i18n="auth.account">账号</label>
+        <input type="text" id="loginUsername" placeholder="请输入账号" autocomplete="off" data-i18n-placeholder="auth.enterUsername">
       </div>
       <div class="form-group">
-        <label>密码</label>
-        <input type="password" id="loginPassword" placeholder="请输入密码" onkeydown="if(event.key==='Enter')doUserLogin()">
+        <label data-i18n="auth.password">密码</label>
+        <input type="password" id="loginPassword" placeholder="请输入密码" onkeydown="if(event.key==='Enter')doUserLogin()" data-i18n-placeholder="auth.enterPassword">
       </div>
       <div class="auth-error" id="loginError"></div>
-      <button class="btn btn-primary" onclick="doUserLogin()">登录</button>
-      <div class="auth-link" onclick="switchTab('admin')">管理员入口 →</div>
+      <button class="btn btn-primary" onclick="doUserLogin()" data-i18n="auth.userLogin">登录</button>
+      <div class="auth-link" onclick="switchTab('admin')" data-i18n="auth.adminEntry">管理员入口 →</div>
     </div>
 
     <!-- Admin panel -->
     <div class="auth-panel" id="panelAdmin">
       <div class="form-group">
-        <label>管理员密钥</label>
-        <input type="password" id="adminKey" placeholder="请输入管理员密钥" onkeydown="if(event.key==='Enter')doAdminLogin()">
+        <label data-i18n="auth.adminKey">管理员密钥</label>
+        <input type="password" id="adminKey" placeholder="请输入管理员密钥" onkeydown="if(event.key==='Enter')doAdminLogin()" data-i18n-placeholder="auth.enterAdminKey">
       </div>
       <div class="auth-error" id="adminError"></div>
-      <button class="btn btn-primary" onclick="doAdminLogin()">进入管理后台</button>
-      <div class="auth-link" onclick="switchTab('user')">← 用户登录</div>
+      <button class="btn btn-primary" onclick="doAdminLogin()" data-i18n="auth.enterBackend">进入管理后台</button>
+      <div class="auth-link" onclick="switchTab('user')" data-i18n="auth.userLogin">← 用户登录</div>
     </div>
 
     <!-- Admin dashboard (hidden initially) -->
     <div class="auth-panel" id="panelAdminDash">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-        <div style="font-weight:700;font-size:1rem;">管理员后台</div>
-        <button class="btn btn-outline btn-sm" onclick="doLogout()">退出</button>
+        <div style="font-weight:700;font-size:1rem;" data-i18n="auth.adminBackend">管理员后台</div>
+        <button class="btn btn-outline btn-sm" onclick="doLogout()" data-i18n="auth.logout">退出</button>
       </div>
 
       <div class="admin-tools">
-        <h4>🔑 创建账号</h4>
+        <h4 data-i18n="auth.createAccount">创建账号</h4>
         <div class="form-row">
-          <div class="form-group"><label>账号</label><input type="text" id="newUsername" placeholder="用户名"></div>
-          <div class="form-group"><label>密码</label><input type="text" id="newPassword" placeholder="密码"></div>
+          <div class="form-group"><label data-i18n="auth.account">账号</label><input type="text" id="newUsername" placeholder="用户名"></div>
+          <div class="form-group"><label data-i18n="auth.password">密码</label><input type="password" id="newPassword" placeholder="密码"></div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>过期日期</label>
+            <label data-i18n="auth.expireDate">过期日期</label>
             <input type="date" id="expireDate">
           </div>
           <div class="form-group">
-            <label>使用额度</label>
+            <label data-i18n="auth.quota">使用额度</label>
             <input type="number" id="newQuota" placeholder="如 100" min="1" max="9999" value="100">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group" style="display:flex;align-items:flex-end;">
-            <button class="btn btn-success btn-sm" onclick="createAccount()" style="width:100%;margin:0;">生成账号</button>
+            <button class="btn btn-success btn-sm" onclick="createAccount()" style="width:100%;margin:0;" data-i18n="auth.generateAccount">生成账号</button>
           </div>
         </div>
         <div class="auth-error" id="createError" style="margin-top:4px;"></div>
       </div>
 
       <div class="accounts-header">
-        <span>已创建账号</span>
+        <span data-i18n="auth.createdAccounts">已创建账号</span>
         <span id="accountCount"></span>
       </div>
       <div class="accounts-list" id="accountsList"></div>
@@ -1359,25 +1375,29 @@
 ════════════════════════════════════════ -->
 <div id="mainApp">
   <div class="topbar">
-    <div class="topbar-title">📚 自动排课系统</div>
+    <div class="topbar-title" data-i18n="topbar.title">📚 自动排课系统</div>
     <div class="topbar-info">
       <span id="quotaDisplay"></span>
       <button class="notif-btn" id="notifBtn" onclick="toggleNotifPage()">
-        🔔 公告栏 <span id="notifBadge" style="display:none;"></span>
+        <span data-i18n-html="topbar.notifBtn">🔔 公告栏</span> <span id="notifBadge" style="display:none;"></span>
       </button>
       <button class="notif-btn guide-btn" id="guideBtn" onclick="openGuide()">
-        📖 使用说明
+        <span data-i18n-html="topbar.guideBtn">📖 使用说明</span>
       </button>
+      <select id="langSelect" onchange="applyLanguage(this.value)" class="lang-select">
+        <option value="zh">🇨🇳 简体中文</option>
+        <option value="en">🇬🇧 English</option>
+      </select>
       <span class="user-mode-badge" id="modeBadge"></span>
-      欢迎，<span id="welcomeUser"></span>
-      <button class="btn btn-outline btn-sm" onclick="doLogout()" style="margin-left:12px;width:auto;">退出登录</button>
+      <span data-i18n="topbar.welcome">欢迎，</span><span id="welcomeUser"></span>
+      <button class="btn btn-outline btn-sm" onclick="doLogout()" style="margin-left:12px;width:auto;" data-i18n="topbar.logout">退出登录</button>
     </div>
   </div>
 
   <!-- 通知页面面板 -->
   <div id="notifPage" class="notif-page" style="display:none;">
     <div class="notif-page-header">
-      <div class="notif-page-title">📬 我的通知</div>
+      <div class="notif-page-title" data-i18n="notif.title">📬 我的通知</div>
       <button class="notif-page-close" onclick="toggleNotifPage()">✕</button>
     </div>
     <div id="notifPageContent" class="notif-page-content"></div>
@@ -1403,13 +1423,13 @@
   <div id="weightOverlay" class="weight-overlay" style="display:none;" onclick="closeWeightModal()">
     <div class="weight-modal" onclick="event.stopPropagation()">
       <div class="weight-modal-header">
-        <div class="weight-modal-title">⚖️ 自定义时段权重</div>
+        <div class="weight-modal-title" data-i18n="weight.modalTitle">⚖️ 自定义时段权重</div>
         <button class="weight-modal-close" onclick="closeWeightModal()">✕</button>
       </div>
       <div class="weight-modal-body">
-        <div class="weight-modal-hint">
+        <div class="weight-modal-hint" data-i18n-html="weight.hint">
           为每个时段（包括子课程）设置喜好权重（1–10）。排课时，将优先展示<strong>总权重最高</strong>的方案。<br>
-          ⭐ 越多星代表越喜欢这个时段，默认为 5。
+          <span data-i18n="weight.stars">⭐ 越多星代表越喜欢这个时段，默认为 5。</span>
         </div>
         <div id="weightCourseList">
           <div style="color:var(--text-muted);font-size:.88rem;text-align:center;padding:24px 0;">暂无课程，请先添加课程和时段</div>
@@ -1425,22 +1445,22 @@
   <!-- 编辑账号弹窗 -->
   <div id="editAccountModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;justify-content:center;align-items:center;">
     <div style="background:#fff;border-radius:12px;padding:24px;width:340px;max-width:90%;">
-      <div style="font-weight:700;font-size:1rem;margin-bottom:16px;">✏️ 编辑账号</div>
+      <div style="font-weight:700;font-size:1rem;margin-bottom:16px;" data-i18n="editAccount.title">✏️ 编辑账号</div>
       <div class="form-group" style="margin-bottom:12px;">
-        <label>账号</label>
+        <label data-i18n="auth.editAcc">账号</label>
         <input type="text" id="editAccUsername" disabled style="background:#f1f5f9;color:#94a3b8;">
       </div>
       <div class="form-group" style="margin-bottom:12px;">
-        <label>过期日期</label>
+        <label data-i18n="auth.expireDate">过期日期</label>
         <input type="date" id="editAccExpire" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;">
       </div>
       <div class="form-group" style="margin-bottom:16px;">
-        <label>使用额度</label>
+        <label data-i18n="auth.quota">使用额度</label>
         <input type="number" id="editAccQuota" min="1" max="9999" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;">
       </div>
       <div style="display:flex;gap:8px;">
-        <button class="btn btn-primary" onclick="saveAccountEdit()" style="flex:1;">保存</button>
-        <button class="btn btn-outline" onclick="closeEditAccountModal()" style="flex:1;">取消</button>
+        <button class="btn btn-primary" onclick="saveAccountEdit()" style="flex:1;" data-i18n="auth.save">保存</button>
+        <button class="btn btn-outline" onclick="closeEditAccountModal()" style="flex:1;" data-i18n="dialog.cancel">取消</button>
       </div>
     </div>
   </div>
@@ -1449,7 +1469,7 @@
   <div id="guideOverlay" class="guide-overlay" style="display:none;" onclick="closeGuide()">
     <div class="guide-modal" onclick="event.stopPropagation()">
       <div class="guide-header">
-        <div class="guide-title">📖 使用说明</div>
+        <div class="guide-title" data-i18n="topbar.guideBtn">📖 使用说明</div>
         <button class="guide-close" onclick="closeGuide()">✕</button>
       </div>
       <div class="guide-body">
@@ -1467,35 +1487,35 @@
     <div id="leftPanel">
       <div id="adminLeftContent" style="display:none;">
         <div class="panel">
-          <div class="panel-title" style="margin-bottom:10px;"><span class="icon">🔔</span>通知管理</div>
+          <div class="panel-title" style="margin-bottom:10px;"><span class="icon">🔔</span><span data-i18n="panel.notifMgmt">通知管理</span></div>
           <div id="notifAdminArea"></div>
         </div>
         <div class="panel" style="margin-top:0;">
-          <div class="panel-title" style="margin-bottom:10px;"><span class="icon">🔑</span>账号管理</div>
+          <div class="panel-title" style="margin-bottom:10px;"><span class="icon">🔑</span><span data-i18n="panel.accMgmt">账号管理</span></div>
           <div class="admin-tools">
-            <h4>创建账号</h4>
+            <h4 data-i18n="auth.createAccount">创建账号</h4>
             <div class="form-row">
-              <div class="form-group"><label>账号</label><input type="text" id="newUsername2" placeholder="用户名"></div>
-              <div class="form-group"><label>密码</label><input type="text" id="newPassword2" placeholder="密码"></div>
+              <div class="form-group"><label data-i18n="auth.account">账号</label><input type="text" id="newUsername2" placeholder="用户名"></div>
+              <div class="form-group"><label data-i18n="auth.password">密码</label><input type="password" id="newPassword2" placeholder="密码"></div>
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label>过期日期</label>
+                <label data-i18n="auth.expireDate">过期日期</label>
                 <input type="date" id="expireDate2">
               </div>
               <div class="form-group">
-                <label>使用额度</label>
+                <label data-i18n="auth.quota">使用额度</label>
                 <input type="number" id="newQuota2" placeholder="如 100" min="1" max="9999" value="100">
               </div>
             </div>
             <div class="form-row">
               <div class="form-group" style="display:flex;align-items:flex-end;">
-                <button class="btn btn-success btn-sm" onclick="createAccountInApp()" style="width:100%;margin:0;">生成</button>
+                <button class="btn btn-success btn-sm" onclick="createAccountInApp()" style="width:100%;margin:0;" data-i18n="auth.generate">生成</button>
               </div>
             </div>
             <div class="auth-error" id="createError2" style="margin-top:4px;"></div>
             <div class="accounts-header" style="margin-top:8px;">
-              <span>已创建账号</span>
+              <span data-i18n="auth.createdAccounts">已创建账号</span>
               <span id="accountCount2"></span>
             </div>
             <div class="accounts-list" id="accountsList2" style="max-height:200px;"></div>
@@ -1505,80 +1525,80 @@
       <!-- 用户左侧：课程管理+筛选排序（默认显示） -->
       <div id="userLeftContent">
         <div class="panel">
-          <div class="panel-title"><span class="icon">📚</span>课程管理</div>
+          <div class="panel-title"><span class="icon">📚</span><span data-i18n="panel.courseMgmt">课程管理</span></div>
           <div class="course-input">
-            <input type="text" id="courseCodeInput" placeholder="课程代号，如 MAT1001" maxlength="20">
-            <button class="btn btn-primary" onclick="addCourse()">添加</button>
+            <input type="text" id="courseCodeInput" placeholder="课程代号，如 MAT1001" maxlength="20" data-i18n-placeholder="input.courseCode">
+            <button class="btn btn-primary" onclick="addCourse()" data-i18n="btn.add">添加</button>
           </div>
           <div class="course-list" id="courseList">
             <div class="empty-state" id="courseEmpty">
-              <div class="emoji">📋</div>暂无课程<br><small>请在上方添加课程</small>
+              <div class="emoji">📋</div><span data-i18n="empty.noCourses">暂无课程</span><br><small data-i18n="empty.addAbove">请在上方添加课程</small>
             </div>
           </div>
         </div>
         <div class="panel" style="margin-top:16px;">
-          <div class="panel-title"><span class="icon">⚙️</span>筛选与排序</div>
+          <div class="panel-title"><span class="icon">⚙️</span><span data-i18n="panel.filters">筛选与排序</span></div>
           <div class="filter-group">
             <div class="filter-row">
               <label class="toggle">
                 <input type="checkbox" id="noEarly" onchange="">
                 <span class="slider"></span>
               </label>
-              <div class="filter-label">不上早八<span>排除 08:30 开始的课程</span></div>
+              <div class="filter-label"><span data-i18n="filter.noEarly">不上早八</span><span data-i18n="filter.noEarlyHint">排除 08:30 开始的课程</span></div>
             </div>
             <div class="filter-row">
               <label class="toggle">
                 <input type="checkbox" id="noNoon" onchange="">
                 <span class="slider"></span>
               </label>
-              <div class="filter-label">不上午一<span>排除 13:30 开始的课程</span></div>
+              <div class="filter-label"><span data-i18n="filter.noNoon">不上午一</span><span data-i18n="filter.noonHint">排除 13:30 开始的课程</span></div>
             </div>
             <div class="filter-row">
               <label class="toggle">
                 <input type="checkbox" id="timePriority" onchange="onSortToggle('','tp',this.checked)">
                 <span class="slider"></span>
               </label>
-              <div class="filter-label">时间优先排序<span>早八/午一越少越靠前</span></div>
+              <div class="filter-label"><span data-i18n="filter.timePriority">时间优先排序</span><span data-i18n="filter.timeHint">早八/午一越少越靠前</span></div>
             </div>
             <div class="filter-row">
               <label class="toggle">
                 <input type="checkbox" id="locPriority" onchange="onSortToggle('','lp',this.checked)">
                 <span class="slider"></span>
               </label>
-              <div class="filter-label">地点优先排序<span>相邻课程地点越近越靠前</span></div>
+              <div class="filter-label"><span data-i18n="filter.locPriority">地点优先排序</span><span data-i18n="filter.locHint">相邻课程地点越近越靠前</span></div>
             </div>
             <div class="filter-row">
               <label class="toggle">
                 <input type="checkbox" id="weightPriority" onchange="onSortToggle('','wp',this.checked)">
                 <span class="slider"></span>
               </label>
-              <div class="filter-label">自定义权重排序<span>总权重越高越靠前</span><button class="weight-set-btn" onclick="openWeightModal()">⚖️ 设置权重</button></div>
+              <div class="filter-label"><span data-i18n="filter.weightSort">自定义权重排序</span><span data-i18n="filter.weightHint">总权重越高越靠前</span><button class="weight-set-btn" onclick="openWeightModal()">⚖️ <span data-i18n="btn.setWeight">设置权重</span></button></div>
             </div>
             <!-- 排序优先级排列区 -->
             <div class="sort-priority-section" id="sortPrioritySection">
-              <div class="sort-priority-title">🏆 排序优先级（拖动 ↑↓ 调整）</div>
+              <div class="sort-priority-title" data-i18n="sortPriority.title">🏆 排序优先级（拖动 ↑↓ 调整）</div>
               <div id="sortPriorityList"></div>
             </div>
             <div class="max-display-row">
-              <label>最多显示</label>
+              <label data-i18n="label.maxDisplay">最多显示</label>
               <input type="number" id="maxDisplay" value="20" min="1" max="999" onchange="">
-              <span>个方案</span>
+              <span data-i18n="label.plans">个方案</span>
             </div>
             <!-- 自定义排除时间 -->
             <div class="exclusion-section">
-              <div class="exclusion-section-title">🕐 排除指定时间</div>
+              <div class="exclusion-section-title" data-i18n="exclusion.timeTitle">🕐 排除指定时间</div>
               <div class="exclusion-input-row">
-                <input type="text" id="excludeTimeInput" placeholder="如 08:30" maxlength="5" onkeydown="if(event.key==='Enter'){event.preventDefault();addExcludedTime();}">
-                <button class="btn btn-sm btn-danger" onclick="addExcludedTime()">添加</button>
+                <input type="text" id="excludeTimeInput" placeholder="如 08:30" maxlength="5" onkeydown="if(event.key==='Enter'){event.preventDefault();addExcludedTime();}" data-i18n-placeholder="input.excludeTime">
+                <button class="btn btn-sm btn-danger" onclick="addExcludedTime()" data-i18n="btn.addExclusion">添加</button>
               </div>
               <div class="exclusion-tags" id="excludedTimeTags"></div>
             </div>
             <!-- 自定义排除地点 -->
             <div class="exclusion-section">
-              <div class="exclusion-section-title">📍 排除指定地点</div>
+              <div class="exclusion-section-title" data-i18n="exclusion.locTitle">📍 排除指定地点</div>
               <div class="exclusion-input-row">
-                <input type="text" id="excludeLocInput" placeholder="如 TXA" maxlength="10" onkeydown="if(event.key==='Enter'){event.preventDefault();addExcludedLocation();}">
-                <button class="btn btn-sm btn-danger" onclick="addExcludedLocation()">添加</button>
+                <input type="text" id="excludeLocInput" placeholder="如 TXA" maxlength="10" onkeydown="if(event.key==='Enter'){event.preventDefault();addExcludedLocation();}" data-i18n-placeholder="input.excludeLoc">
+                <button class="btn btn-sm btn-danger" onclick="addExcludedLocation()" data-i18n="btn.addExclusion">添加</button>
               </div>
               <div class="exclusion-tags" id="excludedLocTags"></div>
             </div>
@@ -1588,7 +1608,7 @@
             相邻距离 = 1，每多隔一个 +1
           </div>
           <div class="actions">
-            <button class="btn btn-primary" onclick="runSchedule()" style="flex:1">🚀 计算排课方案</button>
+            <button class="btn btn-primary" onclick="runSchedule()" style="flex:1" data-i18n="btn.calcSchedule">🚀 计算排课方案</button>
           </div>
         </div>
       </div>
@@ -1598,80 +1618,80 @@
     <div id="centerPanel">
       <div id="adminCenterContent" style="display:none;flex-direction:column;gap:16px;">
         <div class="panel">
-          <div class="panel-title"><span class="icon">📚</span>课程管理</div>
+          <div class="panel-title"><span class="icon">📚</span><span data-i18n="panel.courseMgmt">课程管理</span></div>
           <div class="course-input">
-            <input type="text" id="courseCodeInput2" placeholder="课程代号，如 MAT1001" maxlength="20">
-            <button class="btn btn-primary" onclick="addCourse2()">添加</button>
+            <input type="text" id="courseCodeInput2" placeholder="课程代号，如 MAT1001" maxlength="20" data-i18n-placeholder="input.courseCode">
+            <button class="btn btn-primary" onclick="addCourse2()" data-i18n="btn.add">添加</button>
           </div>
           <div class="course-list" id="courseList2">
             <div class="empty-state" id="courseEmpty2">
-              <div class="emoji">📋</div>暂无课程<br><small>请在上方添加课程</small>
+              <div class="emoji">📋</div><span data-i18n="empty.noCourses">暂无课程</span><br><small data-i18n="empty.addAbove">请在上方添加课程</small>
             </div>
           </div>
         </div>
         <div class="panel">
-          <div class="panel-title"><span class="icon">⚙️</span>筛选与排序</div>
+          <div class="panel-title"><span class="icon">⚙️</span><span data-i18n="panel.filters">筛选与排序</span></div>
           <div class="filter-group">
             <div class="filter-row">
               <label class="toggle">
                 <input type="checkbox" id="noEarly2" onchange="">
                 <span class="slider"></span>
               </label>
-              <div class="filter-label">不上早八<span>排除 08:30 开始的课程</span></div>
+              <div class="filter-label"><span data-i18n="filter.noEarly">不上早八</span><span data-i18n="filter.noEarlyHint">排除 08:30 开始的课程</span></div>
             </div>
             <div class="filter-row">
               <label class="toggle">
                 <input type="checkbox" id="noNoon2" onchange="">
                 <span class="slider"></span>
               </label>
-              <div class="filter-label">不上午一<span>排除 13:30 开始的课程</span></div>
+              <div class="filter-label"><span data-i18n="filter.noNoon">不上午一</span><span data-i18n="filter.noonHint">排除 13:30 开始的课程</span></div>
             </div>
             <div class="filter-row">
               <label class="toggle">
                 <input type="checkbox" id="timePriority2" onchange="onSortToggle('2','tp',this.checked)">
                 <span class="slider"></span>
               </label>
-              <div class="filter-label">时间优先排序<span>早八/午一越少越靠前</span></div>
+              <div class="filter-label"><span data-i18n="filter.timePriority">时间优先排序</span><span data-i18n="filter.timeHint">早八/午一越少越靠前</span></div>
             </div>
             <div class="filter-row">
               <label class="toggle">
                 <input type="checkbox" id="locPriority2" onchange="onSortToggle('2','lp',this.checked)">
                 <span class="slider"></span>
               </label>
-              <div class="filter-label">地点优先排序<span>相邻课程地点越近越靠前</span></div>
+              <div class="filter-label"><span data-i18n="filter.locPriority">地点优先排序</span><span data-i18n="filter.locHint">相邻课程地点越近越靠前</span></div>
             </div>
             <div class="filter-row">
               <label class="toggle">
                 <input type="checkbox" id="weightPriority2" onchange="onSortToggle('2','wp',this.checked)">
                 <span class="slider"></span>
               </label>
-              <div class="filter-label">自定义权重排序<span>总权重越高越靠前</span><button class="weight-set-btn" onclick="openWeightModal()">⚖️ 设置权重</button></div>
+              <div class="filter-label"><span data-i18n="filter.weightSort">自定义权重排序</span><span data-i18n="filter.weightHint">总权重越高越靠前</span><button class="weight-set-btn" onclick="openWeightModal()">⚖️ <span data-i18n="btn.setWeight">设置权重</span></button></div>
             </div>
             <!-- 排序优先级排列区 -->
             <div class="sort-priority-section" id="sortPrioritySection2">
-              <div class="sort-priority-title">🏆 排序优先级（↑↓ 调整）</div>
+              <div class="sort-priority-title" data-i18n="sortPriority.title">🏆 排序优先级（↑↓ 调整）</div>
               <div id="sortPriorityList2"></div>
             </div>
             <div class="max-display-row">
-              <label>最多显示</label>
+              <label data-i18n="label.maxDisplay">最多显示</label>
               <input type="number" id="maxDisplay2" value="20" min="1" max="999" onchange="">
-              <span>个方案</span>
+              <span data-i18n="label.plans">个方案</span>
             </div>
             <!-- 自定义排除时间 -->
             <div class="exclusion-section">
-              <div class="exclusion-section-title">🕐 排除指定时间</div>
+              <div class="exclusion-section-title" data-i18n="exclusion.timeTitle">🕐 排除指定时间</div>
               <div class="exclusion-input-row">
-                <input type="text" id="excludeTimeInput2" placeholder="如 08:30" maxlength="5" onkeydown="if(event.key==='Enter'){event.preventDefault();addExcludedTime('2');}">
-                <button class="btn btn-sm btn-danger" onclick="addExcludedTime('2')">添加</button>
+                <input type="text" id="excludeTimeInput2" placeholder="如 08:30" maxlength="5" onkeydown="if(event.key==='Enter'){event.preventDefault();addExcludedTime('2');}" data-i18n-placeholder="input.excludeTime">
+                <button class="btn btn-sm btn-danger" onclick="addExcludedTime('2')" data-i18n="btn.addExclusion">添加</button>
               </div>
               <div class="exclusion-tags" id="excludedTimeTags2"></div>
             </div>
             <!-- 自定义排除地点 -->
             <div class="exclusion-section">
-              <div class="exclusion-section-title">📍 排除指定地点</div>
+              <div class="exclusion-section-title" data-i18n="exclusion.locTitle">📍 排除指定地点</div>
               <div class="exclusion-input-row">
-                <input type="text" id="excludeLocInput2" placeholder="如 TXA" maxlength="10" onkeydown="if(event.key==='Enter'){event.preventDefault();addExcludedLocation('2');}">
-                <button class="btn btn-sm btn-danger" onclick="addExcludedLocation('2')">添加</button>
+                <input type="text" id="excludeLocInput2" placeholder="如 TXA" maxlength="10" onkeydown="if(event.key==='Enter'){event.preventDefault();addExcludedLocation('2');}" data-i18n-placeholder="input.excludeLoc">
+                <button class="btn btn-sm btn-danger" onclick="addExcludedLocation('2')" data-i18n="btn.addExclusion">添加</button>
               </div>
               <div class="exclusion-tags" id="excludedLocTags2"></div>
             </div>
@@ -1681,7 +1701,7 @@
             相邻距离 = 1，每多隔一个 +1
           </div>
           <div class="actions">
-            <button class="btn btn-primary" onclick="runSchedule2()" style="flex:1">🚀 计算排课方案</button>
+            <button class="btn btn-primary" onclick="runSchedule2()" style="flex:1" data-i18n="btn.calcSchedule">🚀 计算排课方案</button>
           </div>
         </div>
       </div>
@@ -1692,10 +1712,10 @@
       <!-- 用户右侧：排课结果（默认显示） -->
       <div id="userRightContent">
         <div class="panel">
-          <div class="panel-title"><span class="icon">📊</span>排课结果</div>
+          <div class="panel-title"><span class="icon">📊</span><span data-i18n="panel.scheduleResults">排课结果</span></div>
           <div id="resultsContent">
             <div class="empty-state">
-              <div class="emoji">🔍</div>点击「计算排课方案」查看结果
+              <div class="emoji">🔍</div><span data-i18n="empty.clickToView">点击「计算排课方案」查看结果</span>
             </div>
           </div>
         </div>
@@ -1703,10 +1723,10 @@
       <!-- 管理员右侧：仅排课结果 -->
       <div id="adminRightContent" style="display:none;">
         <div class="panel">
-          <div class="panel-title"><span class="icon">📊</span>排课结果</div>
+          <div class="panel-title"><span class="icon">📊</span><span data-i18n="panel.scheduleResults">排课结果</span></div>
           <div id="resultsContent2">
             <div class="empty-state">
-              <div class="emoji">🔍</div>点击「计算排课方案」查看结果
+              <div class="emoji">🔍</div><span data-i18n="empty.clickToView">点击「计算排课方案」查看结果</span>
             </div>
           </div>
         </div>
@@ -1817,7 +1837,7 @@ function switchTo(tab) {
 async function doUserLogin() {
   const u = document.getElementById("loginUsername").value.trim();
   const p = document.getElementById("loginPassword").value;
-  if (!u || !p) { document.getElementById("loginError").textContent = "请输入账号和密码"; return; }
+  if (!u || !p) { document.getElementById("loginError").textContent = T("alert.enterAccountAndPassword"); return; }
   const valid = await isAccountValid(u, p);
   if (!valid) {
     document.getElementById("loginError").textContent = "账号或密码错误，或账号已过期/额度已用完";
@@ -1866,7 +1886,7 @@ function enterMainApp() {
   if (session.type === "admin") {
     layout.classList.add("admin-mode");
     document.getElementById("modeBadge").className = "user-mode-badge badge-admin";
-    document.getElementById("modeBadge").textContent = "管理员";
+    document.getElementById("modeBadge").textContent = T("topbar.mode.admin");
     // 管理员三栏
     document.getElementById("adminLeftContent").style.display = "flex";
     document.getElementById("userLeftContent").style.display = "none";
@@ -1880,7 +1900,7 @@ function enterMainApp() {
   } else {
     layout.classList.remove("admin-mode");
     document.getElementById("modeBadge").className = "user-mode-badge badge-user";
-    document.getElementById("modeBadge").textContent = "用户";
+    document.getElementById("modeBadge").textContent = T("topbar.mode.user");
     // 用户两栏
     document.getElementById("adminLeftContent").style.display = "none";
     document.getElementById("adminCenterContent").style.display = "none";
@@ -1935,8 +1955,8 @@ function renderAccountList(containerId, countId) {
         <div class="account-quota ${qcls}">📊 额度：${qLabel}</div>
       </div>
       <div class="account-actions">
-        <button class="btn-icon" onclick="editAccount(${i})" title="编辑">✏️</button>
-        <button class="btn-icon" onclick="deleteAccount(${i})" title="删除">🗑️</button>
+        <button class="btn-icon" onclick="editAccount(${i})" title="${T('btn.edit')}">✏️</button>
+        <button class="btn-icon" onclick="deleteAccount(${i})" title="${T('btn.delete')}">🗑️</button>
       </div>
     </div>`;
   }).join("");
@@ -1996,7 +2016,7 @@ function renderNotifPage() {
     content.innerHTML = `
       <div class="notif-page-empty">
         <div class="emoji">📭</div>
-        暂无通知
+        ${T("notif.empty")}
       </div>
     `;
     return;
@@ -2010,7 +2030,7 @@ function renderNotifPage() {
       <div class="notif-page-card" style="cursor:pointer;" onclick="openNotifDetail('${_escHtml(n.id)}')">
         <div class="notif-page-card-header">
           <div class="notif-page-card-title">
-            ${_escHtml(n.title || '通知')}
+            ${_escHtml(n.title || T('notif.noTitle'))}
           </div>
           <div class="notif-page-card-time">${_formatNotifTime(n.createdAt)}</div>
         </div>
@@ -2034,7 +2054,7 @@ function openNotifDetail(id) {
   }
 
   // 填充内容
-  document.getElementById("notifDetailTitle").textContent = n.title || "通知";
+  document.getElementById("notifDetailTitle").textContent = n.title || T("notif.noTitle");
 
   const typeSpan = document.getElementById("notifDetailType");
   typeSpan.textContent = (_notifIcon(n.type) || "🔔") + " ";
@@ -2060,6 +2080,14 @@ function _formatNotifTime(ts) {
   const d = new Date(ts);
   const now = new Date();
   const diff = now - d;
+  const lang = localStorage.getItem("wb_lang") || "zh";
+  if (lang === "en") {
+    if (diff < 60000) return T("time.justNow");
+    if (diff < 3600000) return T("time.minutesAgo").replace("{n}", Math.floor(diff/60000));
+    if (diff < 86400000) return T("time.hoursAgo").replace("{n}", Math.floor(diff/3600000));
+    if (diff < 604800000) return T("time.daysAgo").replace("{n}", Math.floor(diff/86400000));
+    return `${d.getMonth()+1}/${d.getDate()}`;
+  }
   if (diff < 60000) return "刚刚";
   if (diff < 3600000) return Math.floor(diff/60000) + "分钟前";
   if (diff < 86400000) return Math.floor(diff/3600000) + "小时前";
@@ -2112,12 +2140,12 @@ function updateQuotaDisplay() {
     const now = new Date();
     const leftDays = Math.ceil((exp - now) / 86400000);
     if (leftDays > 0) {
-      html += `<span class="quota-time">⏰ ${leftDays}天</span>`;
+      html += `<span class="quota-time">⏰ ${leftDays}${T("quota.daysLeft")}</span>`;
     }
   }
   
   if (isUnlimited) {
-    html += `<span class="quota-remaining">💡 无限额度</span>`;
+    html += `<span class="quota-remaining">💡 ${T("quota.unlimited")}</span>`;
   } else {
     const pct = remaining / q.quota;
     let cls = "quota-ok";
@@ -2149,10 +2177,9 @@ function updateNotifBadge() {
 //   id: 唯一标识（英文）; title: 目录显示名称; icon: emoji; content: HTML（支持图文）
 const GUIDE_DATA = [
   {
-    id: "overview",
-    title: "系统概述",
-    icon: "📚",
-    content: `
+    id: "overview", icon: "📚",
+    zh_title: "系统概述", en_title: "Overview",
+    zh_content: `
       <h2>欢迎使用自动排课系统</h2>
       <p>本系统帮助您快速生成合理的课程排课方案。只需输入每门课程的可用时段，系统即可自动枚举所有可行方案，并根据您设定的筛选条件和排序偏好，给出最优排课建议。</p>
       <h3>主要功能</h3>
@@ -2172,13 +2199,33 @@ const GUIDE_DATA = [
         <li>从方案列表中选择最适合的排课方案</li>
       </ol>
       <div class="tip-box">💡 提示：系统数据保存在浏览器本地 localStorage 中，清除浏览器数据会导致课程和设置丢失。</div>
+    `,
+    en_content: `
+      <h2>Welcome to Auto Scheduling System</h2>
+      <p>This system helps you quickly generate optimal course schedules. Simply enter available time slots for each course, and the system will enumerate all feasible options, applying your filters and sorting preferences to suggest the best schedules.</p>
+      <h3>Key Features</h3>
+      <ul>
+        <li><strong>Course Management</strong>: Add/delete courses and configure multiple sessions (including sub-courses)</li>
+        <li><strong>Smart Filtering</strong>: Exclude early morning, noon classes, custom time/location exclusions</li>
+        <li><strong>Multi-dimensional Sorting</strong>: Sort by time, location, or custom weights</li>
+        <li><strong>Priority Customization</strong>: Adjust sort priority order when multiple options are enabled</li>
+        <li><strong>Quota Management</strong>: Admins can create accounts and allocate usage quotas</li>
+        <li><strong>Notifications</strong>: System updates with read/unread status tracking</li>
+      </ul>
+      <h3>Workflow</h3>
+      <ol>
+        <li>Add courses and sessions in "Course Management"</li>
+        <li>Set filters and sorting preferences in "Filters & Sorting"</li>
+        <li>Click "Calculate Schedule" to view all feasible options</li>
+        <li>Select the most suitable schedule from the results</li>
+      </ol>
+      <div class="tip-box">💡 Tip: Data is stored in your browser's localStorage. Clearing browser data will erase all courses and settings.</div>
     `
   },
   {
-    id: "course-mgmt",
-    title: "课程管理",
-    icon: "📋",
-    content: `
+    id: "course-mgmt", icon: "📋",
+    zh_title: "课程管理", en_title: "Course Management",
+    zh_content: `
       <h2>课程管理</h2>
       <p>在左侧「课程管理」面板中，可以管理所有课程及其可用时段。</p>
       <h3>添加课程</h3>
@@ -2192,13 +2239,27 @@ const GUIDE_DATA = [
       <h3>删除课程/时段</h3>
       <p>点击课程或时段卡片上的删除按钮即可。子课程时段标有 ↳ 符号，方便区分。</p>
       <div class="tip-box">💡 提示：子课程的时段会显示在母课程下方，便于区分和管理。</div>
+    `,
+    en_content: `
+      <h2>Course Management</h2>
+      <p>Manage all courses and their available sessions in the left "Course Management" panel.</p>
+      <h3>Adding a Course</h3>
+      <ol>
+        <li>Enter a course code (e.g. <code>MAT1001</code>) and click "Add"</li>
+        <li>A session input area will expand below the course</li>
+        <li>Select day(s) (1-7), start time, end time, and location, then click "Add Session"</li>
+        <li>Each course can have multiple sessions (A, B, C...)</li>
+        <li>For sub-courses (e.g. tutorials, labs), check "Has sub-course" and add sessions for them</li>
+      </ol>
+      <h3>Deleting Courses/Sessions</h3>
+      <p>Click the delete button on any course or session card. Sub-course sessions are marked with ↳ for easy identification.</p>
+      <div class="tip-box">💡 Tip: Sub-course sessions are displayed under their parent course for easy management.</div>
     `
   },
   {
-    id: "filtering",
-    title: "筛选功能",
-    icon: "🔍",
-    content: `
+    id: "filtering", icon: "🔍",
+    zh_title: "筛选功能", en_title: "Filters",
+    zh_content: `
       <h2>筛选功能</h2>
       <p>在「筛选与排序」面板中，可以设置多种筛选条件，过滤掉不想要的时段。</p>
       <h3>不上早八</h3>
@@ -2220,13 +2281,35 @@ const GUIDE_DATA = [
         <li>点击地点标签上的 ✕ 可以取消排除该地点</li>
       </ol>
       <div class="warn-box">⚠️ 注意：修改筛选条件后，需要点击「计算排课方案」按钮才会重新计算方案（避免浪费使用额度）。</div>
+    `,
+    en_content: `
+      <h2>Filters</h2>
+      <p>Set various filter conditions in the "Filters & Sorting" panel to exclude unwanted sessions.</p>
+      <h3>No Early Morning</h3>
+      <p>When enabled, sessions starting at <code>08:30</code> are automatically excluded.</p>
+      <h3>No Noon Classes</h3>
+      <p>When enabled, sessions starting at <code>13:30</code> are automatically excluded.</p>
+      <h3>Exclude Specific Times</h3>
+      <ol>
+        <li>Enter a time in the "Exclude specified times" input (format <code>HH:MM</code>, e.g. <code>10:30</code>)</li>
+        <li>Click "Add" or press Enter</li>
+        <li>All sessions starting at that time will be excluded</li>
+        <li>Click ✕ on a time tag to remove the exclusion</li>
+      </ol>
+      <h3>Exclude Specific Locations</h3>
+      <ol>
+        <li>Enter a location code in the "Exclude specified locations" input (e.g. <code>TXA</code>)</li>
+        <li>Click "Add" or press Enter</li>
+        <li>All sessions at that location will be excluded</li>
+        <li>Click ✕ on a location tag to remove the exclusion</li>
+      </ol>
+      <div class="warn-box">⚠️ Note: After changing filters, click "Calculate Schedule" to recompute (this avoids wasting quota).</div>
     `
   },
   {
-    id: "sorting",
-    title: "排序功能",
-    icon: "📊",
-    content: `
+    id: "sorting", icon: "📊",
+    zh_title: "排序功能", en_title: "Sorting",
+    zh_content: `
       <h2>排序功能</h2>
       <p>系统支持三种排序方式，可以单独开启，也可以多项同时开启。</p>
       <h3>时间优先排序</h3>
@@ -2237,13 +2320,24 @@ const GUIDE_DATA = [
       <p>开启后，系统会根据您为每个时段设置的权重（1-10）对方案排序，总权重越高的方案排名越靠前。</p>
       <p>点击「⚖️ 设置权重」按钮，可以为每门课程的每个时段（包括子课程）设置权重。权重越高表示您越希望选中该时段。</p>
       <div class="tip-box">💡 提示：权重设置使用星星交互，点击星星或输入数字均可设置，默认权重为 5。</div>
+    `,
+    en_content: `
+      <h2>Sorting</h2>
+      <p>The system supports three sorting methods, which can be used individually or combined.</p>
+      <h3>Time Priority</h3>
+      <p>When enabled, schedules with fewer early morning and noon classes are ranked higher. The system counts early/noon classes in each schedule.</p>
+      <h3>Location Priority</h3>
+      <p>When enabled, schedules with closer consecutive class locations are ranked higher. The system calculates distance scores based on a predefined location order.</p>
+      <h3>Custom Weight Sorting</h3>
+      <p>When enabled, schedules are ranked by total weight. Set weights (1-10) for each session — higher weights indicate stronger preference.</p>
+      <p>Click the "⚖️ Set weights" button to configure weights for every session (including sub-courses).</p>
+      <div class="tip-box">💡 Tip: Weights use a star interaction. Click stars or enter a number to set weights. Default is 5.</div>
     `
   },
   {
-    id: "priority",
-    title: "排序优先级自定义",
-    icon: "🏆",
-    content: `
+    id: "priority", icon: "🏆",
+    zh_title: "排序优先级自定义", en_title: "Sort Priority",
+    zh_content: `
       <h2>排序优先级自定义</h2>
       <p>当同时开启 <strong>两个及以上</strong> 排序选项时，系统会显示「排序优先级」区域，允许您调整各排序条件的优先级顺序。</p>
       <h3>如何使用</h3>
@@ -2255,13 +2349,25 @@ const GUIDE_DATA = [
         <li>排课时，系统会按照优先级顺序依次比较。优先级 1 的条件先比较，相同的情况下再比较优先级 2</li>
       </ol>
       <div class="tip-box">💡 提示：如果只开启一个排序选项，不需要调整优先级，系统会直接按该选项排序。</div>
+    `,
+    en_content: `
+      <h2>Sort Priority Customization</h2>
+      <p>When <strong>two or more</strong> sorting options are enabled, a "Sort Priority" area appears, allowing you to adjust the priority order.</p>
+      <h3>How to Use</h3>
+      <ol>
+        <li>Enable two or three sorting toggles (time, location, custom weights)</li>
+        <li>The "🏆 Sort Priority" area will appear in the panel</li>
+        <li>Each sorting condition shows a priority number (1, 2, 3)</li>
+        <li>Click ▲ to increase priority, ▼ to decrease</li>
+        <li>When computing schedules, the system compares by priority order: priority 1 first, then priority 2 if tied</li>
+      </ol>
+      <div class="tip-box">💡 Tip: If only one sorting option is enabled, no priority adjustment is needed.</div>
     `
   },
   {
-    id: "quota",
-    title: "使用额度",
-    icon: "🎫",
-    content: `
+    id: "quota", icon: "🎫",
+    zh_title: "使用额度", en_title: "Usage Quota",
+    zh_content: `
       <h2>使用额度机制</h2>
       <p>为防止滥用，系统采用使用额度机制。每次点击「计算排课方案」按钮都会消耗 1 次额度。</p>
       <h3>额度查看</h3>
@@ -2271,13 +2377,23 @@ const GUIDE_DATA = [
       <h3>管理员操作</h3>
       <p>管理员可以在左侧「账号管理」面板中创建账号、设置额度和过期日期。</p>
       <div class="warn-box">⚠️ 注意：只有点击「计算排课方案」才会消耗额度，修改筛选条件等操作不会消耗额度。</div>
+    `,
+    en_content: `
+      <h2>Usage Quota System</h2>
+      <p>To prevent abuse, the system uses a quota mechanism. Each click of "Calculate Schedule" consumes 1 quota.</p>
+      <h3>Viewing Quota</h3>
+      <p>After login, the top bar shows remaining quota (e.g. <code>Remaining: 95/100</code>).</p>
+      <h3>Quota Exhausted</h3>
+      <p>When quota runs out, clicking "Calculate Schedule" will show a "quota exhausted" message. Contact the admin for more quota.</p>
+      <h3>Admin Operations</h3>
+      <p>Admins can create accounts, set quotas and expiry dates in the left "Account Management" panel.</p>
+      <div class="warn-box">⚠️ Note: Only clicking "Calculate Schedule" consumes quota. Changing filters does not.</div>
     `
   },
   {
-    id: "notifications",
-    title: "通知公告",
-    icon: "🔔",
-    content: `
+    id: "notifications", icon: "🔔",
+    zh_title: "通知公告", en_title: "Notifications",
+    zh_content: `
       <h2>通知公告功能</h2>
       <p>系统通过通知公告向用户传达重要更新信息和使用提示。</p>
       <h3>查看通知</h3>
@@ -2289,13 +2405,25 @@ const GUIDE_DATA = [
       </ol>
       <h3>管理员功能</h3>
       <p>管理员可以在左侧「通知管理」面板中发布、编辑和删除通知（支持提醒/信息/成功/紧急四种类型）。</p>
+    `,
+    en_content: `
+      <h2>Notifications</h2>
+      <p>The system uses notifications to communicate important updates and tips to users.</p>
+      <h3>Viewing Notifications</h3>
+      <ol>
+        <li>Click the "🔔 Notifications" button in the top bar</li>
+        <li>View all notifications in the notification panel</li>
+        <li>Unread notifications show a red dot badge; clicking marks them as read</li>
+        <li>Click any notification to view its full content</li>
+      </ol>
+      <h3>Admin Features</h3>
+      <p>Admins can publish, edit, and delete notifications in the left "Notification Management" panel (supports warning/info/success/danger types).</p>
     `
   },
   {
-    id: "admin",
-    title: "管理员功能",
-    icon: "🔑",
-    content: `
+    id: "admin", icon: "🔑",
+    zh_title: "管理员功能", en_title: "Admin Features",
+    zh_content: `
       <h2>管理员专属功能</h2>
       <p>使用管理员密钥登录后，可以使用以下全部功能：</p>
       <h3>账号管理</h3>
@@ -2312,6 +2440,24 @@ const GUIDE_DATA = [
       <h3>独立的管理员面板</h3>
       <p>管理员拥有独立的课程管理面板和筛选排序面板，与用户面板完全分开，互不影响。</p>
       <div class="tip-box">💡 提示：管理员账号本身不消耗额度，可以无限次计算排课方案。</div>
+    `,
+    en_content: `
+      <h2>Admin Features</h2>
+      <p>After logging in with an admin key, you have access to all features:</p>
+      <h3>Account Management</h3>
+      <ul>
+        <li>Create user accounts (set username, password, expiry date, usage quota)</li>
+        <li>Edit existing accounts (modify expiry date and quota)</li>
+        <li>Delete accounts</li>
+      </ul>
+      <h3>Notification Management</h3>
+      <ul>
+        <li>Publish system notifications (visible to all users)</li>
+        <li>Edit/delete existing notifications</li>
+      </ul>
+      <h3>Independent Admin Panel</h3>
+      <p>Admins have a separate course management panel and filter/sort panel, completely independent from user panels.</p>
+      <div class="tip-box">💡 Tip: Admin accounts do not consume quota and can calculate schedules unlimited times.</div>
     `
   }
 ];
@@ -2333,11 +2479,12 @@ function closeGuide() {
 function renderGuideToc() {
   const container = document.getElementById("guideToc");
   if (!container) return;
+  const lang = localStorage.getItem("wb_lang") || "zh";
   container.innerHTML = GUIDE_DATA.map(item => `
     <div class="guide-toc-item ${item.id === _guideCurrentId ? "active" : ""}"
          onclick="renderGuideContent('${item.id}')">
       <span class="guide-toc-icon">${item.icon}</span>
-      <span>${item.title}</span>
+      <span>${lang === "zh" ? item.zh_title : item.en_title}</span>
     </div>
   `).join("");
 }
@@ -2348,7 +2495,8 @@ function renderGuideContent(id) {
   _guideCurrentId = id;
   const container = document.getElementById("guideContent");
   if (!container) return;
-  container.innerHTML = item.content;
+  const lang = localStorage.getItem("wb_lang") || "zh";
+  container.innerHTML = lang === "zh" ? item.zh_content : item.en_content;
   renderGuideToc();
 }
 
@@ -2360,13 +2508,13 @@ function addExcludedTime(suffix) {
   if (!val) return;
   try {
     const mins = _toMin(val);
-    if (excludedTimes[s].includes(mins)) { alert("该时间已排除"); return; }
+    if (excludedTimes[s].includes(mins)) { alert(T("alert.timeExcluded")); return; }
     excludedTimes[s].push(mins);
     input.value = "";
     renderTimeTags(s);
     // 不自动计算，等用户点击"计算排课方案"按钮
   } catch (e) {
-    alert("时间格式错误，请使用 HH:MM 格式（如 08:30）");
+    alert(T("alert.timeFormatError"));
   }
 }
 
@@ -2393,7 +2541,7 @@ function addExcludedLocation(suffix) {
   const input = document.getElementById("excludeLocInput" + s);
   const val = input.value.trim().toUpperCase();
   if (!val) return;
-  if (excludedLocations[s].includes(val)) { alert("该地点已排除"); return; }
+  if (excludedLocations[s].includes(val)) { alert(T("alert.locExcluded")); return; }
   excludedLocations[s].push(val);
   input.value = "";
   renderLocTags(s);
@@ -2434,19 +2582,19 @@ function renderNotifAdmin() {
   const listHtml = list.length ? list.map(n => `
     <div class="notif-record" onclick="openNotifEditDialog('${n.id}')">
       <span class="rec-icon">🔔</span>
-      <span class="rec-title">${_escHtml(n.title || n.content || '无标题')}</span>
+      <span class="rec-title">${_escHtml(n.title || n.content || T('notif.untitled'))}</span>
       <div class="rec-actions" onclick="event.stopPropagation()">
-        <button class="btn-del" onclick="deleteNotif('${n.id}')" title="撤回">🗑️</button>
+        <button class="btn-del" onclick="deleteNotif('${n.id}')" title="${T('notif.withdraw')}">🗑️</button>
       </div>
     </div>
-  `).join("") : `<div class="notif-empty">暂无通知</div>`;
+  `).join("") : `<div class="notif-empty">${T("notif.empty")}</div>`;
 
   area.innerHTML = `
     <div class="notif-add-form">
-      <div style="font-size:.8rem;font-weight:600;color:var(--text-muted);margin-bottom:4px;">+ 发送新通知</div>
-      <input type="text" id="newNotifTitle" placeholder="通知标题（可选）" maxlength="50">
-      <textarea id="newNotifContent" placeholder="通知内容（必填）" style="min-height:50px;resize:none;font-size:.82rem;padding:6px 8px;" maxlength="500"></textarea>
-      <button class="btn btn-primary" onclick="addNotif()" style="width:100%;margin:0;">发送通知</button>
+      <div style="font-size:.8rem;font-weight:600;color:var(--text-muted);margin-bottom:4px;" data-i18n="notif.sendNew">+ 发送新通知</div>
+      <input type="text" id="newNotifTitle" placeholder="通知标题（可选）" maxlength="50" data-i18n-placeholder="notif.titlePlaceholder">
+      <textarea id="newNotifContent" placeholder="通知内容（必填）" style="min-height:50px;resize:none;font-size:.82rem;padding:6px 8px;" maxlength="500" data-i18n-placeholder="notif.contentPlaceholder"></textarea>
+      <button class="btn btn-primary" onclick="addNotif()" style="width:100%;margin:0;" data-i18n="notif.send">发送通知</button>
     </div>
     <div class="notif-list">${listHtml}</div>
   `;
@@ -2456,7 +2604,7 @@ function renderNotifAdmin() {
 function addNotif() {
   const title = document.getElementById("newNotifTitle").value.trim();
   const content = document.getElementById("newNotifContent").value.trim();
-  if (!content) { alert("请输入通知内容"); return; }
+  if (!content) { alert(T("alert.enterNotifContent")); return; }
   const list = getNotifs();
   list.unshift({ id: _genNotifId(), title, content, enabled: true, read: false, createdAt: Date.now() });
   saveNotifs(list);
@@ -2469,9 +2617,9 @@ function openNotifEditDialog(id) {
   const list = getNotifs();
   const n = list.find(x => x.id === id);
   if (!n) return;
-  const newTitle = prompt("修改标题：", n.title || "");
+  const newTitle = prompt(T("prompt.editTitle"), n.title || "");
   if (newTitle === null) return;
-  const newContent = prompt("修改内容：", n.content);
+  const newContent = prompt(T("prompt.editContent"), n.content);
   if (newContent === null) return;
   n.title = newTitle.trim();
   n.content = newContent.trim();
@@ -2481,7 +2629,7 @@ function openNotifEditDialog(id) {
 
 // 删除通知
 function deleteNotif(id) {
-  if (!confirm("确定撤回该通知？")) return;
+  if (!confirm(T("confirm.withdrawNotif"))) return;
   let list = getNotifs();
   list = list.filter(n => n.id !== id);
   saveNotifs(list);
@@ -2507,9 +2655,9 @@ function createAccountCore(uId, pId, eId, qId, errId, renderFn) {
   const e = document.getElementById(eId).value;
   const q = parseInt(document.getElementById(qId).value) || 100;
   const err = document.getElementById(errId);
-  if (!u) { err.textContent = "请输入账号"; return; }
-  if (!p) { err.textContent = "请输入密码"; return; }
-  if (accounts.some(a=>a.username===u)) { err.textContent = "账号已存在"; return; }
+  if (!u) { err.textContent = T("alert.enterAccount"); return; }
+  if (!p) { err.textContent = T("alert.enterPassword"); return; }
+  if (accounts.some(a=>a.username===u)) { err.textContent = T("alert.accountExists"); return; }
   accounts.push({ username: u, password: p, expire: e || null, quota: q, used: 0 });
   saveAccounts();
   document.getElementById(uId).value = "";
@@ -2524,7 +2672,7 @@ function createAccountCore(uId, pId, eId, qId, errId, renderFn) {
 }
 
 function deleteAccount(idx) {
-  if (!confirm("确定删除该账号？")) return;
+  if (!confirm(T("confirm.deleteAccount"))) return;
   accounts.splice(idx, 1);
   saveAccounts();
   renderAccountList("accountsList", "accountCount");
@@ -2648,7 +2796,7 @@ class Section {
         `<div class="sub-item"><span>${ss.daysStr()} &nbsp;${ss.startStr}-${ss.endStr} &nbsp;${ss.location}</span><button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('${this.courseCode}','${secKey}','${name}','${ss.subId}')">×</button></div>`
       ).join("");
       return `<div class="sub-list">
-        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ ${name} <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('${this.courseCode}','${secKey}','${name}')">+ 时段</button></div>
+        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ ${name} <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('${this.courseCode}','${secKey}','${name}')">+ ${T("btn.session")}</button></div>
         ${subsHtml}
         <div id="sub-inp-${secKey}-${name}" class="sub-input-area hidden">
           ${_renderSubInputHTML(this.courseCode, secKey, name)}
@@ -2658,7 +2806,7 @@ class Section {
     return `<div class="section-item">
       <div class="section-item-row">
         <span><b>${this.sectionId.replace(this.courseCode+"-","")}</b> &nbsp;${this.daysStr()} &nbsp;${this.startStr}-${this.endStr} &nbsp;${this.location}</span>
-        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('${this.courseCode}','${secKey}')">+ 子课程</button>
+        <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('${this.courseCode}','${secKey}')">+ ${T("btn.subcourse")}</button>
         <button class="btn btn-danger btn-sm" onclick="delSection('${this.courseCode}','${secKey}')">×</button>
       </div>
       ${subNamesHtml}
@@ -2672,20 +2820,20 @@ function _renderSubInputHTML(code, secId, subName) {
   const escCode = code.replace(/'/g,"\\'");
   const escSec  = secId.replace(/'/g,"\\'");
   const escName = subName.replace(/'/g,"\\'");
-  return `<h5>新增 ${subName} 时段</h5>
+  return `<h5>${T("dialog.addSubSession").replace("{name}",subName)}</h5>
     <div style="display:flex;flex-direction:column;gap:6px;">
-      <div class="hint">上课日</div>
+      <div class="hint">${T("label.classDay")}</div>
       <div class="days-group" id="sub-days-${secId}-${subName}">
         ${[1,2,3,4,5,6,7].map(d=>`<label class="day-check" id="sub-dc-${secId}-${subName}-${d}"><input type="checkbox" value="${d}" onchange="updateSubDayCheck('${secId}','${subName}',${d})">${DAY_NAMES[d]}</label>`).join("")}
       </div>
       <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
-        <div><div class="hint">开始</div><button class="time-picker-btn" id="sub-tstart-${secId}-${subName}" onclick="openTimePicker('sub-tstart-${secId}-${subName}','开始时间')"><span class="clock-icon">🕐</span><span id="sub-tstart-${secId}-${subName}-txt">--:--</span></button></div>
-        <div><div class="hint">结束</div><button class="time-picker-btn" id="sub-tend-${secId}-${subName}" onclick="openTimePicker('sub-tend-${secId}-${subName}','结束时间')"><span class="clock-icon">🕑</span><span id="sub-tend-${secId}-${subName}-txt">--:--</span></button></div>
-        <div><div class="hint">地点</div><button class="loc-picker-btn" id="sub-tloc-${secId}-${subName}" onclick="openLocPicker('sub-tloc-${secId}-${subName}')">--</button></div>
+        <div><div class="hint">${T("label.start")}</div><button class="time-picker-btn" id="sub-tstart-${secId}-${subName}" onclick="openTimePicker('sub-tstart-${secId}-${subName}','${T("label.start")}')"><span class="clock-icon">🕐</span><span id="sub-tstart-${secId}-${subName}-txt">--:--</span></button></div>
+        <div><div class="hint">${T("label.end")}</div><button class="time-picker-btn" id="sub-tend-${secId}-${subName}" onclick="openTimePicker('sub-tend-${secId}-${subName}','${T("label.end")}')"><span class="clock-icon">🕑</span><span id="sub-tend-${secId}-${subName}-txt">--:--</span></button></div>
+        <div><div class="hint">${T("label.location")}</div><button class="loc-picker-btn" id="sub-tloc-${secId}-${subName}" onclick="openLocPicker('sub-tloc-${secId}-${subName}')">--</button></div>
       </div>
       <div class="section-btn-group">
-        <button class="btn btn-success btn-sm" onclick="addSubSection('${escCode}','${escSec}','${escName}')">确认</button>
-        <button class="btn btn-outline btn-sm" onclick="hideSubInput('${escSec}','${escName}')">取消</button>
+        <button class="btn btn-success btn-sm" onclick="addSubSection('${escCode}','${escSec}','${escName}')">${T("dialog.confirm")}</button>
+        <button class="btn btn-outline btn-sm" onclick="hideSubInput('${escSec}','${escName}')">${T("dialog.cancel")}</button>
       </div>
     </div>`;
 }
@@ -2714,7 +2862,7 @@ function hideSubInput(secId, subName) {
 
 // 弹窗询问子课程名称，然后把该子课程名加到对应 Section
 function promptAddSubCourse(code, secId) {
-  const name = prompt("请输入子课程名称（如：练习课、Tutorial）：");
+  const name = prompt(T("prompt.subCourseName"));
   if (!name || !name.trim()) return;
   const trimmed = name.trim();
   const sec = (courses[code]||[]).find(s=>s.sectionId===secId);
@@ -2734,10 +2882,10 @@ function addSubSection(code, secId, subName) {
   const tend   = _getTimeVal(`sub-tend-${secId}-${subName}`);
   const tloc   = _getLocVal(`sub-tloc-${secId}-${subName}`);
   const checkedDays = [...document.querySelectorAll(`#sub-days-${secId}-${subName} input:checked`)].map(cb=>parseInt(cb.value));
-  if (!checkedDays.length) { alert("请选择至少一个上课日"); return; }
-  if (!tstart||tstart==="--:--") { alert("请选择开始时间"); return; }
-  if (!tend||tend==="--:--") { alert("请选择结束时间"); return; }
-  if (!tloc) { alert("请填写上课地点"); return; }
+  if (!checkedDays.length) { alert(T("alert.selectDay")); return; }
+  if (!tstart||tstart==="--:--") { alert(T("alert.selectStart")); return; }
+  if (!tend||tend==="--:--") { alert(T("alert.selectEnd")); return; }
+  if (!tloc) { alert(T("alert.fillLocation")); return; }
   try {
     const cnt = sec.subCounters[subName] || 0;
     const subId = `${secId}-${cnt+1}`;
@@ -2748,7 +2896,7 @@ function addSubSection(code, secId, subName) {
     hideSubInput(secId, subName);
     saveCourses();
     renderCourseList();
-  } catch(e) { alert("添加失败：" + (e.message || e)); }
+  } catch(e) { alert(T("alert.addFailed") + (e.message || e)); }
 }
 
 function delSubSection(code, secId, subName, subId) {
@@ -2756,7 +2904,7 @@ function delSubSection(code, secId, subName, subId) {
   if (!sec || !sec.subGroups[subName]) return;
   sec.subGroups[subName] = sec.subGroups[subName].filter(ss=>ss.subId!==subId);
   if (!sec.subGroups[subName].length) {
-    if (!confirm(`子课程「${subName}」时段已清空，是否同时删除该子课程？`)) {
+    if (!confirm(T("confirm.deleteSubCourse").replace("{name}", subName))) {
       // 保留空子课程
     } else {
       delete sec.subGroups[subName];
@@ -2870,7 +3018,7 @@ function closeWeightModal() {
   document.getElementById("weightOverlay").style.display = "none";
 }
 function resetAllWeights() {
-  if (!confirm("确定要重置所有时段权重为 5 吗？")) return;
+  if (!confirm(T("confirm.resetWeights"))) return;
   weightMap = {};
   saveWeights();
   renderWeightModal();
@@ -2881,12 +3029,12 @@ function renderWeightModal() {
   const codes = Object.keys(courses);
   const el = document.getElementById("weightCourseList");
   if (!codes.length) {
-    el.innerHTML = `<div style="color:var(--text-muted);font-size:.88rem;text-align:center;padding:24px 0;">暂无课程，请先添加课程和时段</div>`;
+    el.innerHTML = `<div style="color:var(--text-muted);font-size:.88rem;text-align:center;padding:24px 0;">${T("weight.empty")}</div>`;
     return;
   }
   el.innerHTML = codes.map(code => {
     const secs = courses[code];
-    if (!secs.length) return `<div class="weight-course-block"><div class="weight-course-title">📘 ${code}</div><div style="font-size:.8rem;color:var(--text-muted);padding:2px 4px 6px;">暂无时段</div></div>`;
+    if (!secs.length) return `<div class="weight-course-block"><div class="weight-course-title">📘 ${code}</div><div style="font-size:.8rem;color:var(--text-muted);padding:2px 4px 6px;">${T("weight.noSessions")}</div></div>`;
     const rows = secs.map(sec => {
       const secW = getWeight(sec.sectionId);
       let subRows = "";
@@ -3078,38 +3226,38 @@ function renderCourseList(){
         <span class="course-code">${code}</span>
         <div>
           <button class="btn btn-outline btn-sm" onclick="showSectionInput('${code}')">+ 时段</button>
-          <button class="btn btn-danger btn-sm" onclick="delCourse('${code}')">删除</button>
+          <button class="btn btn-danger btn-sm" onclick="delCourse('${code}')">${T("btn.delete")}</button>
         </div>
       </div>
       <div id="sec-inp-${code}" class="section-input-area hidden">
-        <h4>添加时段 → ${code}</h4>
+        <h4>${T("dialog.addSession")} → ${code}</h4>
         <div class="section-row" style="flex-direction:column;align-items:stretch;gap:6px;">
-          <div class="hint">上课日（必选1~7个）</div>
+          <div class="hint">${T("label.classDay")}</div>
           <div class="days-group" id="days-${code}">
             ${[1,2,3,4,5,6,7].map(d=>`<label class="day-check" id="dc-${code}-${d}"><input type="checkbox" value="${d}" class="day-cb" data-code="${code}" onchange="updateDayCheck('${code}',${d})">${DAY_NAMES[d]}</label>`).join("")}
           </div>
         </div>
         <div class="section-row" style="margin-top:8px;align-items:flex-end;">
-          <div style="flex:1"><div class="hint">开始</div><button class="time-picker-btn" id="tstart-${code}" onclick="openTimePicker('tstart-${code}','开始时间')"><span class="clock-icon">🕐</span><span id="tstart-${code}-txt">--:--</span></button></div>
-          <div style="flex:1"><div class="hint">结束</div><button class="time-picker-btn" id="tend-${code}" onclick="openTimePicker('tend-${code}','结束时间')"><span class="clock-icon">🕑</span><span id="tend-${code}-txt">--:--</span></button></div>
-          <div style="flex:1"><div class="hint">地点</div><button class="loc-picker-btn" id="tloc-${code}" onclick="openLocPicker('tloc-${code}')">--</button></div>
+          <div style="flex:1"><div class="hint">${T("label.start")}</div><button class="time-picker-btn" id="tstart-${code}" onclick="openTimePicker('tstart-${code}','${T("label.start")}')"><span class="clock-icon">🕐</span><span id="tstart-${code}-txt">--:--</span></button></div>
+          <div style="flex:1"><div class="hint">${T("label.end")}</div><button class="time-picker-btn" id="tend-${code}" onclick="openTimePicker('tend-${code}','${T("label.end")}')"><span class="clock-icon">🕑</span><span id="tend-${code}-txt">--:--</span></button></div>
+          <div style="flex:1"><div class="hint">${T("label.location")}</div><button class="loc-picker-btn" id="tloc-${code}" onclick="openLocPicker('tloc-${code}')">--</button></div>
         </div>
         <div class="section-btn-group">
-          <button class="btn btn-primary btn-sm" onclick="addSection('${code}')">确认</button>
-          <button class="btn btn-outline btn-sm" onclick="hideSectionInput('${code}')">取消</button>
+          <button class="btn btn-primary btn-sm" onclick="addSection('${code}')">${T("dialog.confirm")}</button>
+          <button class="btn btn-outline btn-sm" onclick="hideSectionInput('${code}')">${T("dialog.cancel")}</button>
         </div>
       </div>
       <div>${courses[code].map(s=>s.toListHTML()).join("")}</div>
-      ${!courses[code].length?"<div style='font-size:0.8rem;color:#94a3b8;padding:4px 0;'>暂无时段</div>":""}
-    </div>`).join(""):`<div class="empty-state" id="courseEmpty"><div class="emoji">📋</div>暂无课程<br><small>请在上方添加课程</small></div>`;
+      ${!courses[code].length?"<div style='font-size:0.8rem;color:#94a3b8;padding:4px 0;'>"+T("weight.noSessions")+"</div>":""}
+    </div>`).join(""):`<div class="empty-state" id="courseEmpty"><div class="emoji">📋</div>${T("empty.noCourses")}<br><small>${T("empty.addAbove")}</small></div>`;
   if(el) el.innerHTML=html;
   if(el2) el2.innerHTML=html;
 }
 
 function addCourse2(){
   const code=document.getElementById("courseCodeInput2").value.trim().toUpperCase();
-  if(!code){ alert("请输入课程代号"); return; }
-  if(courses[code]){ alert("课程 ["+code+"] 已存在"); return; }
+  if(!code){ alert(T("alert.enterCourseCode")); return; }
+  if(courses[code]){ alert(T("alert.courseExists").replace("{code}",code)); return; }
   courses[code]=[];
   sectionCounter[code]=0;
   document.getElementById("courseCodeInput2").value="";
@@ -3158,8 +3306,8 @@ function renderResults(plans, suffix){
 
 function addCourse(){
   const code=document.getElementById("courseCodeInput").value.trim().toUpperCase();
-  if(!code){ alert("请输入课程代号"); return; }
-  if(courses[code]){ alert("课程 ["+code+"] 已存在"); return; }
+  if(!code){ alert(T("alert.enterCourseCode")); return; }
+  if(courses[code]){ alert(T("alert.courseExists").replace("{code}",code)); return; }
   courses[code]=[];
   sectionCounter[code]=0;
   document.getElementById("courseCodeInput").value="";
@@ -3168,7 +3316,7 @@ function addCourse(){
 }
 
 function delCourse(code){
-  if(!confirm("删除课程 ["+code+"] 及其全部时段？")) return;
+  if(!confirm(T("confirm.deleteCourse").replace("{code}",code))) return;
   delete courses[code];
   delete sectionCounter[code];
   renderCourseList();
@@ -3197,10 +3345,10 @@ function addSection(code){
   const tend=_getTimeVal("tend-"+code);
   const tloc=_getLocVal("tloc-"+code);
   const checkedDays=[...document.querySelectorAll(`#days-${code} input:checked`)].map(cb=>parseInt(cb.value));
-  if(!checkedDays.length){ alert("请选择至少一个上课日"); return; }
-  if(!tstart||tstart==="--:--"){ alert("请选择开始时间"); return; }
-  if(!tend||tend==="--:--"){ alert("请选择结束时间"); return; }
-  if(!tloc){ alert("请填写上课地点"); return; }
+  if(!checkedDays.length){ alert(T("alert.selectDay")); return; }
+  if(!tstart||tstart==="--:--"){ alert(T("alert.selectStart")); return; }
+  if(!tend||tend==="--:--"){ alert(T("alert.selectEnd")); return; }
+  if(!tloc){ alert(T("alert.fillLocation")); return; }
   const idx=sectionCounter[code]||0;
   const id=`${code}-${String.fromCharCode(65+idx)}`;
   sectionCounter[code]=idx+1;
@@ -3211,7 +3359,7 @@ function addSection(code){
     renderCourseList();
     saveCourses();
     // 不自动计算，等用户点击"计算排课方案"按钮
-  }catch(e){ alert("添加失败：" + (e.message || e)); }
+  }catch(e){ alert(T("alert.addFailed") + (e.message || e)); }
 }
 
 function delSection(code,sectionId){
@@ -3731,6 +3879,289 @@ function lpCancel() {
 document.getElementById("locpickerOverlay").addEventListener("click", function(e) {
   if (e.target === this) lpCancel();
 });
+// i18n framework
+window.TRANSLATIONS = {
+  zh: {
+    "topbar.title": "📚 自动排课系统",
+    "topbar.notifBtn": "🔔 公告栏",
+    "topbar.guideBtn": "📖 使用说明",
+    "topbar.welcome": "欢迎，",
+    "topbar.logout": "退出登录",
+    "topbar.mode.admin": "管理员",
+    "topbar.mode.user": "用户",
+    "notif.title": "📬 我的通知",
+    "panel.courseMgmt": "📚 课程管理",
+    "panel.scheduleResults": "📊 排课结果",
+    "panel.filters": "⚙️ 筛选与排序",
+    "input.courseCode": "课程代号，如 MAT1001",
+    "btn.add": "添加",
+    "empty.noCourses": "暂无课程",
+    "empty.addAbove": "请在上方添加课程",
+    "filter.noEarly": "不上早八",
+    "filter.noEarlyHint": "排除 08:30 开始的课程",
+    "filter.timePriority": "时间优先排序",
+    "filter.timeHint": "早八/午一越少越靠前",
+    "filter.locPriority": "地点优先排序",
+    "filter.locHint": "相邻课程地点越近越靠前",
+    "btn.calcSchedule": "🚀 计算排课方案",
+    "empty.clickToView": "点击「计算排课方案」查看结果",
+    "filter.noNoon": "不上下午一",
+    "filter.noonHint": "排除 13:30 开始的课程",
+    "input.excludeTime": "如 08:30",
+    "input.excludeLoc": "如 TXA",
+    "btn.addExclusion": "添加",
+    "quota.unlimited": "无限额度",
+    "quota.daysLeft": "天",
+    "btn.delete": "删除",
+    "btn.makeup": "补课",
+    "btn.subcourse": "子课程",
+    "btn.session": "时段",
+    "btn.edit": "编辑",
+    "btn.rename": "重命名",
+    "weight.title": "🎚️ 自定义权重",
+    "weight.hint": "为每个时段（包括子课程）设置喜好权重（1–10）。排课时，将优先展示总权重最高的方案。",
+    "weight.stars": "⭐ 越多星代表越喜欢这个时段，默认为 5。",
+    "weight.empty": "暂无课程，请先添加课程和时段",
+    "filter.weightSort": "自定义权重排序",
+    "filter.weightHint": "总权重越高越靠前",
+    "btn.setWeight": "设置权重",
+    "sortPriority.title": "🏆 排序优先级（拖动 ↑↓ 调整）",
+    "label.maxDisplay": "最多显示",
+    "label.plans": "个方案",
+    "exclusion.timeTitle": "🕐 排除指定时间",
+    "exclusion.locTitle": "📍 排除指定地点",
+    "weight.modalTitle": "⚖️ 自定义时段权重",
+    "editAccount.title": "✏️ 编辑账号",
+    "dialog.addSession": "添加时段",
+    "dialog.addSubSession": "新增 {name} 时段",
+    "label.classDay": "上课日",
+    "label.start": "开始",
+    "label.end": "结束",
+    "label.location": "地点",
+    "label.hasSubCourse": "有子课程",
+    "picker.manualInput": "手动输入",
+    "picker.selectLoc": "选择地点",
+    "picker.orManual": "或手动输入",
+    "picker.locPlaceholder": "输入自定义地点，如 ZX",
+    "auth.title": "自动排课系统",
+    "auth.subtitle": "智能排课 · 安全访问",
+    "auth.userLogin": "用户登录",
+    "auth.adminEntry": "管理员入口",
+    "auth.adminKey": "管理员密钥",
+    "auth.enterBackend": "进入管理后台",
+    "auth.adminBackend": "管理员后台",
+    "auth.logout": "退出",
+    "auth.account": "账号",
+    "auth.password": "密码",
+    "auth.expireDate": "过期日期",
+    "auth.quota": "使用额度",
+    "auth.createAccount": "创建账号",
+    "auth.generate": "生成",
+    "auth.generateAccount": "生成账号",
+    "auth.createdAccounts": "已创建账号",
+    "auth.editAcc": "账号",
+    "auth.save": "保存",
+    "dialog.confirm": "确认",
+    "dialog.cancel": "取消",
+    "panel.notifMgmt": "通知管理",
+    "panel.accMgmt": "账号管理",
+    "notif.sendNew": "+ 发送新通知",
+    "notif.titlePlaceholder": "通知标题（可选）",
+    "notif.contentPlaceholder": "通知内容（必填）",
+    "notif.send": "发送通知",
+    "notif.empty": "暂无通知",
+    "notif.untitled": "无标题",
+    "notif.withdraw": "撤回",
+    "notif.noTitle": "通知",
+    "alert.timeExcluded": "该时间已排除",
+    "alert.timeFormatError": "时间格式错误，请使用 HH:MM 格式（如 08:30）",
+    "alert.locExcluded": "该地点已排除",
+    "alert.enterNotifContent": "请输入通知内容",
+    "prompt.editTitle": "修改标题：",
+    "prompt.editContent": "修改内容：",
+    "confirm.withdrawNotif": "确定撤回该通知？",
+    "confirm.deleteAccount": "确定删除该账号？",
+    "prompt.subCourseName": "请输入子课程名称（如：练习课、Tutorial）：",
+    "alert.selectDay": "请选择至少一个上课日",
+    "alert.selectStart": "请选择开始时间",
+    "alert.selectEnd": "请选择结束时间",
+    "alert.fillLocation": "请填写上课地点",
+    "alert.addFailed": "添加失败：",
+    "confirm.deleteSubCourse": "子课程「{name}」时段已清空，是否同时删除该子课程？",
+    "confirm.resetWeights": "确定要重置所有时段权重为 5 吗？",
+    "alert.enterCourseCode": "请输入课程代号",
+    "alert.courseExists": "课程 [{code}] 已存在",
+    "confirm.deleteCourse": "删除课程 [{code}] 及其全部时段？",
+    "alert.enterAccount": "请输入账号",
+    "alert.enterPassword": "请输入密码",
+    "alert.accountExists": "账号已存在",
+    "alert.enterAccountAndPassword": "请输入账号和密码",
+    "auth.enterUsername": "请输入账号",
+    "auth.enterPassword": "请输入密码",
+    "auth.enterAdminKey": "请输入管理员密钥",
+    "time.justNow": "刚刚",
+    "time.minutesAgo": "{n}分钟前",
+    "time.hoursAgo": "{n}小时前",
+    "time.daysAgo": "{n}天前",
+    "label.selectLocTitle": "选择地点",
+    "weight.noSessions": "暂无时段",
+  },
+  en: {
+    "topbar.title": "📚 Auto Scheduling System",
+    "topbar.notifBtn": "🔔 Notifications",
+    "topbar.guideBtn": "📖 User Guide",
+    "topbar.welcome": "Welcome, ",
+    "topbar.logout": "Logout",
+    "topbar.mode.admin": "Admin",
+    "topbar.mode.user": "User",
+    "notif.title": "📬 My Notifications",
+    "panel.courseMgmt": "📚 Course Management",
+    "panel.scheduleResults": "📊 Schedule Results",
+    "panel.filters": "⚙️ Filters & Sorting",
+    "input.courseCode": "Course code, e.g. MAT1001",
+    "btn.add": "Add",
+    "empty.noCourses": "No courses yet",
+    "empty.addAbove": "Add courses above",
+    "filter.noEarly": "No early morning",
+    "filter.noEarlyHint": "Exclude courses starting at 08:30",
+    "filter.timePriority": "Time priority",
+    "filter.timeHint": "Fewer early classes first",
+    "filter.locPriority": "Location priority",
+    "filter.locHint": "Closer locations first",
+    "btn.calcSchedule": "🚀 Calculate Schedule",
+    "empty.clickToView": "Click \"Calculate Schedule\" to view results",
+    "filter.noNoon": "No noon classes",
+    "filter.noonHint": "Exclude courses starting at 13:30",
+    "input.excludeTime": "e.g. 08:30",
+    "input.excludeLoc": "e.g. TXA",
+    "btn.addExclusion": "Add",
+    "quota.unlimited": "Unlimited",
+    "quota.daysLeft": " days left",
+    "btn.delete": "Delete",
+    "btn.makeup": "Makeup",
+    "btn.subcourse": "Sub-course",
+    "btn.session": "Session",
+    "btn.edit": "Edit",
+    "btn.rename": "Rename",
+    "weight.title": "🎚️ Custom Weights",
+    "weight.hint": "Set preference weights (1–10) for each session. Higher total weights appear first.",
+    "weight.stars": "More stars = stronger preference. Default is 5.",
+    "weight.empty": "No courses yet. Add courses and sessions first.",
+    "filter.weightSort": "Custom weight sort",
+    "filter.weightHint": "Higher total weight first",
+    "btn.setWeight": "Set weights",
+    "sortPriority.title": "🏆 Sort Priority (drag to adjust)",
+    "label.maxDisplay": "Show max",
+    "label.plans": "plans",
+    "exclusion.timeTitle": "🕐 Exclude specified times",
+    "exclusion.locTitle": "📍 Exclude specified locations",
+    "weight.modalTitle": "⚖️ Custom Section Weights",
+    "editAccount.title": "✏️ Edit Account",
+    "dialog.addSession": "Add Session",
+    "dialog.addSubSession": "Add {name} Session",
+    "label.classDay": "Class Day",
+    "label.start": "Start",
+    "label.end": "End",
+    "label.location": "Location",
+    "label.hasSubCourse": "Has sub-course",
+    "picker.manualInput": "Manual Input",
+    "picker.selectLoc": "Select Location",
+    "picker.orManual": "or enter manually",
+    "picker.locPlaceholder": "Enter custom location, e.g. ZX",
+    "auth.title": "Auto Scheduling System",
+    "auth.subtitle": "Smart Scheduling · Secure Access",
+    "auth.userLogin": "User Login",
+    "auth.adminEntry": "Admin Entry",
+    "auth.adminKey": "Admin Key",
+    "auth.enterBackend": "Enter Admin Panel",
+    "auth.adminBackend": "Admin Panel",
+    "auth.logout": "Logout",
+    "auth.account": "Account",
+    "auth.password": "Password",
+    "auth.expireDate": "Expiry Date",
+    "auth.quota": "Quota",
+    "auth.createAccount": "Create Account",
+    "auth.generate": "Generate",
+    "auth.generateAccount": "Generate Account",
+    "auth.createdAccounts": "Created Accounts",
+    "auth.editAcc": "Account",
+    "auth.save": "Save",
+    "dialog.confirm": "OK",
+    "dialog.cancel": "Cancel",
+    "panel.notifMgmt": "Notification Management",
+    "panel.accMgmt": "Account Management",
+    "notif.sendNew": "+ Send New Notification",
+    "notif.titlePlaceholder": "Title (optional)",
+    "notif.contentPlaceholder": "Content (required)",
+    "notif.send": "Send Notification",
+    "notif.empty": "No notifications",
+    "notif.untitled": "Untitled",
+    "notif.withdraw": "Withdraw",
+    "notif.noTitle": "Notification",
+    "alert.timeExcluded": "This time is already excluded",
+    "alert.timeFormatError": "Invalid time format. Use HH:MM (e.g. 08:30)",
+    "alert.locExcluded": "This location is already excluded",
+    "alert.enterNotifContent": "Please enter notification content",
+    "prompt.editTitle": "Edit title:",
+    "prompt.editContent": "Edit content:",
+    "confirm.withdrawNotif": "Withdraw this notification?",
+    "confirm.deleteAccount": "Delete this account?",
+    "prompt.subCourseName": "Enter sub-course name (e.g. Tutorial):",
+    "alert.selectDay": "Please select at least one class day",
+    "alert.selectStart": "Please select a start time",
+    "alert.selectEnd": "Please select an end time",
+    "alert.fillLocation": "Please fill in the location",
+    "alert.addFailed": "Failed to add: ",
+    "confirm.deleteSubCourse": "Sub-course \"{name}\" has no sessions. Delete it too?",
+    "confirm.resetWeights": "Reset all weights to 5?",
+    "alert.enterCourseCode": "Please enter a course code",
+    "alert.courseExists": "Course [{code}] already exists",
+    "confirm.deleteCourse": "Delete course [{code}] and all its sessions?",
+    "alert.enterAccount": "Please enter an account",
+    "alert.enterPassword": "Please enter a password",
+    "alert.accountExists": "Account already exists",
+    "alert.enterAccountAndPassword": "Please enter account and password",
+    "auth.enterUsername": "Enter account",
+    "auth.enterPassword": "Enter password",
+    "auth.enterAdminKey": "Enter admin key",
+    "time.justNow": "Just now",
+    "time.minutesAgo": "{n}m ago",
+    "time.hoursAgo": "{n}h ago",
+    "time.daysAgo": "{n}d ago",
+    "label.selectLocTitle": "Select Location",
+    "weight.noSessions": "No sessions",
+  }
+};
+
+window.T = function(key) {
+  var lang = localStorage.getItem("wb_lang") || "zh";
+  return (window.TRANSLATIONS[lang] && window.TRANSLATIONS[lang][key]) || key;
+};
+
+function applyLanguage(lang) {
+  localStorage.setItem("wb_lang", lang);
+  document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+  var sel = document.getElementById("langSelect");
+  if (sel) sel.value = lang;
+  document.querySelectorAll("[data-i18n]").forEach(function(el) {
+    var key = el.getAttribute("data-i18n");
+    var text = window.T(key);
+    if (text !== key) el.textContent = text;
+  });
+  document.querySelectorAll("[data-i18n-html]").forEach(function(el) {
+    var key = el.getAttribute("data-i18n-html");
+    var text = window.T(key);
+    if (text !== key) el.innerHTML = text;
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(function(el) {
+    var key = el.getAttribute("data-i18n-placeholder");
+    var text = window.T(key);
+    if (text !== key) el.setAttribute("placeholder", text);
+  });
+}
+
+// 应用保存的语言偏好
+(function(){ var _l = localStorage.getItem("wb_lang") || "zh"; applyLanguage(_l); })();
 </script>
 </body>
 </html>

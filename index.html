@@ -3590,6 +3590,7 @@ function loadCourses(){
     const _v110EnTitle = "Version 1.1.0 Update";
     const _v110EnContent = "To optimize user experience and long-term development, the system has been updated to version 1.1.0 with the following changes:\n1. New Notification Panel: Users can now view update announcements and other info;\n2. New Sub-course Option: After creating a course, users can link sub-courses (e.g., Lec & Tut) to any session. The scheduler will consider linked courses for more reasonable timetables;\n3. Improved Time & Location Selection: Time selection now uses a scroll wheel or manual input; location selection offers direct clicking (on-campus) or manual entry (off-campus);\n4. New Location Options: Added ABE location. When sorting by location priority, its calculation is similar to TA, but the distance to TA is 1;\n5. New Custom Exclusion Options: Users can exclude specific times or locations;\n6. Improved Page Layout: Optimized for different window ratios;\n7. New Usage Quota: To prevent account sharing, each schedule calculation consumes one quota. Contact admin when quota runs out.";
     const _v110Idx = _existing.findIndex(n => n.id === "n_builtin_v17_update");
+    const _v110NewIdx = _existing.findIndex(n => n.id === "n_builtin_v110_update");
     if (_v110Idx !== -1) {
       // 存在旧公告，更新ID、标题和内容，保持原发送时间
       _existing[_v110Idx].id = "n_builtin_v110_update";
@@ -3598,7 +3599,12 @@ function loadCourses(){
       _existing[_v110Idx].enTitle = _v110EnTitle;
       _existing[_v110Idx].enContent = _v110EnContent;
       _existing[_v110Idx].type = "warning";
-    } else if (!_existing.some(n => n.id === "n_builtin_v110_update")) {
+    } else if (_v110NewIdx !== -1) {
+      // 已存在新ID，补全英文字段
+      _existing[_v110NewIdx].enTitle = _v110EnTitle;
+      _existing[_v110NewIdx].enContent = _v110EnContent;
+      _existing[_v110NewIdx].type = "warning";
+    } else {
       // 不存在旧公告，也不存在新ID，添加新公告
       _existing.unshift({
         id: "n_builtin_v110_update",
@@ -3616,7 +3622,13 @@ function loadCourses(){
     // 公告2：第一轮内测反馈
     const _beta1EnTitle = "First Beta Feedback";
     const _beta1EnContent = "Welcome beta testers to report bugs or suggest optimizations! All feedback that gets adopted will be rewarded with a premium public-beta account (super long duration & super high quota^^)! Feedback: WeChat Ablu6669";
-    if (!_existing.some(n => n.id === "n_builtin_beta_feedback")) {
+    const _beta1Idx = _existing.findIndex(n => n.id === "n_builtin_beta_feedback");
+    if (_beta1Idx !== -1) {
+      // 已存在，补全英文字段
+      _existing[_beta1Idx].enTitle = _beta1EnTitle;
+      _existing[_beta1Idx].enContent = _beta1EnContent;
+      _existing[_beta1Idx].type = "warning";
+    } else {
       _existing.unshift({
         id: "n_builtin_beta_feedback",
         title: "第一轮内测反馈",

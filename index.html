@@ -854,6 +854,29 @@
   .tp-wheels { display: flex; align-items: center; justify-content: center; gap: 4px; }
   .tp-sep { font-size: 1.5rem; font-weight: 700; color: var(--text-muted); line-height: 1; padding: 0 2px; }
 
+  /* ── 导出栏 ── */
+  .export-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; margin-bottom: 4px;
+    background: var(--primary-light); border: 1px solid var(--border);
+    border-radius: var(--radius); font-size: 0.85rem; color: var(--text-muted);
+    flex-wrap: wrap;
+  }
+  .export-bar.hidden { display: none; }
+  .export-num-input {
+    width: 52px; padding: 3px 6px; border: 1.5px solid var(--border);
+    border-radius: 6px; font-size: 0.85rem; text-align: center;
+    background: var(--card); color: var(--text);
+  }
+  .btn-export {
+    padding: 5px 14px; background: var(--success); color: #fff;
+    border: none; border-radius: 8px; font-size: 0.85rem;
+    cursor: pointer; transition: background .15s;
+    white-space: nowrap;
+  }
+  .btn-export:hover { background: #16a34a; }
+  .btn-export:active { background: #15803d; }
+
   /* 箭头 + 滚轮外层容器 */
   .tp-wheel-outer { display: flex; flex-direction: column; align-items: center; gap: 4px; }
   .tp-arrow {
@@ -1288,6 +1311,10 @@
     flex-direction: column; gap: 4px;
   }
 </style>
+<!-- SheetJS（xlsx-style fork，支持单元格样式） -->
+<script src="https://unpkg.com/xlsx-style@0.8.13/dist/xlsx.full.min.js"></script>
+<!-- FileSaver：xlsx-style 需要用它保存文件 -->
+<script src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 </head>
 <body>
 
@@ -1794,6 +1821,12 @@
       <div id="userRightContent">
         <div class="panel">
           <div class="panel-title"><span class="icon">📊</span><span data-i18n="panel.scheduleResults">排课结果</span></div>
+          <div id="exportBar" class="export-bar hidden">
+            <span data-i18n="export.label">导出方案</span>
+            <input type="number" id="exportPlanNum" min="1" value="1" class="export-num-input">
+            <span data-i18n="export.as">为 Excel</span>
+            <button class="btn btn-export" onclick="exportScheduleExcel('')">📥 <span data-i18n="export.btn">导出课表</span></button>
+          </div>
           <div id="resultsContent">
             <div class="empty-state">
               <div class="emoji">🔍</div><span data-i18n="empty.clickToView">点击「计算排课方案」查看结果</span>
@@ -1805,6 +1838,12 @@
       <div id="adminRightContent" style="display:none;">
         <div class="panel">
           <div class="panel-title"><span class="icon">📊</span><span data-i18n="panel.scheduleResults">排课结果</span></div>
+          <div id="exportBar2" class="export-bar hidden">
+            <span data-i18n="export.label">导出方案</span>
+            <input type="number" id="exportPlanNum2" min="1" value="1" class="export-num-input">
+            <span data-i18n="export.as">为 Excel</span>
+            <button class="btn btn-export" onclick="exportScheduleExcel('2')">📥 <span data-i18n="export.btn">导出课表</span></button>
+          </div>
           <div id="resultsContent2">
             <div class="empty-state">
               <div class="emoji">🔍</div><span data-i18n="empty.clickToView">点击「计算排课方案」查看结果</span>
@@ -2280,6 +2319,7 @@ const GUIDE_DATA = [
         <li><strong>课程管理</strong>：添加/删除课程，为每门课程配置多个时段（支持子课程），可直接编辑时段、控制参与排课</li>
         <li><strong>智能筛选</strong>：不上早八、不上午一、自定义排除时间及地点</li>
         <li><strong>多维排序</strong>：按时间、地点、自定义权重多维度排序</li>
+        <li><strong>Excel 导出</strong>：一键将排课结果导出为 Excel 文件，含完整课表和课程列表</li>
         <li><strong>优先级自定义</strong>：多排序项同时开启时，自由调整优先级顺序</li>
         <li><strong>参与排课开关</strong>：灵活控制每个时段是否纳入排课计算</li>
         <li><strong>使用额度管理</strong>：管理员可创建账号并分配使用额度</li>
@@ -2303,6 +2343,7 @@ const GUIDE_DATA = [
         <li><strong>Course Management</strong>: Add/delete courses, configure multiple sessions (including sub-courses), edit sessions directly, toggle scheduling participation</li>
         <li><strong>Smart Filtering</strong>: Exclude early morning, noon classes, custom time/location exclusions</li>
         <li><strong>Multi-dimensional Sorting</strong>: Sort by time, location, or custom weights</li>
+        <li><strong>Excel Export</strong>: One-click export of schedule results to Excel, with complete schedule table and course list</li>
         <li><strong>Priority Customization</strong>: Adjust sort priority order when multiple options are enabled</li>
         <li><strong>Schedule Toggle</strong>: Control which sessions are included in schedule calculation</li>
         <li><strong>Quota Management</strong>: Admins can create accounts and allocate usage quotas</li>
@@ -2543,6 +2584,58 @@ const GUIDE_DATA = [
         <li>When computing schedules, the system compares by priority order: priority 1 first, then priority 2 if tied</li>
       </ol>
       <div class="tip-box">💡 Tip: If only one sorting option is enabled, no priority adjustment is needed.</div>
+    `
+  },
+  {
+    id: "excel-export", icon: "📊",
+    zh_title: "Excel 导出", en_title: "Excel Export",
+    zh_content: `
+      <h2>Excel 导出功能</h2>
+      <p>排课结果生成后，您可以一键将排课方案导出为 Excel 文件，方便离线查看、打印或填写选课系统。</p>
+      <h3>如何使用</h3>
+      <ol>
+        <li>点击「计算排课方案」按钮，等待系统生成排课结果</li>
+        <li>在结果面板（左侧或右侧）的方案卡片上方，可以看到导出栏</li>
+        <li>输入要导出的方案编号（如 <code>1</code> 表示导出第 1 个方案）</li>
+        <li>点击「📥 导出 Excel」按钮</li>
+        <li>系统会生成并下载一个 Excel 文件，文件名格式为 <code>排课方案_编号_时间戳.xlsx</code></li>
+      </ol>
+      <h3>导出内容</h3>
+      <ul>
+        <li><strong>课表</strong>：按周一至周日排列的完整课表，包含每天各时段（早八、上午、午一、下午、晚上）的课程安排</li>
+        <li><strong>课程列表</strong>：课表下方附带所有待选课程时段列表，包含课程代码、时间、地点、参与排课状态，方便对照填写选课系统</li>
+      </ul>
+      <h3>注意事项</h3>
+      <ul>
+        <li>如果未输入方案编号，系统将导出第 1 个方案</li>
+        <li>如果两个结果面板都打开了，两个面板都可以独立导出各自的方案</li>
+        <li>导出的 Excel 文件使用 xlsx 格式，可用 Excel、WPS 等软件打开</li>
+      </ul>
+      <div class="tip-box">💡 提示：导出功能需要浏览器支持文件下载。如果下载失败，请检查浏览器设置或尝试更换浏览器。</div>
+    `,
+    en_content: `
+      <h2>Excel Export Feature</h2>
+      <p>After generating schedule results, you can export any schedule to an Excel file with one click for offline viewing, printing, or filling in course registration systems.</p>
+      <h3>How to Use</h3>
+      <ol>
+        <li>Click "Calculate Schedule" and wait for the system to generate results</li>
+        <li>In the result panel (left or right), you'll see an export bar above the plan cards</li>
+        <li>Enter the plan number to export (e.g. <code>1</code> for the 1st plan)</li>
+        <li>Click the "📥 Export Excel" button</li>
+        <li>The system generates and downloads an Excel file named <code>Schedule_Plan_Number_Timestamp.xlsx</code></li>
+      </ol>
+      <h3>Export Contents</h3>
+      <ul>
+        <li><strong>Schedule Table</strong>: Complete weekly schedule (Mon-Sun) with all time slots (early morning, morning, noon, afternoon, evening)</li>
+        <li><strong>Course List</strong>: All available course sessions listed below the schedule, including course code, time, location, and scheduling status, for easy reference when filling in registration forms</li>
+      </ul>
+      <h3>Notes</h3>
+      <ul>
+        <li>If no plan number is entered, the system exports the 1st plan by default</li>
+        <li>If both result panels are open, each panel can export its own plans independently</li>
+        <li>The exported file is in .xlsx format, compatible with Excel, WPS, and other spreadsheet software</li>
+      </ul>
+      <div class="tip-box">💡 Tip: The export feature requires browser file download support. If download fails, check browser settings or try a different browser.</div>
     `
   },
   {
@@ -2934,8 +3027,9 @@ const DAY_NAMES = {1:"Mo",2:"Tu",3:"We",4:"Th",5:"Fr",6:"St",7:"Su"};
 let courses = {};
 let sectionCounter = {};
 let currentPlans = [];
-
-// ─── 共用时间解析 ──────────────────────
+let currentPlans2 = [];
+// 存储最近一次 renderResults 的 display 列表，供导出使用
+const _renderedPlans = { "": [], "2": [] };
 function _toMin(t) {
   const parts = t.trim().replace(/[：﹕]/g,":").split(":");
   if(parts.length!==2) throw new Error("时间需用冒号分隔，如 14:00");
@@ -3346,10 +3440,20 @@ function timeScore(plan){
 }
 
 function locScore(plan){
+  const GAP_THRESHOLD = 120; // 只计算间隔 ≤ 120 分钟（2小时）的相邻课程之间的地点距离
   let total=0;
   const byDay={};
-  allSections(plan).forEach(s=>s.weekdays.forEach(d=>{ byDay[d]=byDay[d]||[]; byDay[d].push({t:s.start,l:s.location}); }));
-  Object.values(byDay).forEach(ev=>{ ev.sort((a,b)=>a.t-b.t); for(let i=0;i<ev.length-1;i++) total+=locDist(ev[i].l,ev[i+1].l); });
+  allSections(plan).forEach(s=>s.weekdays.forEach(d=>{
+    byDay[d]=byDay[d]||[];
+    byDay[d].push({t:s.start,e:s.end,l:s.location});
+  }));
+  Object.values(byDay).forEach(ev=>{
+    ev.sort((a,b)=>a.t-b.t);
+    for(let i=0;i<ev.length-1;i++){
+      const gap = ev[i+1].t - ev[i].e; // 下一门开始 - 当前课结束
+      if(gap <= GAP_THRESHOLD) total+=locDist(ev[i].l,ev[i+1].l);
+    }
+  });
   return total;
 }
 
@@ -3513,7 +3617,19 @@ function renderResults(plans, suffix){
   const lp=document.getElementById("locPriority"+s).checked;
   const wp=document.getElementById("weightPriority"+s).checked;
   const display=plans.slice(0,max);
-  if(!plans.length){ el.innerHTML=`<div class="results-summary empty">${T("results.noPlans")}</div><div class="empty-state"><div class="emoji">😔</div>${T("results.noPlansFound")}<br><small>${T("results.relaxFilters")}</small></div>`; return; }
+  _renderedPlans[s] = display; // 存储供导出
+  // 导出栏：无结果时隐藏，有结果时显示
+  const exportBar = document.getElementById("exportBar"+s);
+  if(!plans.length){
+    if(exportBar) exportBar.classList.add("hidden");
+    el.innerHTML=`<div class="results-summary empty">${T("results.noPlans")}</div><div class="empty-state"><div class="emoji">😔</div>${T("results.noPlansFound")}<br><small>${T("results.relaxFilters")}</small></div>`;
+    return;
+  }
+  if(exportBar){
+    exportBar.classList.remove("hidden");
+    const numInput = document.getElementById("exportPlanNum"+s);
+    if(numInput){ numInput.max = display.length; if(parseInt(numInput.value)>display.length) numInput.value=1; }
+  }
   const showScores=tp||lp||wp;
   const totalText = T("results.totalPlans").replace("{n}", plans.length);
   const showingText = plans.length>max ? T("results.showingTop").replace("{n}", max) : "";
@@ -4083,6 +4199,30 @@ function loadCourses(){
       });
     }
 
+    // 公告7：2.2.0版本更新
+    const _v220EnTitle = "Version 2.2.0 Update";
+    const _v220EnContent = "To optimize user experience and long-term development, the system has been updated to version 2.2.0. Update content is as follows:\n1. Re-optimized time selection: Reduced scroll wheel sensitivity for time slot selection — mouse wheel now moves only 1 option per scroll tick, and added arrow buttons for precise stepping;\n2. Optimized location sorting logic: Removed mechanical sorting of adjacent time slots; now only calculates distances between sessions within 2 hours for more reasonable sorting;\n3. New one-click export: Users can select a preferred plan and export the corresponding Excel course schedule and all course information lists with one click.";
+    const _v220Idx = _existing.findIndex(n => n.id === "n_builtin_v220_update");
+    if (_v220Idx !== -1) {
+      _existing[_v220Idx].title = "2.2.0版本更新";
+      _existing[_v220Idx].content = "为优化用户体验和长久发展，本系统进行2.2.0版本更新，更新内容如下：\n1.再次优化时间选择方式：降低了时段时间选择时滚轮滑动方式的灵敏度，鼠标滚轮每滚一格只移动1个选项，同时新增箭头点击精确步进；\n2.优化地点排序计算逻辑：取消相邻时段机械排序，优化为只计算间隔在2小时以内的时段之间的距离然后进行排序；\n3.新增一键导出功能：用户可以选择心仪方案后一键导出对应方案的excel课程表以及要选的所有课程信息列表。";
+      _existing[_v220Idx].enTitle = _v220EnTitle;
+      _existing[_v220Idx].enContent = _v220EnContent;
+      _existing[_v220Idx].type = "info";
+    } else {
+      _existing.unshift({
+        id: "n_builtin_v220_update",
+        title: "2.2.0版本更新",
+        content: "为优化用户体验和长久发展，本系统进行2.2.0版本更新，更新内容如下：\n1.再次优化时间选择方式：降低了时段时间选择时滚轮滑动方式的灵敏度，鼠标滚轮每滚一格只移动1个选项，同时新增箭头点击精确步进；\n2.优化地点排序计算逻辑：取消相邻时段机械排序，优化为只计算间隔在2小时以内的时段之间的距离然后进行排序；\n3.新增一键导出功能：用户可以选择心仪方案后一键导出对应方案的excel课程表以及要选的所有课程信息列表。",
+        enTitle: _v220EnTitle,
+        enContent: _v220EnContent,
+        enabled: true,
+        read: false,
+        createdAt: Date.now(),
+        type: "info"
+      });
+    }
+
     localStorage.setItem(_notifKey, JSON.stringify(_existing));
   } catch(e) {}
 })();
@@ -4245,6 +4385,282 @@ function openTimePicker(btnId, title) {
   };
 
   document.getElementById("timepickerOverlay").classList.add("open");
+}
+
+// ══════════════════════════════════════
+//  EXCEL 课表导出
+// ══════════════════════════════════════
+function exportScheduleExcel(suffix) {
+  const s = suffix || "";
+  const plans = _renderedPlans[s] || [];
+  if (!plans.length) { alert(T("export.noResult")); return; }
+
+  const numInput = document.getElementById("exportPlanNum" + s);
+  const planIdx = Math.max(0, Math.min(parseInt(numInput.value || 1) - 1, plans.length - 1));
+  const plan = plans[planIdx];
+  if (!plan) { alert(T("export.noResult")); return; }
+
+  // ── 1. 收集该方案所有时段 ─────────────────────────────
+  const items = []; // { label, day, start, end }
+  plan.forEach(entry => {
+    const sec = entry.sec;
+    const label = `${sec.courseCode} ${sec.sectionId.replace(sec.courseCode + "-", "")}\n${sec.startStr}-${sec.endStr}\n${sec.location}`;
+    sec.weekdays.forEach(d => items.push({ label, day: d, start: sec.start, end: sec.end }));
+    entry.subs.forEach(ss => {
+      const subLabel = `${sec.courseCode} ${ss.subId.replace(sec.courseCode + "-", "")}\n[${ss.subName}]\n${ss.startStr}-${ss.endStr}\n${ss.location}`;
+      ss.weekdays.forEach(d => items.push({ label: subLabel, day: d, start: ss.start, end: ss.end }));
+    });
+  });
+
+  // ── 2. 确定时间行范围（以30分钟为步长）─────────────────
+  const STEP = 30; // 分钟
+  const minStart = Math.min(...items.map(x => x.start));
+  const maxEnd   = Math.max(...items.map(x => x.end));
+  // 向下取整到半小时
+  const rowStart = Math.floor(minStart / STEP) * STEP;
+  const rowEnd   = Math.ceil(maxEnd / STEP) * STEP;
+  const totalRows = (rowEnd - rowStart) / STEP;
+
+  // ── 3. 构建表格数据 ───────────────────────────────────
+  const langIsZh = (document.documentElement.lang !== "en");
+  const DAY_FULL = langIsZh
+    ? { 1:"周一", 2:"周二", 3:"周三", 4:"周四", 5:"周五", 6:"周六", 7:"周日" }
+    : { 1:"Monday", 2:"Tuesday", 3:"Wednesday", 4:"Thursday", 5:"Friday", 6:"Saturday", 7:"Sunday" };
+  const DAYS_ORDER = [1,2,3,4,5,6,7];
+
+  // 表头行：第一列 Time，后续7列为星期
+  const headerRow = [langIsZh ? "时间" : "Time", ...DAYS_ORDER.map(d => DAY_FULL[d])];
+
+  // 为每个时间槽 × 星期列准备内容（可能多个课程叠加）
+  const grid = {}; // "rowIdx_dayIdx" -> string[]
+  items.forEach(item => {
+    const startRowIdx = Math.round((item.start - rowStart) / STEP);
+    const endRowIdx   = Math.round((item.end - rowStart) / STEP);
+    const dayCol = DAYS_ORDER.indexOf(item.day); // 0-based
+    for (let r = startRowIdx; r < endRowIdx; r++) {
+      const key = `${r}_${dayCol}`;
+      if (!grid[key]) grid[key] = [];
+      // 只在起始行写课程信息
+      if (r === startRowIdx) grid[key].push(item.label);
+    }
+  });
+
+  // 构建行数组（用于 merge 计算）
+  // 同时记录每列每个课程的跨行范围
+  const merges = []; // {s:{r,c}, e:{r,c}}
+
+  // 收集每个课程在每列的 span 信息（aoa_to_sheet 0-based，第0行=表头，数据从1起）
+  items.forEach(item => {
+    const startRowIdx = Math.round((item.start - rowStart) / STEP);
+    const endRowIdx   = Math.round((item.end - rowStart) / STEP);
+    const dayColIdx = DAYS_ORDER.indexOf(item.day) + 1; // +1 因第0列是时间
+    const spanRows = endRowIdx - startRowIdx;
+    if (spanRows > 1) {
+      merges.push({
+        s: { r: startRowIdx + 1, c: dayColIdx }, // +1 跳过表头行（0-based）
+        e: { r: startRowIdx + spanRows, c: dayColIdx } // 最后一行（含）
+      });
+    }
+  });
+
+  // 构建所有行
+  const dataRows = [];
+  for (let r = 0; r < totalRows; r++) {
+    const timeMin = rowStart + r * STEP;
+    const hh = String(Math.floor(timeMin / 60)).padStart(2, "0");
+    const mm = String(timeMin % 60).padStart(2, "0");
+    const timeLabel = `${hh}:${mm}`;
+    const row = [timeLabel];
+    DAYS_ORDER.forEach((_, di) => {
+      const key = `${r}_${di}`;
+      const cells = grid[key];
+      row.push(cells && cells.length ? cells.join("\n---\n") : "");
+    });
+    dataRows.push(row);
+  }
+
+  // ── 4. 组装完整 wsData（课表 + 空行 + 课程列表）───────────────────
+  // 课程列表表头
+  const listHeaders = langIsZh
+    ? ["序号","课程代码","时段","子课程","星期","开始","结束","地点"]
+    : ["No.","Course","Section","Sub-course","Day","Start","End","Location"];
+
+  // 收集列表行：每对 (section/day) 一行；主时段和子时段都列出
+  const listRows = [];
+  let seq = 0;
+  plan.forEach(entry => {
+    const sec = entry.sec;
+    sec.weekdays.forEach(d => {
+      seq++;
+      listRows.push([
+        seq,
+        sec.courseCode,
+        sec.sectionId.replace(sec.courseCode + "-", ""),
+        "",
+        DAY_FULL[d],
+        sec.startStr,
+        sec.endStr,
+        sec.location
+      ]);
+    });
+    entry.subs.forEach(ss => {
+      ss.weekdays.forEach(d => {
+        seq++;
+        listRows.push([
+          seq,
+          sec.courseCode,
+          sec.sectionId.replace(sec.courseCode + "-", ""),
+          ss.subName,
+          DAY_FULL[d],
+          ss.startStr,
+          ss.endStr,
+          ss.location
+        ]);
+      });
+    });
+  });
+
+  const listTitle = langIsZh ? "📋 课程列表（对照填课用）" : "📋 Course List (for registration)";
+
+  // 完整数据：课表 + 2 空行 + 列表标题（合并A~H）+ 列表表头 + 列表数据
+  const SCHEDULE_ROWS = 1 + totalRows; // 表头 + 时间行
+  const LIST_START = SCHEDULE_ROWS + 2 + 1; // 空行×2 + 标题行 之后的列表表头行索引（0-based）
+  const fullWsData = [
+    ...[headerRow, ...dataRows],
+    Array(headerRow.length).fill(""), // 空行 1
+    Array(headerRow.length).fill(""), // 空行 2
+    [listTitle, ...Array(headerRow.length - 1).fill("")], // 标题行（A列填标题，其余空）
+    listHeaders,
+    ...listRows
+  ];
+
+  // ── 5. 使用 SheetJS 生成 workbook ───────────────────
+  if (!window.XLSX) { alert("SheetJS 未加载，请检查网络连接。"); return; }
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(fullWsData);
+
+  // 列宽设置
+  ws["!cols"] = [
+    { wch: 7 },  // Time / 序号
+    { wch: 10 }, // 课程代码 / Course
+    { wch: 8 },  // 时段 / Section
+    { wch: 12 }, // 子课程 / Sub-course
+    { wch: 8 },  // 星期 / Day
+    { wch: 7 },  // 开始 / Start
+    { wch: 7 },  // 结束 / End
+    { wch: 10 }  // 地点 / Location
+  ];
+
+  // 行高设置
+  ws["!rows"] = [];
+  // 课表部分
+  ws["!rows"].push({ hpt: 20 }); // 课表表头
+  for (let r = 0; r < totalRows; r++) ws["!rows"].push({ hpt: 48 });
+  // 空行
+  ws["!rows"].push({ hpt: 10 }, { hpt: 10 });
+  // 列表标题行
+  ws["!rows"].push({ hpt: 22 });
+  // 列表表头行
+  ws["!rows"].push({ hpt: 20 });
+  // 列表数据行
+  for (let r = 0; r < listRows.length; r++) ws["!rows"].push({ hpt: 18 });
+
+  // 合并：课表原有 merges + 列表标题行合并 A~H
+  const titleRowIdx = SCHEDULE_ROWS + 2; // 0-based，空行×2 之后的那一行
+  ws["!merges"] = [
+    ...merges,
+    { s: { r: titleRowIdx, c: 0 }, e: { r: titleRowIdx, c: headerRow.length - 1 } }
+  ];
+
+  // 单元格样式
+  const totalDataRows = fullWsData.length;
+  for (let R = 0; R < totalDataRows; R++) {
+    for (let C = 0; C < headerRow.length; C++) {
+      const addr = XLSX.utils.encode_cell({ r: R, c: C });
+      if (!ws[addr]) ws[addr] = { t: "s", v: "" };
+      const cell = ws[addr];
+      const v = cell.v || "";
+
+      // ── 课表区域（R < SCHEDULE_ROWS）─────────────────────────────
+      if (R < SCHEDULE_ROWS) {
+        cell.s = {
+          alignment: { horizontal: "center", vertical: "center", wrapText: true },
+          font: R === 0
+            ? { bold: true, sz: 11 }
+            : C === 0
+              ? { bold: true, sz: 10 }
+              : { sz: 10 },
+          fill: R === 0
+            ? { fgColor: { rgb: "4F6EF7" }, patternType: "solid" }
+            : (v ? { fgColor: { rgb: "C6D9A8" }, patternType: "solid" } : { fgColor: { rgb: "F7F9E5" }, patternType: "solid" }),
+          border: {
+            top:    { style: "thin", color: { rgb: "94A3B8" } },
+            bottom: { style: "thin", color: { rgb: "94A3B8" } },
+            left:   { style: "thin", color: { rgb: "94A3B8" } },
+            right:  { style: "thin", color: { rgb: "94A3B8" } }
+          }
+        };
+        if (R === 0) cell.s.font.color = { rgb: "FFFFFF" };
+      }
+      // ── 空行（无样式）─────────────────────────────────────────────
+      else if (R === SCHEDULE_ROWS || R === SCHEDULE_ROWS + 1) {
+        cell.s = { fill: { fgColor: { rgb: "FFFFFF" }, patternType: "solid" } };
+      }
+      // ── 列表标题行 ────────────────────────────────────────────────
+      else if (R === titleRowIdx) {
+        cell.s = {
+          alignment: { horizontal: "left", vertical: "center" },
+          font: { bold: true, sz: 12, color: { rgb: "1E293B" } },
+          fill: { fgColor: { rgb: "E2E8F0" }, patternType: "solid" },
+          border: {
+            top:    { style: "medium", color: { rgb: "94A3B8" } },
+            bottom: { style: "medium", color: { rgb: "94A3B8" } },
+            left:   { style: "medium", color: { rgb: "94A3B8" } },
+            right:  { style: "medium", color: { rgb: "94A3B8" } }
+          }
+        };
+      }
+      // ── 列表表头行 ────────────────────────────────────────────────
+      else if (R === titleRowIdx + 1) {
+        cell.s = {
+          alignment: { horizontal: "center", vertical: "center" },
+          font: { bold: true, sz: 10, color: { rgb: "FFFFFF" } },
+          fill: { fgColor: { rgb: "475569" }, patternType: "solid" },
+          border: {
+            top:    { style: "thin", color: { rgb: "94A3B8" } },
+            bottom: { style: "thin", color: { rgb: "94A3B8" } },
+            left:   { style: "thin", color: { rgb: "94A3B8" } },
+            right:  { style: "thin", color: { rgb: "94A3B8" } }
+          }
+        };
+      }
+      // ── 列表数据行 ────────────────────────────────────────────────
+      else {
+        const alt = (R - (titleRowIdx + 2)) % 2 === 0;
+        cell.s = {
+          alignment: { horizontal: C <= 1 ? "center" : "left", vertical: "center", wrapText: true },
+          font: { sz: 10 },
+          fill: alt
+            ? { fgColor: { rgb: "F1F5F9" }, patternType: "solid" }
+            : { fgColor: { rgb: "FFFFFF" }, patternType: "solid" },
+          border: {
+            top:    { style: "thin", color: { rgb: "94A3B8" } },
+            bottom: { style: "thin", color: { rgb: "94A3B8" } },
+            left:   { style: "thin", color: { rgb: "94A3B8" } },
+            right:  { style: "thin", color: { rgb: "94A3B8" } }
+          }
+        };
+      }
+    }
+  }
+
+  XLSX.utils.book_append_sheet(wb, ws, langIsZh ? "课表" : "Schedule");
+
+  const planLabel = (langIsZh ? "方案" : "Plan") + (planIdx + 1);
+  // xlsx-style：type:"array" 返回 Uint8Array，直接用于 Blob，最可靠
+  const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  const blob = new Blob([wbout], { type: "application/octet-stream" });
+  saveAs(blob, `Schedule_${planLabel}.xlsx`);
 }
 
 // 滚动对齐（snap）
@@ -4414,7 +4830,7 @@ window.TRANSLATIONS = {
     "filter.timePriority": "时间优先排序",
     "filter.timeHint": "早八/午一越少越靠前",
     "filter.locPriority": "地点优先排序",
-    "filter.locHint": "相邻课程地点越近越靠前",
+    "filter.locHint": "2小时内相邻课程地点越近越靠前",
     "btn.calcSchedule": "🚀 计算排课方案",
     "empty.clickToView": "点击「计算排课方案」查看结果",
     "filter.noNoon": "不上下午一",
@@ -4455,6 +4871,10 @@ window.TRANSLATIONS = {
     "results.morePlans": "... 还有 {n} 个方案",
     "results.timeLabel": "时间分",
     "results.locLabel": "地点分",
+    "export.label": "导出方案",
+    "export.as": "为 Excel",
+    "export.btn": "导出课表",
+    "export.noResult": "暂无可导出的方案，请先计算排课。",
     "results.weightLabel": "权重",
     "weight.modalTitle": "⚖️ 自定义时段权重",
     "editAccount.title": "✏️ 编辑账号",
@@ -4563,7 +4983,7 @@ window.TRANSLATIONS = {
     "filter.timePriority": "Time priority",
     "filter.timeHint": "Fewer early classes first",
     "filter.locPriority": "Location priority",
-    "filter.locHint": "Closer locations first",
+    "filter.locHint": "Closer locations for classes within 2 hrs",
     "btn.calcSchedule": "🚀 Calculate Schedule",
     "empty.clickToView": "Click \"Calculate Schedule\" to view results",
     "filter.noNoon": "No noon classes",
@@ -4604,6 +5024,10 @@ window.TRANSLATIONS = {
     "results.morePlans": "... {n} more plans",
     "results.timeLabel": "Time score",
     "results.locLabel": "Loc score",
+    "export.label": "Export Plan",
+    "export.as": "as Excel",
+    "export.btn": "Export Schedule",
+    "export.noResult": "No plans to export. Please calculate first.",
     "results.weightLabel": "Weight",
     "weight.modalTitle": "⚖️ Custom Section Weights",
     "editAccount.title": "✏️ Edit Account",

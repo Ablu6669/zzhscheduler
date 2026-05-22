@@ -854,6 +854,20 @@
   .tp-wheels { display: flex; align-items: center; justify-content: center; gap: 4px; }
   .tp-sep { font-size: 1.5rem; font-weight: 700; color: var(--text-muted); line-height: 1; padding: 0 2px; }
 
+  /* 箭头 + 滚轮外层容器 */
+  .tp-wheel-outer { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .tp-arrow {
+    width: 72px; height: 28px;
+    background: var(--bg); border: 1.5px solid var(--border);
+    border-radius: 8px; color: var(--text-muted);
+    font-size: 0.7rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s, color .15s, border-color .15s;
+    user-select: none;
+  }
+  .tp-arrow:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+  .tp-arrow:active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
   .tp-wheel-wrap {
     position: relative; width: 72px; overflow: hidden;
     border-radius: 10px; background: var(--bg);
@@ -1282,14 +1296,22 @@
   <div class="tp-modal">
     <div class="tp-title" id="tp-title">选择时间</div>
     <div class="tp-wheels">
-      <div class="tp-wheel-wrap">
-        <div class="tp-highlight"></div>
-        <div class="tp-wheel" id="tp-hour-wheel"></div>
+      <div class="tp-wheel-outer">
+        <button class="tp-arrow tp-arrow-up" onclick="tpStep('tp-hour-wheel',-1)">&#9650;</button>
+        <div class="tp-wheel-wrap">
+          <div class="tp-highlight"></div>
+          <div class="tp-wheel" id="tp-hour-wheel"></div>
+        </div>
+        <button class="tp-arrow tp-arrow-down" onclick="tpStep('tp-hour-wheel',1)">&#9660;</button>
       </div>
       <span class="tp-sep">:</span>
-      <div class="tp-wheel-wrap">
-        <div class="tp-highlight"></div>
-        <div class="tp-wheel" id="tp-min-wheel"></div>
+      <div class="tp-wheel-outer">
+        <button class="tp-arrow tp-arrow-up" onclick="tpStep('tp-min-wheel',-1)">&#9650;</button>
+        <div class="tp-wheel-wrap">
+          <div class="tp-highlight"></div>
+          <div class="tp-wheel" id="tp-min-wheel"></div>
+        </div>
+        <button class="tp-arrow tp-arrow-down" onclick="tpStep('tp-min-wheel',1)">&#9660;</button>
       </div>
     </div>
     <div class="tp-manual">
@@ -4188,6 +4210,17 @@ function openTimePicker(btnId, title) {
 
   // 滚动事件（防抖高亮）
   [hourWheel, minWheel].forEach(w => {
+    // 拦截鼠标滚轮，降低灵敏度：每次只步进 1 格（38px）
+    w.onwheel = (e) => {
+      e.preventDefault();
+      const itemH = 38;
+      const dir = e.deltaY > 0 ? 1 : -1;
+      const cur = Math.round(w.scrollTop / itemH);
+      w.scrollTo({ top: (cur + dir) * itemH, behavior: "smooth" });
+      clearTimeout(w._scrollT);
+      w._scrollT = setTimeout(() => { _snapWheel(w); _syncManual(); }, 150);
+      _updateWheelHighlight(w);
+    };
     w.onscroll = () => {
       clearTimeout(w._scrollT);
       w._scrollT = setTimeout(() => {
@@ -4220,6 +4253,18 @@ function _snapWheel(wheelEl) {
   const idx = Math.round(wheelEl.scrollTop / itemH);
   wheelEl.scrollTo({ top: idx * itemH, behavior: "smooth" });
   _updateWheelHighlight(wheelEl);
+}
+
+// 箭头按钮步进（dir: -1=上 / +1=下）
+function tpStep(wheelId, dir) {
+  const w = document.getElementById(wheelId);
+  if (!w) return;
+  const itemH = 38;
+  const cur = Math.round(w.scrollTop / itemH);
+  w.scrollTo({ top: (cur + dir) * itemH, behavior: "smooth" });
+  clearTimeout(w._scrollT);
+  w._scrollT = setTimeout(() => { _snapWheel(w); _syncManual(); }, 150);
+  _updateWheelHighlight(w);
 }
 
 // 把滚轮当前值同步到手动输入框

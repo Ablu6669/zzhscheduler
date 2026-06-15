@@ -2166,11 +2166,11 @@ async function renderAccountList(containerId, countId) {
   }
   el.innerHTML = accounts.map((a,i) => {
     const st = getExpireStatus(a.expiresAt);
-    const q = a.quota || 999;
+    const q = a.quota || 0;
     const u = a.quotaUsed || 0;
     const rem = q - u;
-    const qcls = rem <= 0 ? "quota-critical" : (rem <= q * 0.2 ? "quota-critical" : rem <= q * 0.5 ? "quota-warning" : "quota-ok");
-    const qLabel = q >= 999 ? "无限" : `${rem}/${q}`;
+    const qcls = q >= 999 ? "quota-ok" : (rem <= 0 ? "quota-critical" : (rem <= q * 0.2 ? "quota-critical" : rem <= q * 0.5 ? "quota-warning" : "quota-ok"));
+    const qLabel = q >= 999 ? "无限" : `${u}/${q}（剩余${rem}）`;
     // 注意：密码不显示（服务端已加密），用 ●●● 代替
     return `<div class="account-item">
       <div class="account-info">
@@ -2358,13 +2358,14 @@ async function updateQuotaDisplay() {
   // 从 API 刷新最新额度
   try {
     const q = await getAccountQuota(session.username);
+    console.log("[updateQuotaDisplay] API返回:", JSON.stringify(q), "session:", JSON.stringify({quotaTotal:session.quotaTotal,quotaUsed:session.quotaUsed,quotaRemaining:session.quotaRemaining}));
     if (!q) return;
     // 更新 session 缓存
     session.quotaTotal = q.quota;
     session.quotaUsed = q.used;
     session.quotaRemaining = q.remaining;
     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  } catch(e) { /* 使用 session 缓存 */ }
+  } catch(e) { console.warn("[updateQuotaDisplay] API失败:", e.message); /* 使用 session 缓存 */ }
   
   const remaining = session.quotaRemaining || 0;
   const isUnlimited = (session.quotaTotal || 0) >= 999;

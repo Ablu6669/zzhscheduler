@@ -1919,24 +1919,34 @@ function getExpireStatus(expireStr) {
 
 // ══ 用户登录（调用后端 API）═════════════════════════════
 
-// 获取当前账号的剩余额度（从 session 缓存读取，或调 API 刷新）
+// 获取当前账号的剩余额度（优先从 API 获取最新值，缓存作降级备用）
 async function getAccountQuota(username) {
-  if (session && session.username === username && session.quotaTotal !== undefined) {
-    return {
-      quota: session.quotaTotal,
-      used: session.quotaUsed,
-      remaining: Math.max(0, session.quotaTotal - session.quotaUsed)
-    };
-  }
-  // 从 API 刷新
+  // 优先从 API 获取最新额度（保证多端同步）
   try {
     const data = await apiFetch("/api/quota");
-    return {
+    const result = {
       quota: data.quotaTotal || 0,
       used: data.quotaUsed || 0,
       remaining: data.quotaRemaining || 0
     };
+    // 同步更新 session 缓存
+    if (session) {
+      session.quotaTotal = result.quota;
+      session.quotaUsed = result.used;
+      session.quotaRemaining = result.remaining;
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    }
+    return result;
   } catch(e) {
+    // API 失败时用 session 缓存降级
+    console.warn("[getAccountQuota] API 失败，使用缓存:", e.message);
+    if (session && session.quotaTotal !== undefined) {
+      return {
+        quota: session.quotaTotal,
+        used: session.quotaUsed,
+        remaining: Math.max(0, session.quotaTotal - session.quotaUsed)
+      };
+    }
     return { quota: 0, used: 0, remaining: 0 };
   }
 }

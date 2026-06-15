@@ -2176,7 +2176,7 @@ async function renderAccountList(containerId, countId) {
       <div class="account-info">
         <div class="account-user">${a.username}</div>
         <div class="account-exp ${st.cls}">${st.label}</div>
-        <div class="account-quota ${qcls}">📊 额度：${qLabel}</div>
+        <div class="account-quota ${qcls}">📊 额度：${qLabel} <span style="font-size:0.7rem;color:#94a3b8;">[DB quota=${a.quota}]</span></div>
       </div>
       <div class="account-actions">
         <button class="btn-icon" onclick="editAccount('${a._id || a.username}')" title="${T('btn.edit')}">✏️</button>
@@ -2356,16 +2356,21 @@ async function updateQuotaDisplay() {
   if (!el || !session || session.type === "admin") return;
   
   // 从 API 刷新最新额度
+  let apiRaw = null;
   try {
-    const q = await getAccountQuota(session.username);
-    console.log("[updateQuotaDisplay] API返回:", JSON.stringify(q), "session:", JSON.stringify({quotaTotal:session.quotaTotal,quotaUsed:session.quotaUsed,quotaRemaining:session.quotaRemaining}));
-    if (!q) return;
-    // 更新 session 缓存
-    session.quotaTotal = q.quota;
-    session.quotaUsed = q.used;
-    session.quotaRemaining = q.remaining;
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  } catch(e) { console.warn("[updateQuotaDisplay] API失败:", e.message); /* 使用 session 缓存 */ }
+    const rawResp = await apiFetch("/api/quota");
+    apiRaw = rawResp;
+    console.log("[updateQuotaDisplay] API原始返回:", JSON.stringify(rawResp));
+    if (rawResp) {
+      session.quotaTotal = rawResp.quotaTotal || 0;
+      session.quotaUsed = rawResp.quotaUsed || 0;
+      session.quotaRemaining = rawResp.quotaRemaining !== undefined ? rawResp.quotaRemaining : Math.max(0, (rawResp.quotaTotal || 0) - (rawResp.quotaUsed || 0));
+      if (rawResp.expiresAt) session.expiresAt = rawResp.expiresAt;
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    }
+  } catch(e) {
+    console.warn("[updateQuotaDisplay] API失败:", e.message);
+  }
   
   const remaining = session.quotaRemaining || 0;
   const isUnlimited = (session.quotaTotal || 0) >= 999;
@@ -2391,6 +2396,13 @@ async function updateQuotaDisplay() {
     if (pct <= 0.2) cls = "quota-critical";
     else if (pct <= 0.5) cls = "quota-warning";
     html += `<span class="quota-remaining ${cls}">📊 ${T("quota.used")} ${used}/${total}（${T("quota.remaining")}${remaining}）</span>`;
+  }
+  
+  // 临时调试：显示 API 原始返回值（排查额度问题后删除）
+  if (apiRaw) {
+    html += `<span style="font-size:0.7rem;color:#94a3b8;margin-left:8px;">[API: ${JSON.stringify(apiRaw)}]</span>`;
+  } else {
+    html += `<span style="font-size:0.7rem;color:#f59e0b;margin-left:8px;">[API调用失败]</span>`;
   }
   
   el.innerHTML = html;
@@ -3191,7 +3203,7 @@ function editAccount(idOrUsername) {
   _editAccountId = a._id || a.username;
   document.getElementById("editAccUsername").value = a.username;
   document.getElementById("editAccExpire").value = a.expiresAt ? a.expiresAt.slice(0,10) : "";
-  document.getElementById("editAccQuota").value = a.quota || 100;
+  document.getElementById("editAccQuota").value = a.quota !== undefined ? a.quota : "";
   document.getElementById("editAccountModal").style.display = "flex";
 }
 
@@ -3203,11 +3215,14 @@ function closeEditAccountModal() {
 async function saveAccountEdit() {
   if (!_editAccountId) return;
   const expire = document.getElementById("editAccExpire").value;
-  const quota = parseInt(document.getElementById("editAccQuota").value) || 100;
+  const quotaInput = document.getElementById("editAccQuota").value;
+  const quota = quotaInput !== "" ? parseInt(quotaInput) : undefined;
+  const body = { expiresAt: expire || null };
+  if (quota !== undefined && !isNaN(quota)) body.quota = quota;
   try {
     await apiFetch("/api/accounts/" + encodeURIComponent(_editAccountId), {
       method: "PUT",
-      body: JSON.stringify({ expiresAt: expire || null, quota })
+      body: JSON.stringify(body)
     });
     await renderAdminDash();
     await renderAdminDash2();
@@ -4215,15 +4230,17 @@ function loadCourses(){
       if (session.token) {
         try {
           const quotaData = await apiFetch("/api/quota");
+          console.log("[init] /api/quota 原始返回:", JSON.stringify(quotaData));
           // 用服务端最新额度覆盖本地缓存（保证多端同步）
           if (quotaData) {
             session.quotaTotal = quotaData.quotaTotal || 0;
             session.quotaUsed = quotaData.quotaUsed || 0;
-            session.quotaRemaining = quotaData.quotaRemaining || 0;
+            session.quotaRemaining = quotaData.quotaRemaining !== undefined ? quotaData.quotaRemaining : Math.max(0, (quotaData.quotaTotal || 0) - (quotaData.quotaUsed || 0));
             if (quotaData.expiresAt) session.expiresAt = quotaData.expiresAt;
             localStorage.setItem(SESSION_KEY, JSON.stringify(session));
           }
         } catch(e) {
+          console.warn("[init] /api/quota 失败:", e.message);
           // 网络错误时不清除 session（允许离线查看）
           // 只有明确 401/403 才清除
           if (e.message && !e.message.includes("Failed to fetch")) {

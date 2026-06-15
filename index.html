@@ -2373,11 +2373,13 @@ async function updateQuotaDisplay() {
   if (isUnlimited) {
     html += `<span class="quota-remaining">💡 ${T("quota.unlimited")}</span>`;
   } else {
-    const pct = remaining / (session.quotaTotal || 1);
+    const used = session.quotaUsed || 0;
+    const total = session.quotaTotal || 0;
+    const pct = remaining / (total || 1);
     let cls = "quota-ok";
     if (pct <= 0.2) cls = "quota-critical";
     else if (pct <= 0.5) cls = "quota-warning";
-    html += `<span class="quota-remaining ${cls}">📊 ${remaining}/${session.quotaTotal}</span>`;
+    html += `<span class="quota-remaining ${cls}">📊 ${T("quota.used")} ${used}/${total}（${T("quota.remaining")}${remaining}）</span>`;
   }
   
   el.innerHTML = html;
@@ -4068,16 +4070,16 @@ async function runSchedule(){
   // 检查额度
   if (session && session.type === "user") {
     const q = await getAccountQuota(session.username);
+    // 真正用完了才阻止
     if (q && q.quota < 999 && q.remaining <= 0) {
-      document.getElementById("resultsContent").innerHTML = `<div class="empty-state"><div class="emoji">😔</div>额度已用完<br><small>请联系管理员增加额度</small></div>`;
+      document.getElementById("resultsContent").innerHTML = `<div class="empty-state"><div class="emoji">😔</div>${T("alert.quotaExhausted")}<br><small>${T("alert.contactAdmin")}</small></div>`;
       return;
     }
-    // 消耗额度
+    // 尝试扣减额度，但任何失败都不阻止排课（已通过上方预检查确认有余额）
     try {
       await consumeQuota(session.username);
     } catch(e) {
-      document.getElementById("resultsContent").innerHTML = `<div class="empty-state"><div class="emoji">😔</div>额度已用完<br><small>请联系管理员增加额度</small></div>`;
-      return;
+      console.warn("[runSchedule] 额度扣减失败（仍允许排课）:", e.message);
     }
     // 更新显示
     await updateQuotaDisplay();
@@ -4091,15 +4093,14 @@ async function runSchedule2(){
   if (session && session.type === "user") {
     const q = await getAccountQuota(session.username);
     if (q && q.quota < 999 && q.remaining <= 0) {
-      document.getElementById("resultsContent2").innerHTML = `<div class="empty-state"><div class="emoji">😔</div>额度已用完<br><small>请联系管理员增加额度</small></div>`;
+      document.getElementById("resultsContent2").innerHTML = `<div class="empty-state"><div class="emoji">😔</div>${T("alert.quotaExhausted")}<br><small>${T("alert.contactAdmin")}</small></div>`;
       return;
     }
-    // 消耗额度
+    // 尝试扣减额度，但任何失败都不阻止排课
     try {
       await consumeQuota(session.username);
     } catch(e) {
-      document.getElementById("resultsContent2").innerHTML = `<div class="empty-state"><div class="emoji">😔</div>额度已用完<br><small>请联系管理员增加额度</small></div>`;
-      return;
+      console.warn("[runSchedule2] 额度扣减失败（仍允许排课）:", e.message);
     }
     // 更新显示
     await updateQuotaDisplay();
@@ -4990,6 +4991,8 @@ window.TRANSLATIONS = {
     "btn.addExclusion": "添加",
     "quota.unlimited": "无限额度",
     "quota.daysLeft": "天",
+    "quota.used": "已用",
+    "quota.remaining": "剩余",
     "btn.delete": "删除",
     "btn.makeup": "补课",
     "btn.subcourse": "子课程",
@@ -5085,6 +5088,8 @@ window.TRANSLATIONS = {
     "alert.timeFormatError": "时间格式错误，请使用 HH:MM 格式（如 08:30）",
     "alert.locExcluded": "该地点已排除",
     "alert.enterNotifContent": "请输入通知内容",
+    "alert.quotaExhausted": "额度已用完",
+    "alert.contactAdmin": "请联系管理员增加额度",
     "prompt.editTitle": "修改标题：",
     "prompt.editContent": "修改内容：",
     "confirm.withdrawNotif": "确定撤回该通知？",
@@ -5145,6 +5150,8 @@ window.TRANSLATIONS = {
     "btn.addExclusion": "Add",
     "quota.unlimited": "Unlimited",
     "quota.daysLeft": " days left",
+    "quota.used": "Used",
+    "quota.remaining": "Remaining ",
     "btn.delete": "Delete",
     "btn.makeup": "Makeup",
     "btn.subcourse": "Sub-course",
@@ -5240,6 +5247,8 @@ window.TRANSLATIONS = {
     "alert.timeFormatError": "Invalid time format. Use HH:MM (e.g. 08:30)",
     "alert.locExcluded": "This location is already excluded",
     "alert.enterNotifContent": "Please enter notification content",
+    "alert.quotaExhausted": "Quota exhausted",
+    "alert.contactAdmin": "Please contact admin for more quota",
     "prompt.editTitle": "Edit title:",
     "prompt.editContent": "Edit content:",
     "confirm.withdrawNotif": "Withdraw this notification?",

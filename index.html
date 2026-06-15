@@ -1861,7 +1861,6 @@
 // ══════════════════════════════════════
 
 const ADMIN_KEY = "ZZH6669ABLU";  // 保留备用（管理员本地快捷入口）
-const ACCOUNTS_KEY = "wb_scheduler_accounts";
 const SESSION_KEY  = "wb_scheduler_session";
 const COURSES_KEY  = "wb_scheduler_courses";
 
@@ -1872,24 +1871,23 @@ async function apiFetch(path, options = {}) {
   const token = session?.token;
   const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
   if (token) headers["Authorization"] = "Bearer " + token;
-  const resp = await fetch(API_BASE + path, { ...options, headers });
-  const data = await resp.json();
-  if (!resp.ok) throw new Error(data.error || "请求失败");
-  return data;
+  // 15 秒超时保护，避免服务端无响应时界面卡住
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  try {
+    const resp = await fetch(API_BASE + path, { ...options, headers, signal: controller.signal });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || "请求失败");
+    return data;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 let accounts = [];  // 管理员视图缓存，从 API 加载
 let session = null; // { type:'admin'|'user', username, token, isAdmin, quotaTotal, quotaUsed, expiresAt }
 let excludedTimes = { "": [], "2": [] };      // 排除的时间（分钟数），按 suffix 分别存储
 let excludedLocations = { "": [], "2": [] };  // 排除的地点（大写），按 suffix 分别存储
-
-function sha256(s) {
-  const enc = new TextEncoder();
-  const data = enc.encode(s);
-  return crypto.subtle.digest('SHA-256', data).then(buf => {
-    return Array.from(new Uint8Array(buf)).map(b=>('0'+b.toString(16)).slice(-2)).join('');
-  });
-}
 
 // 从 API 加载账号列表（管理员）
 async function loadAccounts() {
@@ -1902,9 +1900,7 @@ async function loadAccounts() {
   }
 }
 
-// 保留 saveAccounts 存根（管理员操作通过 API，不再写 localStorage）
-function saveAccounts() { /* 账号数据已迁移到服务端 */ }
-
+// getExpireStatus: 格式化过期状态
 function getExpireStatus(expireStr) {
   if (!expireStr) return { label: "永不过期", cls: "active" };
   const exp = new Date(expireStr).getTime();
@@ -1915,20 +1911,6 @@ function getExpireStatus(expireStr) {
 }
 
 // ══ 用户登录（调用后端 API）═════════════════════════════
-async function isAccountValid(username, password) {
-  // 保留本地验证作为备用（无网络时）
-  try {
-    const data = await apiFetch("/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ username, password })
-    });
-    return data; // 返回 { token, user } 表示成功
-  } catch(e) {
-    // 网络错误时回退到 localStorage（兼容离线模式）
-    console.warn("[login] API 失败，尝试本地模式", e.message);
-    return false; // 本地模式暂不启用，强制在线
-  }
-}
 
 // 获取当前账号的剩余额度（从 session 缓存读取，或调 API 刷新）
 async function getAccountQuota(username) {
@@ -1996,7 +1978,7 @@ async function doUserLogin() {
   if (!u || !p) { document.getElementById("loginError").textContent = T("alert.enterAccountAndPassword"); return; }
   document.getElementById("loginError").textContent = "登录中...";
   try {
-    const data = await apiFetch("/api/auth/login", {
+    const data = await apiFetch("/api/login", {
       method: "POST",
       body: JSON.stringify({ username: u, password: p })
     });
@@ -2024,16 +2006,40 @@ async function doAdminLogin() {
   const key = document.getElementById("adminKey").value.trim();
   const errEl = document.getElementById("adminError");
   if (!key) { errEl.textContent = "请输入密钥"; return; }
-  // 先尝试本地密钥（快速进入）
+  // 先尝试本地密钥匹配（快速进入）
   if (key === ADMIN_KEY) {
-    session = { type: "admin", username: "管理员" };
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-    document.getElementById("adminKey").value = "";
-    errEl.textContent = "";
-    switchTo("adminDash");
-    await renderAdminDash();
-    enterMainApp();
-    return;
+    // 本地密钥也走 API 登录以获取有效 token（否则后续 API 操作都会 401）
+    errEl.textContent = "验证中...";
+    try {
+      const data = await apiFetch("/api/admin/login", {
+        method: "POST",
+        body: JSON.stringify({ key, password: key })
+      });
+      session = {
+        type: "admin",
+        username: data.user.username,
+        token: data.token,
+        isAdmin: true,
+      };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      document.getElementById("adminKey").value = "";
+      errEl.textContent = "";
+      switchTo("adminDash");
+      await renderAdminDash();
+      enterMainApp();
+      return;
+    } catch(e) {
+      // API 登录失败（如网络不通），仍允许本地模式但功能受限
+      console.warn("[admin login] API 失败，使用本地模式（功能受限）", e.message);
+      session = { type: "admin", username: "管理员" };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      document.getElementById("adminKey").value = "";
+      errEl.textContent = "";
+      switchTo("adminDash");
+      await renderAdminDash();
+      enterMainApp();
+      return;
+    }
   }
   // 否则尝试 API 管理员登录（key=用户名，密码在后端验证）
   errEl.textContent = "验证中...";
@@ -2134,9 +2140,9 @@ async function renderAccountList(containerId, countId) {
     return;
   }
   el.innerHTML = accounts.map((a,i) => {
-    const st = getExpireStatus(a.expire);
+    const st = getExpireStatus(a.expiresAt);
     const q = a.quota || 999;
-    const u = a.used || 0;
+    const u = a.quotaUsed || 0;
     const rem = q - u;
     const qcls = rem <= 0 ? "quota-critical" : (rem <= q * 0.2 ? "quota-critical" : rem <= q * 0.5 ? "quota-warning" : "quota-ok");
     const qLabel = q >= 999 ? "无限" : `${rem}/${q}`;
@@ -3045,7 +3051,7 @@ async function createAccountCore(uId, pId, eId, qId, errId, renderFn) {
   try {
     await apiFetch("/api/accounts", {
       method: "POST",
-      body: JSON.stringify({ username: u, password: p, expire: e || null, quota: q })
+      body: JSON.stringify({ username: u, password: p, expiresAt: e || null, quota: q })
     });
     document.getElementById(uId).value = "";
     document.getElementById(pId).value = "";
@@ -3055,7 +3061,7 @@ async function createAccountCore(uId, pId, eId, qId, errId, renderFn) {
     err.style.color = "var(--success)";
     err.textContent = "账号创建成功 ✓";
     setTimeout(()=>{ err.textContent = ""; }, 2000);
-    renderFn();
+    await renderFn();
   } catch(e) {
     err.style.color = "#ef4444";
     err.textContent = e.message || "创建失败";
@@ -3079,7 +3085,7 @@ function editAccount(idOrUsername) {
   if (!a) return;
   _editAccountId = a._id || a.username;
   document.getElementById("editAccUsername").value = a.username;
-  document.getElementById("editAccExpire").value = a.expire || "";
+  document.getElementById("editAccExpire").value = a.expiresAt ? a.expiresAt.slice(0,10) : "";
   document.getElementById("editAccQuota").value = a.quota || 100;
   document.getElementById("editAccountModal").style.display = "flex";
 }
@@ -3096,7 +3102,7 @@ async function saveAccountEdit() {
   try {
     await apiFetch("/api/accounts/" + encodeURIComponent(_editAccountId), {
       method: "PUT",
-      body: JSON.stringify({ expire: expire || null, quota })
+      body: JSON.stringify({ expiresAt: expire || null, quota })
     });
     await renderAdminDash();
     await renderAdminDash2();
@@ -4113,6 +4119,7 @@ function loadCourses(){
           switchTo("adminDash");
           // 管理员视图：尝试从 API 加载账号列表，失败则显示空列表
           try { await renderAdminDash(); } catch(e) {}
+          try { await renderAdminDash2(); } catch(e) {}
         }
         enterMainApp();
       }

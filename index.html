@@ -1955,16 +1955,16 @@ async function getAccountQuota(username) {
 async function consumeQuota(username) {
   try {
     const data = await apiFetch("/api/quota/deduct", { method: "POST" });
-    // 更新 session 中的额度缓存
+    console.log("[consumeQuota] 成功:", JSON.stringify(data));
+    // 更新 session 中的额度缓存（用服务端返回的精确值）
     if (session && data) {
-      session.quotaUsed = (session.quotaUsed || 0) + 1;
-      session.quotaRemaining = Math.max(0, (session.quotaTotal || 0) - (session.quotaUsed || 0));
+      session.quotaUsed = data.quotaUsed || (session.quotaUsed || 0) + 1;
+      session.quotaRemaining = data.quotaRemaining !== undefined ? data.quotaRemaining : Math.max(0, (session.quotaTotal || 0) - (session.quotaUsed || 0));
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     }
     return data && data.success;
   } catch(e) {
-    console.error("[consumeQuota]", e);
-    // 额度已用完的错误由调用方处理
+    console.error("[consumeQuota] 失败:", e.message);
     throw e;
   }
 }
@@ -4210,10 +4210,18 @@ function loadCourses(){
   if(raw){
     try{
       session=JSON.parse(raw);
-      // 验证 token 是否仍然有效（调用 /api/quota 检查）
+      // 验证 token 是否仍然有效（调用 /api/quota 检查），同时刷新额度数据
       if (session.token) {
         try {
-          await apiFetch("/api/quota");
+          const quotaData = await apiFetch("/api/quota");
+          // 用服务端最新额度覆盖本地缓存（保证多端同步）
+          if (quotaData) {
+            session.quotaTotal = quotaData.quotaTotal || 0;
+            session.quotaUsed = quotaData.quotaUsed || 0;
+            session.quotaRemaining = quotaData.quotaRemaining || 0;
+            if (quotaData.expiresAt) session.expiresAt = quotaData.expiresAt;
+            localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+          }
         } catch(e) {
           // 网络错误时不清除 session（允许离线查看）
           // 只有明确 401/403 才清除

@@ -1860,13 +1860,26 @@
 //  AUTH SYSTEM
 // ══════════════════════════════════════
 
-const ADMIN_KEY = "ZZH6669ABLU";
+const ADMIN_KEY = "ZZH6669ABLU";  // 保留备用（管理员本地快捷入口）
 const ACCOUNTS_KEY = "wb_scheduler_accounts";
 const SESSION_KEY  = "wb_scheduler_session";
 const COURSES_KEY  = "wb_scheduler_courses";
 
-let accounts = [];
-let session = null;   // { type:'admin'|'user', username, expire, quota, used }
+// ══ API 配置 ══════════════════════════════
+const API_BASE = "https://1443353382-7jgrci9mpr.ap-guangzhou.tencentscf.com";
+
+async function apiFetch(path, options = {}) {
+  const token = session?.token;
+  const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+  if (token) headers["Authorization"] = "Bearer " + token;
+  const resp = await fetch(API_BASE + path, { ...options, headers });
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.error || "请求失败");
+  return data;
+}
+
+let accounts = [];  // 管理员视图缓存，从 API 加载
+let session = null; // { type:'admin'|'user', username, token, isAdmin, quotaTotal, quotaUsed, expiresAt }
 let excludedTimes = { "": [], "2": [] };      // 排除的时间（分钟数），按 suffix 分别存储
 let excludedLocations = { "": [], "2": [] };  // 排除的地点（大写），按 suffix 分别存储
 
@@ -1878,14 +1891,19 @@ function sha256(s) {
   });
 }
 
-function loadAccounts() {
-  const raw = localStorage.getItem(ACCOUNTS_KEY);
-  accounts = raw ? JSON.parse(raw) : [];
+// 从 API 加载账号列表（管理员）
+async function loadAccounts() {
+  if (!session?.token) { accounts = []; return; }
+  try {
+    accounts = await apiFetch("/api/accounts");
+  } catch(e) {
+    console.error("[loadAccounts]", e);
+    accounts = [];
+  }
 }
 
-function saveAccounts() {
-  localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
-}
+// 保留 saveAccounts 存根（管理员操作通过 API，不再写 localStorage）
+function saveAccounts() { /* 账号数据已迁移到服务端 */ }
 
 function getExpireStatus(expireStr) {
   if (!expireStr) return { label: "永不过期", cls: "active" };
@@ -1896,42 +1914,60 @@ function getExpireStatus(expireStr) {
   return { label: `剩余 ${left} 天（${expireStr}）`, cls: "active" };
 }
 
-function isAccountValid(username, password) {
-  return new Promise(async (resolve) => {
-    const raw = localStorage.getItem(ACCOUNTS_KEY);
-    const list = raw ? JSON.parse(raw) : [];
-    const now = Date.now();
-    const match = list.find(a =>
-      a.username === username &&
-      a.password === password &&
-      (!a.expire || new Date(a.expire).getTime() > now) &&
-      (!a.quota || (a.used || 0) < a.quota)
-    );
-    resolve(!!match);
-  });
+// ══ 用户登录（调用后端 API）═════════════════════════════
+async function isAccountValid(username, password) {
+  // 保留本地验证作为备用（无网络时）
+  try {
+    const data = await apiFetch("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ username, password })
+    });
+    return data; // 返回 { token, user } 表示成功
+  } catch(e) {
+    // 网络错误时回退到 localStorage（兼容离线模式）
+    console.warn("[login] API 失败，尝试本地模式", e.message);
+    return false; // 本地模式暂不启用，强制在线
+  }
 }
 
-// 获取当前账号的剩余额度
-function getAccountQuota(username) {
-  const raw = localStorage.getItem(ACCOUNTS_KEY);
-  const list = raw ? JSON.parse(raw) : [];
-  const acc = list.find(a => a.username === username);
-  if (!acc) return null;
-  const quota = acc.quota || 999; // 无限制默认为999
-  const used = acc.used || 0;
-  return { quota, used, remaining: quota - used };
+// 获取当前账号的剩余额度（从 session 缓存读取，或调 API 刷新）
+async function getAccountQuota(username) {
+  if (session && session.username === username && session.quotaTotal !== undefined) {
+    return {
+      quota: session.quotaTotal,
+      used: session.quotaUsed,
+      remaining: Math.max(0, session.quotaTotal - session.quotaUsed)
+    };
+  }
+  // 从 API 刷新
+  try {
+    const data = await apiFetch("/api/quota");
+    return {
+      quota: data.quotaTotal || 0,
+      used: data.quotaUsed || 0,
+      remaining: data.quotaRemaining || 0
+    };
+  } catch(e) {
+    return { quota: 0, used: 0, remaining: 0 };
+  }
 }
 
-// 消耗一次额度
-function consumeQuota(username) {
-  const raw = localStorage.getItem(ACCOUNTS_KEY);
-  const list = raw ? JSON.parse(raw) : [];
-  const idx = list.findIndex(a => a.username === username);
-  if (idx === -1) return false;
-  if (!list[idx].quota) return true; // 无限制
-  list[idx].used = (list[idx].used || 0) + 1;
-  localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(list));
-  return true;
+// 消耗一次额度（调用后端 API，原子扣减）
+async function consumeQuota(username) {
+  try {
+    const data = await apiFetch("/api/quota/deduct", { method: "POST" });
+    // 更新 session 中的额度缓存
+    if (session && data) {
+      session.quotaUsed = (session.quotaUsed || 0) + 1;
+      session.quotaRemaining = Math.max(0, (session.quotaTotal || 0) - (session.quotaUsed || 0));
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    }
+    return data && data.success;
+  } catch(e) {
+    console.error("[consumeQuota]", e);
+    // 额度已用完的错误由调用方处理
+    throw e;
+  }
 }
 
 function switchTab(tab) {
@@ -1958,34 +1994,69 @@ async function doUserLogin() {
   const u = document.getElementById("loginUsername").value.trim();
   const p = document.getElementById("loginPassword").value;
   if (!u || !p) { document.getElementById("loginError").textContent = T("alert.enterAccountAndPassword"); return; }
-  const valid = await isAccountValid(u, p);
-  if (!valid) {
+  document.getElementById("loginError").textContent = "登录中...";
+  try {
+    const data = await apiFetch("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ username: u, password: p })
+    });
+    session = {
+      type: "user",
+      username: data.user.username,
+      token: data.token,
+      isAdmin: data.user.isAdmin || false,
+      quotaTotal: data.user.quotaTotal || 0,
+      quotaUsed: data.user.quotaUsed || 0,
+      quotaRemaining: Math.max(0, (data.user.quotaTotal || 0) - (data.user.quotaUsed || 0)),
+      expiresAt: data.user.expiresAt
+    };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    document.getElementById("loginUsername").value = "";
+    document.getElementById("loginPassword").value = "";
+    document.getElementById("loginError").textContent = "";
+    enterMainApp();
+  } catch(e) {
     document.getElementById("loginError").textContent = "账号或密码错误，或账号已过期/额度已用完";
-    return;
   }
-  const q = getAccountQuota(u);
-  session = { type: "user", username: u, quota: q.quota, used: q.used };
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  document.getElementById("loginUsername").value = "";
-  document.getElementById("loginPassword").value = "";
-  document.getElementById("loginError").textContent = "";
-  enterMainApp();
 }
 
 async function doAdminLogin() {
   const key = document.getElementById("adminKey").value.trim();
-  if (!key) { document.getElementById("adminError").textContent = "请输入密钥"; return; }
-  if (key !== ADMIN_KEY) {
-    document.getElementById("adminError").textContent = "密钥错误";
+  const errEl = document.getElementById("adminError");
+  if (!key) { errEl.textContent = "请输入密钥"; return; }
+  // 先尝试本地密钥（快速进入）
+  if (key === ADMIN_KEY) {
+    session = { type: "admin", username: "管理员" };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    document.getElementById("adminKey").value = "";
+    errEl.textContent = "";
+    switchTo("adminDash");
+    await renderAdminDash();
+    enterMainApp();
     return;
   }
-  session = { type: "admin", username: "管理员" };
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  document.getElementById("adminKey").value = "";
-  document.getElementById("adminError").textContent = "";
-  switchTo("adminDash");
-  renderAdminDash();
-  enterMainApp();
+  // 否则尝试 API 管理员登录（key=用户名，密码在后端验证）
+  errEl.textContent = "验证中...";
+  try {
+    const data = await apiFetch("/api/admin/login", {
+      method: "POST",
+      body: JSON.stringify({ key, password: key })
+    });
+    session = {
+      type: "admin",
+      username: data.user.username,
+      token: data.token,
+      isAdmin: true,
+    };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    document.getElementById("adminKey").value = "";
+    errEl.textContent = "";
+    switchTo("adminDash");
+    await renderAdminDash();
+    enterMainApp();
+  } catch(e) {
+    errEl.textContent = "密钥错误";
+  }
 }
 
 function doLogout() {
@@ -2051,11 +2122,12 @@ function syncAdminRightCourses(){
   document.getElementById("maxDisplay2").value=document.getElementById("maxDisplay").value;
 }
 
-function renderAccountList(containerId, countId) {
+async function renderAccountList(containerId, countId) {
   const el = document.getElementById(containerId);
   const cnt = document.getElementById(countId);
   if (!el) return;
-  loadAccounts();
+  // 从 API 加载最新账号列表
+  await loadAccounts();
   cnt.textContent = `${accounts.length} 个`;
   if (!accounts.length) {
     el.innerHTML = `<div style="padding:14px;color:#94a3b8;font-size:0.82rem;text-align:center;">暂无账号</div>`;
@@ -2068,22 +2140,23 @@ function renderAccountList(containerId, countId) {
     const rem = q - u;
     const qcls = rem <= 0 ? "quota-critical" : (rem <= q * 0.2 ? "quota-critical" : rem <= q * 0.5 ? "quota-warning" : "quota-ok");
     const qLabel = q >= 999 ? "无限" : `${rem}/${q}`;
+    // 注意：密码不显示（服务端已加密），用 ●●● 代替
     return `<div class="account-item">
       <div class="account-info">
         <div class="account-user">${a.username}</div>
-        <div class="account-exp ${st.cls}">${st.label} &nbsp;|&nbsp; 密码：${a.password}</div>
+        <div class="account-exp ${st.cls}">${st.label}</div>
         <div class="account-quota ${qcls}">📊 额度：${qLabel}</div>
       </div>
       <div class="account-actions">
-        <button class="btn-icon" onclick="editAccount(${i})" title="${T('btn.edit')}">✏️</button>
-        <button class="btn-icon" onclick="deleteAccount(${i})" title="${T('btn.delete')}">🗑️</button>
+        <button class="btn-icon" onclick="editAccount('${a._id || a.username}')" title="${T('btn.edit')}">✏️</button>
+        <button class="btn-icon" onclick="deleteAccount('${a._id || a.username}')" title="${T('btn.delete')}">🗑️</button>
       </div>
     </div>`;
   }).join("");
 }
 
-function renderAdminDash() { renderAccountList("accountsList", "accountCount"); }
-function renderAdminDash2() { renderAccountList("accountsList2", "accountCount2"); }
+async function renderAdminDash() { await renderAccountList("accountsList", "accountCount"); }
+async function renderAdminDash2() { await renderAccountList("accountsList2", "accountCount2"); }
 
 function createAccount() { createAccountCore("newUsername", "newPassword", "expireDate", "newQuota", "createError", renderAdminDash); }
 function createAccountInApp() { createAccountCore("newUsername2", "newPassword2", "expireDate2", "newQuota2", "createError2", renderAdminDash2); }
@@ -2247,28 +2320,28 @@ function markAllNotifsRead() {
 }
 
 // 更新并显示额度信息
-function updateQuotaDisplay() {
+async function updateQuotaDisplay() {
   const el = document.getElementById("quotaDisplay");
   if (!el || !session || session.type === "admin") return;
   
-  const q = getAccountQuota(session.username);
-  if (!q) return;
+  // 从 API 刷新最新额度
+  try {
+    const q = await getAccountQuota(session.username);
+    if (!q) return;
+    // 更新 session 缓存
+    session.quotaTotal = q.quota;
+    session.quotaUsed = q.used;
+    session.quotaRemaining = q.remaining;
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  } catch(e) { /* 使用 session 缓存 */ }
   
-  // 更新session中的额度信息
-  session.quota = q.quota;
-  session.used = q.used;
-  
-  const remaining = q.remaining;
-  const isUnlimited = q.quota >= 999;
+  const remaining = session.quotaRemaining || 0;
+  const isUnlimited = (session.quotaTotal || 0) >= 999;
   let html = "";
   
-  // 获取账号过期信息
-  const raw = localStorage.getItem(ACCOUNTS_KEY);
-  const list = raw ? JSON.parse(raw) : [];
-  const acc = list.find(a => a.username === session.username);
-  
-  if (acc && acc.expire) {
-    const exp = new Date(acc.expire);
+  // 显示过期倒计时
+  if (session.expiresAt) {
+    const exp = new Date(session.expiresAt);
     const now = new Date();
     const leftDays = Math.ceil((exp - now) / 86400000);
     if (leftDays > 0) {
@@ -2279,11 +2352,11 @@ function updateQuotaDisplay() {
   if (isUnlimited) {
     html += `<span class="quota-remaining">💡 ${T("quota.unlimited")}</span>`;
   } else {
-    const pct = remaining / q.quota;
+    const pct = remaining / (session.quotaTotal || 1);
     let cls = "quota-ok";
     if (pct <= 0.2) cls = "quota-critical";
     else if (pct <= 0.5) cls = "quota-warning";
-    html += `<span class="quota-remaining ${cls}">📊 ${remaining}/${q.quota}</span>`;
+    html += `<span class="quota-remaining ${cls}">📊 ${remaining}/${session.quotaTotal}</span>`;
   }
   
   el.innerHTML = html;
@@ -2958,7 +3031,9 @@ function _escHtml(str) {
 
 // ══════════════════════════════════════════
 
-function createAccountCore(uId, pId, eId, qId, errId, renderFn) {
+let _editAccountId = ""; // 当前编辑的账号 ID（服务端 _id 或 username）
+
+async function createAccountCore(uId, pId, eId, qId, errId, renderFn) {
   const u = document.getElementById(uId).value.trim();
   const p = document.getElementById(pId).value;
   const e = document.getElementById(eId).value;
@@ -2966,33 +3041,43 @@ function createAccountCore(uId, pId, eId, qId, errId, renderFn) {
   const err = document.getElementById(errId);
   if (!u) { err.textContent = T("alert.enterAccount"); return; }
   if (!p) { err.textContent = T("alert.enterPassword"); return; }
-  if (accounts.some(a=>a.username===u)) { err.textContent = T("alert.accountExists"); return; }
-  accounts.push({ username: u, password: p, expire: e || null, quota: q, used: 0 });
-  saveAccounts();
-  document.getElementById(uId).value = "";
-  document.getElementById(pId).value = "";
-  document.getElementById(eId).value = "";
-  document.getElementById(qId).value = "100";
-  err.textContent = "";
-  err.style.color = "var(--success)";
-  err.textContent = "账号创建成功 ✓";
-  setTimeout(()=>{ err.textContent = ""; }, 2000);
-  renderFn();
+  err.textContent = "创建中...";
+  try {
+    await apiFetch("/api/accounts", {
+      method: "POST",
+      body: JSON.stringify({ username: u, password: p, expire: e || null, quota: q })
+    });
+    document.getElementById(uId).value = "";
+    document.getElementById(pId).value = "";
+    document.getElementById(eId).value = "";
+    document.getElementById(qId).value = "100";
+    err.textContent = "";
+    err.style.color = "var(--success)";
+    err.textContent = "账号创建成功 ✓";
+    setTimeout(()=>{ err.textContent = ""; }, 2000);
+    renderFn();
+  } catch(e) {
+    err.style.color = "#ef4444";
+    err.textContent = e.message || "创建失败";
+  }
 }
 
-function deleteAccount(idx) {
+async function deleteAccount(idOrUsername) {
   if (!confirm(T("confirm.deleteAccount"))) return;
-  accounts.splice(idx, 1);
-  saveAccounts();
-  renderAccountList("accountsList", "accountCount");
-  renderAccountList("accountsList2", "accountCount2");
+  try {
+    await apiFetch("/api/accounts/" + encodeURIComponent(idOrUsername), { method: "DELETE" });
+    await renderAdminDash();
+    await renderAdminDash2();
+  } catch(e) {
+    alert("删除失败：" + (e.message || "未知错误"));
+  }
 }
 
-let _editAccountIdx = -1; // 当前编辑的账号索引
-
-function editAccount(idx) {
-  _editAccountIdx = idx;
-  const a = accounts[idx];
+function editAccount(idOrUsername) {
+  // 从 accounts 缓存中找到账号
+  const a = accounts.find(x => (x._id === idOrUsername) || (x.username === idOrUsername));
+  if (!a) return;
+  _editAccountId = a._id || a.username;
   document.getElementById("editAccUsername").value = a.username;
   document.getElementById("editAccExpire").value = a.expire || "";
   document.getElementById("editAccQuota").value = a.quota || 100;
@@ -3001,19 +3086,24 @@ function editAccount(idx) {
 
 function closeEditAccountModal() {
   document.getElementById("editAccountModal").style.display = "none";
-  _editAccountIdx = -1;
+  _editAccountId = "";
 }
 
-function saveAccountEdit() {
-  if (_editAccountIdx < 0) return;
+async function saveAccountEdit() {
+  if (!_editAccountId) return;
   const expire = document.getElementById("editAccExpire").value;
   const quota = parseInt(document.getElementById("editAccQuota").value) || 100;
-  accounts[_editAccountIdx].expire = expire || null;
-  accounts[_editAccountIdx].quota = quota;
-  saveAccounts();
-  renderAccountList("accountsList", "accountCount");
-  renderAccountList("accountsList2", "accountCount2");
-  closeEditAccountModal();
+  try {
+    await apiFetch("/api/accounts/" + encodeURIComponent(_editAccountId), {
+      method: "PUT",
+      body: JSON.stringify({ expire: expire || null, quota })
+    });
+    await renderAdminDash();
+    await renderAdminDash2();
+    closeEditAccountModal();
+  } catch(e) {
+    alert("保存失败：" + (e.message || "未知错误"));
+  }
 }
 
 // ══════════════════════════════════════
@@ -3905,35 +3995,45 @@ function toggleSubSectionSchedule(code, secId, subName, subId, enabled) {
   renderCourseList();
 }
 
-function runSchedule(){
+async function runSchedule(){
   // 检查额度
-  if (session && session.type === "user" && session.username !== "管理员") {
-    const q = getAccountQuota(session.username);
+  if (session && session.type === "user") {
+    const q = await getAccountQuota(session.username);
     if (q && q.quota < 999 && q.remaining <= 0) {
       document.getElementById("resultsContent").innerHTML = `<div class="empty-state"><div class="emoji">😔</div>额度已用完<br><small>请联系管理员增加额度</small></div>`;
       return;
     }
     // 消耗额度
-    consumeQuota(session.username);
+    try {
+      await consumeQuota(session.username);
+    } catch(e) {
+      document.getElementById("resultsContent").innerHTML = `<div class="empty-state"><div class="emoji">😔</div>额度已用完<br><small>请联系管理员增加额度</small></div>`;
+      return;
+    }
     // 更新显示
-    updateQuotaDisplay();
+    await updateQuotaDisplay();
   }
   currentPlans=schedule();
   renderResults(currentPlans);
 }
 
-function runSchedule2(){
+async function runSchedule2(){
   // 检查额度
-  if (session && session.type === "user" && session.username !== "管理员") {
-    const q = getAccountQuota(session.username);
+  if (session && session.type === "user") {
+    const q = await getAccountQuota(session.username);
     if (q && q.quota < 999 && q.remaining <= 0) {
       document.getElementById("resultsContent2").innerHTML = `<div class="empty-state"><div class="emoji">😔</div>额度已用完<br><small>请联系管理员增加额度</small></div>`;
       return;
     }
     // 消耗额度
-    consumeQuota(session.username);
+    try {
+      await consumeQuota(session.username);
+    } catch(e) {
+      document.getElementById("resultsContent2").innerHTML = `<div class="empty-state"><div class="emoji">😔</div>额度已用完<br><small>请联系管理员增加额度</small></div>`;
+      return;
+    }
     // 更新显示
-    updateQuotaDisplay();
+    await updateQuotaDisplay();
   }
   const plans=schedule("2");
   renderResults(plans,"2");
@@ -3987,55 +4087,35 @@ function loadCourses(){
 //  INIT
 // ══════════════════════════════════════
 
-(function init(){
-  loadAccounts();
+(async function init(){
   loadWeights();
-  // 如果本地还没有账号，预设 NC1 账号（无限制额度，2026-05-25 过期）
-  if(!accounts.length){
-    accounts.push({ username:"NC1", password:"NC1", expire:"2026-05-25", quota:999, used:0 });
-    saveAccounts();
-  } else {
-    // 迁移旧账号：为没有额度字段的账号添加默认额度
-    let changed = false;
-    accounts.forEach(a => {
-      if (a.quota === undefined) {
-        a.quota = 100;
-        a.used = 0;
-        changed = true;
-      }
-    });
-    if (changed) saveAccounts();
-  }
-  // 注入预设账号（已存在则强制更新密码/到期日/额度，不存在则新建）
-  (function _injectPresetAccounts() {
-    const presets = [
-      { username:"NC2", password:"NC2NC2", expire:"2026-05-31", quota:999, used:0 }
-    ];
-    let changed = false;
-    presets.forEach(p => {
-      const idx = accounts.findIndex(a => a.username === p.username);
-      if (idx !== -1) {
-        // 已存在：强制同步密码、到期日、额度（保留已用额度 used）
-        accounts[idx].password = p.password;
-        accounts[idx].expire   = p.expire;
-        accounts[idx].quota    = p.quota;
-        changed = true;
-      } else {
-        accounts.push(p);
-        changed = true;
-      }
-    });
-    if (changed) saveAccounts();
-  })();
+  // 账号数据已迁移到服务端，不再预设本地账号
+  // 管理员账号列表通过 API 加载（loadAccounts 会调 /api/accounts）
   const raw=localStorage.getItem(SESSION_KEY);
   if(raw){
     try{
       session=JSON.parse(raw);
-      if(session.type==="admin"){
-        switchTo("adminDash");
-        renderAdminDash();
+      // 验证 token 是否仍然有效（调用 /api/quota 检查）
+      if (session.token) {
+        try {
+          await apiFetch("/api/quota");
+        } catch(e) {
+          // 网络错误时不清除 session（允许离线查看）
+          // 只有明确 401/403 才清除
+          if (e.message && !e.message.includes("Failed to fetch")) {
+            session = null;
+            localStorage.removeItem(SESSION_KEY);
+          }
+        }
       }
-      enterMainApp();
+      if (session) {
+        if(session.type==="admin"){
+          switchTo("adminDash");
+          // 管理员视图：尝试从 API 加载账号列表，失败则显示空列表
+          try { await renderAdminDash(); } catch(e) {}
+        }
+        enterMainApp();
+      }
     }catch(e){
       localStorage.removeItem(SESSION_KEY);
     }

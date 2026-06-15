@@ -1512,7 +1512,10 @@
           <textarea id="editNotifContent" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;min-height:80px;resize:vertical;"></textarea>
         </div>
         <div class="form-group" style="margin-bottom:12px;">
-          <label data-i18n="notif.labelEnTitle">English Title</label>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <label data-i18n="notif.labelEnTitle">English Title</label>
+            <button type="button" class="btn btn-outline" style="padding:2px 10px;font-size:.75rem;border-radius:6px;" onclick="autoTranslateEdit()" data-i18n="notif.autoTranslate">🌐 自动翻译</button>
+          </div>
           <input type="text" id="editNotifEnTitle" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;">
         </div>
         <div class="form-group" style="margin-bottom:16px;">
@@ -2800,6 +2803,7 @@ const GUIDE_DATA = [
       <h3>通知管理</h3>
       <ul>
         <li>发布系统通知（所有用户可见）</li>
+        <li>输入中文内容后，英文内容会自动翻译生成，也可手动修改</li>
         <li>编辑/删除已有通知</li>
       </ul>
       <h3>独立的管理员面板</h3>
@@ -2818,6 +2822,7 @@ const GUIDE_DATA = [
       <h3>Notification Management</h3>
       <ul>
         <li>Publish system notifications (visible to all users)</li>
+        <li>English content is auto-translated from Chinese input, with manual editing supported</li>
         <li>Edit/delete existing notifications</li>
       </ul>
       <h3>Independent Admin Panel</h3>
@@ -2959,9 +2964,7 @@ function renderNotifAdmin() {
       <div style="font-size:.8rem;font-weight:600;color:var(--text-muted);margin-bottom:4px;" data-i18n="notif.sendNew">+ 发送新通知</div>
       <input type="text" id="newNotifTitle" placeholder="通知标题（可选）" maxlength="50" data-i18n-placeholder="notif.titlePlaceholder">
       <textarea id="newNotifContent" placeholder="通知内容（必填）" style="min-height:50px;resize:none;font-size:.82rem;padding:6px 8px;" maxlength="500" data-i18n-placeholder="notif.contentPlaceholder"></textarea>
-      <input type="text" id="newNotifEnTitle" placeholder="English title (optional)" maxlength="50" data-i18n-placeholder="notif.enTitlePlaceholder">
-      <textarea id="newNotifEnContent" placeholder="English content (optional)" style="min-height:50px;resize:none;font-size:.82rem;padding:6px 8px;" maxlength="500" data-i18n-placeholder="notif.enContentPlaceholder"></textarea>
-      <button class="btn btn-primary" onclick="addNotif()" style="width:100%;margin:0;" data-i18n="notif.send">发送通知</button>
+      <button class="btn btn-primary" onclick="addNotif()" id="addNotifBtn" style="width:100%;margin:0;" data-i18n="notif.send">发送通知</button>
     </div>
     <div class="notif-list">${listHtml}</div>
   `;
@@ -2978,13 +2981,23 @@ function renderNotifAdmin() {
   });
 }
 
-// 添加通知
-function addNotif() {
+// 添加通知（自动翻译英文）
+async function addNotif() {
   const title = document.getElementById("newNotifTitle").value.trim();
   const content = document.getElementById("newNotifContent").value.trim();
   if (!content) { alert(T("alert.enterNotifContent")); return; }
-  const enTitle = (document.getElementById("newNotifEnTitle")?.value || "").trim();
-  const enContent = (document.getElementById("newNotifEnContent")?.value || "").trim();
+  // 按钮显示翻译中
+  const btn = document.getElementById("addNotifBtn");
+  const origText = btn.textContent;
+  btn.textContent = T("notif.translating") || "翻译中...";
+  btn.disabled = true;
+  // 自动翻译标题和内容
+  const [enTitle, enContent] = await Promise.all([
+    title ? translateToEn(title) : "",
+    translateToEn(content)
+  ]);
+  btn.textContent = origText;
+  btn.disabled = false;
   const list = getNotifs();
   list.unshift({ id: _genNotifId(), title, content, enTitle, enContent, enabled: true, read: false, createdAt: Date.now() });
   saveNotifs(list);
@@ -3011,6 +3024,22 @@ function openNotifEditDialog(id) {
 function closeNotifEditModal() {
   document.getElementById("notifEditOverlay").style.display = "none";
   _editingNotifId = null;
+}
+
+// 自动翻译编辑弹窗中的英文标题和内容
+async function autoTranslateEdit() {
+  const title = document.getElementById("editNotifTitle").value.trim();
+  const content = document.getElementById("editNotifContent").value.trim();
+  const btn = document.querySelector('#notifEditOverlay button[onclick="autoTranslateEdit()"]');
+  const origText = btn?.textContent;
+  if (btn) { btn.textContent = "..."; btn.disabled = true; }
+  const [enTitle, enContent] = await Promise.all([
+    title ? translateToEn(title) : "",
+    content ? translateToEn(content) : ""
+  ]);
+  if (enTitle) document.getElementById("editNotifEnTitle").value = enTitle;
+  if (enContent) document.getElementById("editNotifEnContent").value = enContent;
+  if (btn) { btn.textContent = origText || "🌐 自动翻译"; btn.disabled = false; }
 }
 
 function saveNotifEdit() {
@@ -3048,6 +3077,28 @@ function _escHtml(str) {
 }
 
 // ══════════════════════════════════════════
+
+// MyMemory 免费翻译 API（zh→en）
+async function translateToEn(text) {
+  if (!text || !text.trim()) return "";
+  try {
+    const url = "https://api.mymemory.translated.net/get?q=" + encodeURIComponent(text) + "&langpair=zh-CN|en";
+    const resp = await fetch(url);
+    const data = await resp.json();
+    if (data.responseStatus === 200 && data.responseData?.translatedText) {
+      let result = data.responseData.translatedText;
+      // MyMemory 有时返回全大写，转句首大写
+      if (result === result.toUpperCase() && result.length > 1) {
+        result = result.charAt(0) + result.slice(1).toLowerCase();
+      }
+      return result;
+    }
+    return "";
+  } catch(e) {
+    console.warn("[translateToEn] 翻译失败", e.message);
+    return "";
+  }
+}
 
 let _editAccountId = ""; // 当前编辑的账号 ID（服务端 _id 或 username）
 
@@ -5020,8 +5071,10 @@ window.TRANSLATIONS = {
     "notif.untitled": "无标题",
     "notif.withdraw": "撤回",
     "notif.noTitle": "通知",
-    "notif.enTitlePlaceholder": "英文标题（可选）",
-    "notif.enContentPlaceholder": "英文内容（可选）",
+    "notif.enTitlePlaceholder": "英文标题（自动翻译）",
+    "notif.enContentPlaceholder": "英文内容（自动翻译）",
+    "notif.autoTranslate": "🌐 自动翻译",
+    "notif.translating": "翻译中...",
     "notif.editTitle": "✏️ 编辑通知",
     "notif.labelZhTitle": "中文标题",
     "notif.labelZhContent": "中文内容",
@@ -5173,8 +5226,10 @@ window.TRANSLATIONS = {
     "notif.untitled": "Untitled",
     "notif.withdraw": "Withdraw",
     "notif.noTitle": "Notification",
-    "notif.enTitlePlaceholder": "English title (optional)",
-    "notif.enContentPlaceholder": "English content (optional)",
+    "notif.enTitlePlaceholder": "English title (auto-translated)",
+    "notif.enContentPlaceholder": "English content (auto-translated)",
+    "notif.autoTranslate": "🌐 Auto Translate",
+    "notif.translating": "Translating...",
     "notif.editTitle": "✏️ Edit Notification",
     "notif.labelZhTitle": "Chinese Title",
     "notif.labelZhContent": "Chinese Content",

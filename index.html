@@ -2176,7 +2176,7 @@ async function renderAccountList(containerId, countId) {
       <div class="account-info">
         <div class="account-user">${a.username}</div>
         <div class="account-exp ${st.cls}">${st.label}</div>
-        <div class="account-quota ${qcls}">📊 额度：${qLabel} <span style="font-size:0.7rem;color:#94a3b8;">[DB quota=${a.quota}]</span></div>
+        <div class="account-quota ${qcls}">📊 额度：${qLabel}</div>
       </div>
       <div class="account-actions">
         <button class="btn-icon" onclick="editAccount('${a._id || a.username}')" title="${T('btn.edit')}">✏️</button>
@@ -2360,7 +2360,6 @@ async function updateQuotaDisplay() {
   try {
     const rawResp = await apiFetch("/api/quota");
     apiRaw = rawResp;
-    console.log("[updateQuotaDisplay] API原始返回:", JSON.stringify(rawResp));
     if (rawResp) {
       session.quotaTotal = rawResp.quotaTotal || 0;
       session.quotaUsed = rawResp.quotaUsed || 0;
@@ -2369,7 +2368,7 @@ async function updateQuotaDisplay() {
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     }
   } catch(e) {
-    console.warn("[updateQuotaDisplay] API失败:", e.message);
+    /* 使用 session 缓存 */
   }
   
   const remaining = session.quotaRemaining || 0;
@@ -2396,13 +2395,6 @@ async function updateQuotaDisplay() {
     if (pct <= 0.2) cls = "quota-critical";
     else if (pct <= 0.5) cls = "quota-warning";
     html += `<span class="quota-remaining ${cls}">📊 ${T("quota.used")} ${used}/${total}（${T("quota.remaining")}${remaining}）</span>`;
-  }
-  
-  // 临时调试：显示 API 原始返回值（排查额度问题后删除）
-  if (apiRaw) {
-    html += `<span style="font-size:0.7rem;color:#94a3b8;margin-left:8px;">[API: ${JSON.stringify(apiRaw)}]</span>`;
-  } else {
-    html += `<span style="font-size:0.7rem;color:#f59e0b;margin-left:8px;">[API调用失败]</span>`;
   }
   
   el.innerHTML = html;
@@ -4230,7 +4222,6 @@ function loadCourses(){
       if (session.token) {
         try {
           const quotaData = await apiFetch("/api/quota");
-          console.log("[init] /api/quota 原始返回:", JSON.stringify(quotaData));
           // 用服务端最新额度覆盖本地缓存（保证多端同步）
           if (quotaData) {
             session.quotaTotal = quotaData.quotaTotal || 0;
@@ -4240,7 +4231,6 @@ function loadCourses(){
             localStorage.setItem(SESSION_KEY, JSON.stringify(session));
           }
         } catch(e) {
-          console.warn("[init] /api/quota 失败:", e.message);
           // 网络错误时不清除 session（允许离线查看）
           // 只有明确 401/403 才清除
           if (e.message && !e.message.includes("Failed to fetch")) {

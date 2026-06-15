@@ -2385,6 +2385,35 @@ async function updateQuotaDisplay() {
   el.innerHTML = html;
 }
 
+// 纯本地渲染额度显示（不调 API，立即更新 UI）
+function refreshQuotaUI() {
+  const el = document.getElementById("quotaDisplay");
+  if (!el || !session || session.type === "admin") return;
+  const remaining = session.quotaRemaining || 0;
+  const isUnlimited = (session.quotaTotal || 0) >= 999;
+  let html = "";
+  if (session.expiresAt) {
+    const exp = new Date(session.expiresAt);
+    const now = new Date();
+    const leftDays = Math.ceil((exp - now) / 86400000);
+    if (leftDays > 0) {
+      html += `<span class="quota-time">⏰ ${leftDays}${T("quota.daysLeft")}</span>`;
+    }
+  }
+  if (isUnlimited) {
+    html += `<span class="quota-remaining">💡 ${T("quota.unlimited")}</span>`;
+  } else {
+    const used = session.quotaUsed || 0;
+    const total = session.quotaTotal || 0;
+    const pct = remaining / (total || 1);
+    let cls = "quota-ok";
+    if (pct <= 0.2) cls = "quota-critical";
+    else if (pct <= 0.5) cls = "quota-warning";
+    html += `<span class="quota-remaining ${cls}">📊 ${T("quota.used")} ${used}/${total}（${T("quota.remaining")}${remaining}）</span>`;
+  }
+  el.innerHTML = html;
+}
+
 // 更新通知徽章（未读数量）
 function updateNotifBadge() {
   const badge = document.getElementById("notifBadge");
@@ -4075,14 +4104,18 @@ async function runSchedule(){
       document.getElementById("resultsContent").innerHTML = `<div class="empty-state"><div class="emoji">😔</div>${T("alert.quotaExhausted")}<br><small>${T("alert.contactAdmin")}</small></div>`;
       return;
     }
-    // 尝试扣减额度，但任何失败都不阻止排课（已通过上方预检查确认有余额）
+    // 先乐观扣减本地计数（立即更新显示）
+    session.quotaUsed = (session.quotaUsed || 0) + 1;
+    session.quotaRemaining = Math.max(0, (session.quotaTotal || 0) - (session.quotaUsed || 0));
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    // 再异步调后端扣减（失败不回滚，预检查已确认有余额）
     try {
       await consumeQuota(session.username);
     } catch(e) {
-      console.warn("[runSchedule] 额度扣减失败（仍允许排课）:", e.message);
+      console.warn("[runSchedule] 后端额度扣减失败（已使用本地乐观计数）:", e.message);
     }
-    // 更新显示
-    await updateQuotaDisplay();
+    // 刷新显示（优先用本地缓存）
+    refreshQuotaUI();
   }
   currentPlans=schedule();
   renderResults(currentPlans);
@@ -4096,14 +4129,16 @@ async function runSchedule2(){
       document.getElementById("resultsContent2").innerHTML = `<div class="empty-state"><div class="emoji">😔</div>${T("alert.quotaExhausted")}<br><small>${T("alert.contactAdmin")}</small></div>`;
       return;
     }
-    // 尝试扣减额度，但任何失败都不阻止排课
+    // 先乐观扣减本地计数
+    session.quotaUsed = (session.quotaUsed || 0) + 1;
+    session.quotaRemaining = Math.max(0, (session.quotaTotal || 0) - (session.quotaUsed || 0));
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     try {
       await consumeQuota(session.username);
     } catch(e) {
-      console.warn("[runSchedule2] 额度扣减失败（仍允许排课）:", e.message);
+      console.warn("[runSchedule2] 后端额度扣减失败（已使用本地乐观计数）:", e.message);
     }
-    // 更新显示
-    await updateQuotaDisplay();
+    refreshQuotaUI();
   }
   const plans=schedule("2");
   renderResults(plans,"2");

@@ -3463,6 +3463,7 @@ function addSubSection(code, secId, subName, pfx) {
   if (!checkedDays.length) { alert(T("alert.selectDay")); return; }
   if (!tstart||tstart==="--:--") { alert(T("alert.selectStart")); return; }
   if (!tend||tend==="--:--") { alert(T("alert.selectEnd")); return; }
+  if (tend < tstart) { alert(T("alert.endBeforeStart")); return; }
   if (!tloc) { alert(T("alert.fillLocation")); return; }
   try {
     const cnt = sec.subCounters[subName] || 0;
@@ -3966,6 +3967,7 @@ function addSection(code, pfx){
   if(!checkedDays.length){ alert(T("alert.selectDay")); return; }
   if(!tstart||tstart==="--:--"){ alert(T("alert.selectStart")); return; }
   if(!tend||tend==="--:--"){ alert(T("alert.selectEnd")); return; }
+  if(tend < tstart){ alert(T("alert.endBeforeStart")); return; }
   if(!tloc){ alert(T("alert.fillLocation")); return; }
   const idx=sectionCounter[code]||0;
   const id=`${code}-${String.fromCharCode(65+idx)}`;
@@ -4049,6 +4051,7 @@ function editSection(code, secId, pfx) {
   if (!checkedDays.length) { alert(T("alert.selectDay")); return; }
   if (!tstart || tstart==="--:--") { alert(T("alert.selectStart")); return; }
   if (!tend || tend==="--:--") { alert(T("alert.selectEnd")); return; }
+  if (tend < tstart) { alert(T("alert.endBeforeStart")); return; }
   if (!tloc) { alert(T("alert.fillLocation")); return; }
   // 更新时段数据
   sec.weekdays  = checkedDays;
@@ -4136,6 +4139,7 @@ function editSubSection(code, secId, subName, subId, pfx) {
   if (!checkedDays.length) { alert(T("alert.selectDay")); return; }
   if (!tstart || tstart==="--:--") { alert(T("alert.selectStart")); return; }
   if (!tend || tend==="--:--") { alert(T("alert.selectEnd")); return; }
+  if (tend < tstart) { alert(T("alert.endBeforeStart")); return; }
   if (!tloc) { alert(T("alert.fillLocation")); return; }
   sub.weekdays = checkedDays;
   sub.start    = tstart;
@@ -5240,6 +5244,7 @@ window.TRANSLATIONS = {
     "alert.selectStart": "请选择开始时间",
     "alert.selectEnd": "请选择结束时间",
     "alert.fillLocation": "请填写上课地点",
+    "alert.endBeforeStart": "结束时间不得早于开始时间",
     "alert.addFailed": "添加失败：",
     "confirm.deleteSubCourse": "子课程「{name}」时段已清空，是否同时删除该子课程？",
     "confirm.resetWeights": "确定要重置所有时段权重为 5 吗？",
@@ -5404,6 +5409,7 @@ window.TRANSLATIONS = {
     "alert.selectStart": "Please select a start time",
     "alert.selectEnd": "Please select an end time",
     "alert.fillLocation": "Please fill in the location",
+    "alert.endBeforeStart": "End time cannot be earlier than start time",
     "alert.addFailed": "Failed to add: ",
     "confirm.deleteSubCourse": "Sub-course \"{name}\" has no sessions. Delete it too?",
     "confirm.resetWeights": "Reset all weights to 5?",

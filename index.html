@@ -3310,7 +3310,8 @@ class Section {
     const days=this.weekdays.map(d=>`<span class="plan-day">${DAY_NAMES[d]}</span>`).join("");
     return `<div class="plan-row"><span class="plan-code">${this.courseCode} ${this.sectionId.replace(this.courseCode+"-","")}</span>${days}<span class="plan-time">${this.startStr}-${this.endStr}</span><span class="plan-loc">${this.location}</span></div>`;
   }
-  toListHTML() {
+  toListHTML(pfx) {
+    const pf = pfx||"";
     const secKey = this.sectionId;
     const enabledChecked = this.enabled ? "checked" : "";
     const disabledClass = this.enabled ? "" : " disabled-section";
@@ -3324,15 +3325,15 @@ class Section {
             <span class="section-schedule-check">✓</span>
           </label>
           <span style="flex:1;">${ss.daysStr()} &nbsp;${ss.startStr}-${ss.endStr} &nbsp;${ss.location}</span>
-          <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.68rem;color:var(--primary);border-color:var(--primary);white-space:nowrap;" onclick="showEditSubSection('${this.courseCode}','${secKey}','${name}','${ss.subId}')">✏️ ${T("btn.edit")}</button>
+          <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.68rem;color:var(--primary);border-color:var(--primary);white-space:nowrap;" onclick="showEditSubSection('${this.courseCode}','${secKey}','${name}','${ss.subId}','${pf}')">✏️ ${T("btn.edit")}</button>
           <button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:0.72rem;" onclick="delSubSection('${this.courseCode}','${secKey}','${name}','${ss.subId}')">×</button>
         </div>`;
       }).join("");
       return `<div class="sub-list">
-        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ ${name} <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('${this.courseCode}','${secKey}','${name}')">+ ${T("btn.session")}</button></div>
+        <div style="font-size:0.78rem;color:var(--success);font-weight:600;margin-bottom:2px;">↳ ${name} <button class="btn btn-outline btn-sm" style="padding:1px 7px;font-size:0.7rem;color:var(--success);border-color:var(--success);" onclick="showSubInput('${this.courseCode}','${secKey}','${name}','${pf}')">+ ${T("btn.session")}</button></div>
         ${subsHtml}
-        <div id="sub-inp-${secKey}-${name}" class="sub-input-area hidden">
-          ${_renderSubInputHTML(this.courseCode, secKey, name)}
+        <div id="${pf}sub-inp-${secKey}-${name}" class="sub-input-area hidden">
+          ${_renderSubInputHTML(this.courseCode, secKey, name, pfx)}
         </div>
       </div>`;
     }).join("");
@@ -3344,60 +3345,62 @@ class Section {
           <span class="section-schedule-label">${T("label.scheduleToggleShort")}</span>
         </label>
         <span><b>${this.sectionId.replace(this.courseCode+"-","")}</b> &nbsp;${this.daysStr()} &nbsp;${this.startStr}-${this.endStr} &nbsp;${this.location}</span>
-        <button class="btn btn-outline btn-sm" style="font-size:0.72rem;color:var(--primary);border-color:var(--primary);white-space:nowrap;" onclick="showEditSection('${this.courseCode}','${secKey}')">✏️ ${T("btn.edit")}</button>
+        <button class="btn btn-outline btn-sm" style="font-size:0.72rem;color:var(--primary);border-color:var(--primary);white-space:nowrap;" onclick="showEditSection('${this.courseCode}','${secKey}','${pf}')">✏️ ${T("btn.edit")}</button>
         <button class="btn btn-outline btn-sm" style="font-size:0.75rem;color:var(--success);border-color:var(--success);white-space:nowrap;" onclick="promptAddSubCourse('${this.courseCode}','${secKey}')">+ ${T("btn.subcourse")}</button>
         <button class="btn btn-danger btn-sm" onclick="delSection('${this.courseCode}','${secKey}')">×</button>
       </div>
       ${subNamesHtml}
-      <div id="edit-sec-${secKey}" class="section-edit-area hidden"></div>
+      <div id="${pf}edit-sec-${secKey}" class="section-edit-area hidden"></div>
     </div>`;
   }
 }
 
 // ─── 子时段 UI 辅助 ──────────────────────
 // 生成子时段输入区 HTML（内嵌在 section-item 里）
-function _renderSubInputHTML(code, secId, subName) {
+function _renderSubInputHTML(code, secId, subName, pfx) {
+  const pf = pfx||"";
   const escCode = code.replace(/'/g,"\\'");
   const escSec  = secId.replace(/'/g,"\\'");
   const escName = subName.replace(/'/g,"\\'");
   return `<h5>${T("dialog.addSubSession").replace("{name}",subName)}</h5>
     <div style="display:flex;flex-direction:column;gap:6px;">
       <div class="hint">${T("label.classDay")}</div>
-      <div class="days-group" id="sub-days-${secId}-${subName}">
-        ${[1,2,3,4,5,6,7].map(d=>`<label class="day-check" id="sub-dc-${secId}-${subName}-${d}"><input type="checkbox" value="${d}" onchange="updateSubDayCheck('${secId}','${subName}',${d})">${DAY_NAMES[d]}</label>`).join("")}
+      <div class="days-group" id="${pf}sub-days-${secId}-${subName}">
+        ${[1,2,3,4,5,6,7].map(d=>`<label class="day-check" id="${pf}sub-dc-${secId}-${subName}-${d}"><input type="checkbox" value="${d}" onchange="updateSubDayCheck('${secId}','${subName}',${d},'${pf}')">${DAY_NAMES[d]}</label>`).join("")}
       </div>
       <div style="display:flex;gap:6px;margin-top:4px;align-items:flex-end;">
-        <div><div class="hint">${T("label.start")}</div><button class="time-picker-btn" id="sub-tstart-${secId}-${subName}" onclick="openTimePicker('sub-tstart-${secId}-${subName}','${T("label.start")}')"><span class="clock-icon">🕐</span><span id="sub-tstart-${secId}-${subName}-txt">--:--</span></button></div>
-        <div><div class="hint">${T("label.end")}</div><button class="time-picker-btn" id="sub-tend-${secId}-${subName}" onclick="openTimePicker('sub-tend-${secId}-${subName}','${T("label.end")}')"><span class="clock-icon">🕑</span><span id="sub-tend-${secId}-${subName}-txt">--:--</span></button></div>
-        <div><div class="hint">${T("label.location")}</div><button class="loc-picker-btn" id="sub-tloc-${secId}-${subName}" onclick="openLocPicker('sub-tloc-${secId}-${subName}')">--</button></div>
+        <div><div class="hint">${T("label.start")}</div><button class="time-picker-btn" id="${pf}sub-tstart-${secId}-${subName}" onclick="openTimePicker('${pf}sub-tstart-${secId}-${subName}','${T("label.start")}')"><span class="clock-icon">🕐</span><span id="${pf}sub-tstart-${secId}-${subName}-txt">--:--</span></button></div>
+        <div><div class="hint">${T("label.end")}</div><button class="time-picker-btn" id="${pf}sub-tend-${secId}-${subName}" onclick="openTimePicker('${pf}sub-tend-${secId}-${subName}','${T("label.end")}')"><span class="clock-icon">🕑</span><span id="${pf}sub-tend-${secId}-${subName}-txt">--:--</span></button></div>
+        <div><div class="hint">${T("label.location")}</div><button class="loc-picker-btn" id="${pf}sub-tloc-${secId}-${subName}" onclick="openLocPicker('${pf}sub-tloc-${secId}-${subName}')">--</button></div>
       </div>
       <div class="section-btn-group">
-        <button class="btn btn-success btn-sm" onclick="addSubSection('${escCode}','${escSec}','${escName}')">${T("dialog.confirm")}</button>
-        <button class="btn btn-outline btn-sm" onclick="hideSubInput('${escSec}','${escName}')">${T("dialog.cancel")}</button>
+        <button class="btn btn-success btn-sm" onclick="addSubSection('${escCode}','${escSec}','${escName}','${pf}')">${T("dialog.confirm")}</button>
+        <button class="btn btn-outline btn-sm" onclick="hideSubInput('${escSec}','${escName}','${pf}')">${T("dialog.cancel")}</button>
       </div>
     </div>`;
 }
 
-function updateSubDayCheck(secId, subName, day) {
-  const label = document.getElementById(`sub-dc-${secId}-${subName}-${day}`);
+function updateSubDayCheck(secId, subName, day, pfx) {
+  const label = document.getElementById((pfx||"")+"sub-dc-"+secId+"-"+subName+"-"+day);
   if (!label) return;
   label.classList.toggle("active", label.querySelector("input").checked);
 }
 
-function showSubInput(code, secId, subName) {
-  const el = document.getElementById(`sub-inp-${secId}-${subName}`);
+function showSubInput(code, secId, subName, pfx) {
+  const el = document.getElementById((pfx||"")+"sub-inp-"+secId+"-"+subName);
   if (el) el.classList.remove("hidden");
 }
 
-function hideSubInput(secId, subName) {
-  const el = document.getElementById(`sub-inp-${secId}-${subName}`);
+function hideSubInput(secId, subName, pfx) {
+  const pf = pfx||"";
+  const el = document.getElementById(pf+"sub-inp-"+secId+"-"+subName);
   if (!el) return;
   el.classList.add("hidden");
-  _resetTimeBtn(`sub-tstart-${secId}-${subName}`);
-  _resetTimeBtn(`sub-tend-${secId}-${subName}`);
-  _resetLocBtn(`sub-tloc-${secId}-${subName}`);
-  document.querySelectorAll(`#sub-days-${secId}-${subName} input`).forEach(cb=>{ cb.checked=false; });
-  document.querySelectorAll(`#sub-days-${secId}-${subName} label`).forEach(lb=>lb.classList.remove("active"));
+  _resetTimeBtn(pf+"sub-tstart-"+secId+"-"+subName);
+  _resetTimeBtn(pf+"sub-tend-"+secId+"-"+subName);
+  _resetLocBtn(pf+"sub-tloc-"+secId+"-"+subName);
+  document.querySelectorAll(`#${pf}sub-days-${secId}-${subName} input`).forEach(cb=>{ cb.checked=false; });
+  document.querySelectorAll(`#${pf}sub-days-${secId}-${subName} label`).forEach(lb=>lb.classList.remove("active"));
 }
 
 // 弹窗询问子课程名称，然后把该子课程名加到对应 Section
@@ -3415,13 +3418,14 @@ function promptAddSubCourse(code, secId) {
   renderCourseList();
 }
 
-function addSubSection(code, secId, subName) {
+function addSubSection(code, secId, subName, pfx) {
+  const pf = pfx||"";
   const sec = (courses[code]||[]).find(s=>s.sectionId===secId);
   if (!sec) return;
-  const tstart = _getTimeVal(`sub-tstart-${secId}-${subName}`);
-  const tend   = _getTimeVal(`sub-tend-${secId}-${subName}`);
-  const tloc   = _getLocVal(`sub-tloc-${secId}-${subName}`);
-  const checkedDays = [...document.querySelectorAll(`#sub-days-${secId}-${subName} input:checked`)].map(cb=>parseInt(cb.value));
+  const tstart = _getTimeVal(pf+"sub-tstart-"+secId+"-"+subName);
+  const tend   = _getTimeVal(pf+"sub-tend-"+secId+"-"+subName);
+  const tloc   = _getLocVal(pf+"sub-tloc-"+secId+"-"+subName);
+  const checkedDays = [...document.querySelectorAll(`#${pf}sub-days-${secId}-${subName} input:checked`)].map(cb=>parseInt(cb.value));
   if (!checkedDays.length) { alert(T("alert.selectDay")); return; }
   if (!tstart||tstart==="--:--") { alert(T("alert.selectStart")); return; }
   if (!tend||tend==="--:--") { alert(T("alert.selectEnd")); return; }
@@ -3433,7 +3437,7 @@ function addSubSection(code, secId, subName) {
     if (!sec.subGroups[subName]) sec.subGroups[subName] = [];
     sec.subGroups[subName].push(ss);
     sec.subCounters[subName] = cnt + 1;
-    hideSubInput(secId, subName);
+    hideSubInput(secId, subName, pf);
     saveCourses();
     renderCourseList();
   } catch(e) { alert(T("alert.addFailed") + (e.message || e)); }
@@ -3800,7 +3804,7 @@ function renderCourseList(){
           <button class="btn btn-outline btn-sm" onclick="hideSectionInput('${code}','${pfx}')">${T("dialog.cancel")}</button>
         </div>
       </div>
-      <div>${courses[code].map(s=>s.toListHTML()).join("")}</div>
+      <div>${courses[code].map(s=>s.toListHTML(pfx)).join("")}</div>
       ${!courses[code].length?"<div style='font-size:0.8rem;color:#94a3b8;padding:4px 0;'>"+T("weight.noSessions")+"</div>":""}
     </div>`;
   }
@@ -3943,37 +3947,38 @@ function delSection(code,sectionId){
 }
 
 // ─── 时段编辑功能 ──────────────────────
-function showEditSection(code, secId) {
+function showEditSection(code, secId, pfx) {
+  const pf = pfx||"";
   const sec = (courses[code]||[]).find(s=>s.sectionId===secId);
   if (!sec) return;
-  const container = document.getElementById(`edit-sec-${secId}`);
+  const container = document.getElementById(pf+"edit-sec-"+secId);
   if (!container) return;
   // 如果已经展开则关闭
   if (!container.classList.contains("hidden")) {
-    hideEditSection(secId);
+    hideEditSection(secId, pf);
     return;
   }
   // 生成星期选择 HTML
   const dayChecks = [1,2,3,4,5,6,7].map(d => {
     const checked = sec.weekdays.includes(d) ? "checked" : "";
     const activeClass = sec.weekdays.includes(d) ? "active" : "";
-    return `<label class="day-check ${activeClass}" id="edit-dc-${secId}-${d}"><input type="checkbox" value="${d}" ${checked} onchange="updateEditDayCheck('${secId}',${d})">${DAY_NAMES[d]}</label>`;
+    return `<label class="day-check ${activeClass}" id="${pf}edit-dc-${secId}-${d}"><input type="checkbox" value="${d}" ${checked} onchange="updateEditDayCheck('${secId}',${d},'${pf}')">${DAY_NAMES[d]}</label>`;
   }).join("");
   container.innerHTML = `
     <h5>${T("dialog.editSession")}</h5>
     <div style="display:flex;flex-direction:column;gap:6px;">
       <div class="hint">${T("label.classDay")}</div>
-      <div class="days-group" id="edit-days-${secId}">
+      <div class="days-group" id="${pf}edit-days-${secId}">
         ${dayChecks}
       </div>
       <div style="display:flex;gap:6px;align-items:flex-end;">
-        <div><div class="hint">${T("label.start")}</div><button class="time-picker-btn" id="edit-tstart-${secId}" onclick="openTimePicker('edit-tstart-${secId}','${T("label.start")}')"><span class="clock-icon">🕐</span><span id="edit-tstart-${secId}-txt">${sec.startStr}</span></button></div>
-        <div><div class="hint">${T("label.end")}</div><button class="time-picker-btn" id="edit-tend-${secId}" onclick="openTimePicker('edit-tend-${secId}','${T("label.end")}')"><span class="clock-icon">🕑</span><span id="edit-tend-${secId}-txt">${sec.endStr}</span></button></div>
-        <div><div class="hint">${T("label.location")}</div><button class="loc-picker-btn" id="edit-tloc-${secId}" onclick="openLocPicker('edit-tloc-${secId}')">${sec.location||'--'}</button></div>
+        <div><div class="hint">${T("label.start")}</div><button class="time-picker-btn" id="${pf}edit-tstart-${secId}" onclick="openTimePicker('${pf}edit-tstart-${secId}','${T("label.start")}')"><span class="clock-icon">🕐</span><span id="${pf}edit-tstart-${secId}-txt">${sec.startStr}</span></button></div>
+        <div><div class="hint">${T("label.end")}</div><button class="time-picker-btn" id="${pf}edit-tend-${secId}" onclick="openTimePicker('${pf}edit-tend-${secId}','${T("label.end")}')"><span class="clock-icon">🕑</span><span id="${pf}edit-tend-${secId}-txt">${sec.endStr}</span></button></div>
+        <div><div class="hint">${T("label.location")}</div><button class="loc-picker-btn" id="${pf}edit-tloc-${secId}" onclick="openLocPicker('${pf}edit-tloc-${secId}')">${sec.location||'--'}</button></div>
       </div>
       <div class="section-btn-group">
-        <button class="btn btn-primary btn-sm" onclick="editSection('${code}','${secId}')">${T("btn.save")}</button>
-        <button class="btn btn-outline btn-sm" onclick="hideEditSection('${secId}')">${T("dialog.cancel")}</button>
+        <button class="btn btn-primary btn-sm" onclick="editSection('${code}','${secId}','${pf}')">${T("btn.save")}</button>
+        <button class="btn btn-outline btn-sm" onclick="hideEditSection('${secId}','${pf}')">${T("dialog.cancel")}</button>
       </div>
     </div>`;
   container.classList.remove("hidden");
@@ -3981,24 +3986,25 @@ function showEditSection(code, secId) {
   container.scrollIntoView({behavior:"smooth", block:"nearest"});
 }
 
-function updateEditDayCheck(secId, day) {
-  const label = document.getElementById(`edit-dc-${secId}-${day}`);
+function updateEditDayCheck(secId, day, pfx) {
+  const label = document.getElementById((pfx||"")+"edit-dc-"+secId+"-"+day);
   if (!label) return;
   label.classList.toggle("active", label.querySelector("input").checked);
 }
 
-function hideEditSection(secId) {
-  const el = document.getElementById(`edit-sec-${secId}`);
+function hideEditSection(secId, pfx) {
+  const el = document.getElementById((pfx||"")+"edit-sec-"+secId);
   if (el) { el.classList.add("hidden"); el.innerHTML = ""; }
 }
 
-function editSection(code, secId) {
+function editSection(code, secId, pfx) {
+  const pf = pfx||"";
   const sec = (courses[code]||[]).find(s=>s.sectionId===secId);
   if (!sec) return;
-  const tstart = _getTimeVal(`edit-tstart-${secId}`);
-  const tend   = _getTimeVal(`edit-tend-${secId}`);
-  const tloc   = _getLocVal(`edit-tloc-${secId}`);
-  const checkedDays = [...document.querySelectorAll(`#edit-days-${secId} input:checked`)].map(cb=>parseInt(cb.value));
+  const tstart = _getTimeVal(pf+"edit-tstart-"+secId);
+  const tend   = _getTimeVal(pf+"edit-tend-"+secId);
+  const tloc   = _getLocVal(pf+"edit-tloc-"+secId);
+  const checkedDays = [...document.querySelectorAll(`#${pf}edit-days-${secId} input:checked`)].map(cb=>parseInt(cb.value));
   if (!checkedDays.length) { alert(T("alert.selectDay")); return; }
   if (!tstart || tstart==="--:--") { alert(T("alert.selectStart")); return; }
   if (!tend || tend==="--:--") { alert(T("alert.selectEnd")); return; }
@@ -4010,19 +4016,20 @@ function editSection(code, secId) {
   sec.startStr  = _norm(tstart);
   sec.endStr    = _norm(tend);
   sec.location  = tloc;
-  hideEditSection(secId);
+  hideEditSection(secId, pf);
   renderCourseList();
   saveCourses();
 }
 
 // 子时段编辑
-function showEditSubSection(code, secId, subName, subId) {
+function showEditSubSection(code, secId, subName, subId, pfx) {
+  const pf = pfx||"";
   const sec = (courses[code]||[]).find(s=>s.sectionId===secId);
   if (!sec) return;
   const subs = sec.subGroups[subName] || [];
   const sub = subs.find(s=>s.subId===subId);
   if (!sub) return;
-  const containerId = `edit-sub-${subId}`;
+  const containerId = pf+"edit-sub-"+subId;
   let container = document.getElementById(containerId);
   if (!container) {
     // 在子项后面插入编辑区域
@@ -4040,50 +4047,51 @@ function showEditSubSection(code, secId, subName, subId) {
   const dayChecks = [1,2,3,4,5,6,7].map(d => {
     const checked = sub.weekdays.includes(d) ? "checked" : "";
     const activeClass = sub.weekdays.includes(d) ? "active" : "";
-    return `<label class="day-check ${activeClass}" id="edit-sub-dc-${subId}-${d}"><input type="checkbox" value="${d}" ${checked} onchange="updateEditSubDayCheck('${subId}',${d})">${DAY_NAMES[d]}</label>`;
+    return `<label class="day-check ${activeClass}" id="${pf}edit-sub-dc-${subId}-${d}"><input type="checkbox" value="${d}" ${checked} onchange="updateEditSubDayCheck('${subId}',${d},'${pf}')">${DAY_NAMES[d]}</label>`;
   }).join("");
   container.innerHTML = `
     <h5>${T("dialog.editSubSession")}</h5>
     <div style="display:flex;flex-direction:column;gap:6px;">
       <div class="hint">${T("label.classDay")}</div>
-      <div class="days-group" id="edit-sub-days-${subId}">
+      <div class="days-group" id="${pf}edit-sub-days-${subId}">
         ${dayChecks}
       </div>
       <div style="display:flex;gap:6px;align-items:flex-end;">
-        <div><div class="hint">${T("label.start")}</div><button class="time-picker-btn" id="edit-sub-tstart-${subId}" onclick="openTimePicker('edit-sub-tstart-${subId}','${T("label.start")}')"><span class="clock-icon">🕐</span><span id="edit-sub-tstart-${subId}-txt">${sub.startStr}</span></button></div>
-        <div><div class="hint">${T("label.end")}</div><button class="time-picker-btn" id="edit-sub-tend-${subId}" onclick="openTimePicker('edit-sub-tend-${subId}','${T("label.end")}')"><span class="clock-icon">🕑</span><span id="edit-sub-tend-${subId}-txt">${sub.endStr}</span></button></div>
-        <div><div class="hint">${T("label.location")}</div><button class="loc-picker-btn" id="edit-sub-tloc-${subId}" onclick="openLocPicker('edit-sub-tloc-${subId}')">${sub.location||'--'}</button></div>
+        <div><div class="hint">${T("label.start")}</div><button class="time-picker-btn" id="${pf}edit-sub-tstart-${subId}" onclick="openTimePicker('${pf}edit-sub-tstart-${subId}','${T("label.start")}')"><span class="clock-icon">🕐</span><span id="${pf}edit-sub-tstart-${subId}-txt">${sub.startStr}</span></button></div>
+        <div><div class="hint">${T("label.end")}</div><button class="time-picker-btn" id="${pf}edit-sub-tend-${subId}" onclick="openTimePicker('${pf}edit-sub-tend-${subId}','${T("label.end")}')"><span class="clock-icon">🕑</span><span id="${pf}edit-sub-tend-${subId}-txt">${sub.endStr}</span></button></div>
+        <div><div class="hint">${T("label.location")}</div><button class="loc-picker-btn" id="${pf}edit-sub-tloc-${subId}" onclick="openLocPicker('${pf}edit-sub-tloc-${subId}')">${sub.location||'--'}</button></div>
       </div>
       <div class="section-btn-group">
-        <button class="btn btn-primary btn-sm" onclick="editSubSection('${code}','${secId}','${subName}','${subId}')">${T("btn.save")}</button>
-        <button class="btn btn-outline btn-sm" onclick="hideEditSubSection('${subId}')">${T("dialog.cancel")}</button>
+        <button class="btn btn-primary btn-sm" onclick="editSubSection('${code}','${secId}','${subName}','${subId}','${pf}')">${T("btn.save")}</button>
+        <button class="btn btn-outline btn-sm" onclick="hideEditSubSection('${subId}','${pf}')">${T("dialog.cancel")}</button>
       </div>
     </div>`;
   container.classList.remove("hidden");
   container.scrollIntoView({behavior:"smooth", block:"nearest"});
 }
 
-function updateEditSubDayCheck(subId, day) {
-  const label = document.getElementById(`edit-sub-dc-${subId}-${day}`);
+function updateEditSubDayCheck(subId, day, pfx) {
+  const label = document.getElementById((pfx||"")+"edit-sub-dc-"+subId+"-"+day);
   if (!label) return;
   label.classList.toggle("active", label.querySelector("input").checked);
 }
 
-function hideEditSubSection(subId) {
-  const el = document.getElementById(`edit-sub-${subId}`);
+function hideEditSubSection(subId, pfx) {
+  const el = document.getElementById((pfx||"")+"edit-sub-"+subId);
   if (el) { el.classList.add("hidden"); el.innerHTML = ""; }
 }
 
-function editSubSection(code, secId, subName, subId) {
+function editSubSection(code, secId, subName, subId, pfx) {
+  const pf = pfx||"";
   const sec = (courses[code]||[]).find(s=>s.sectionId===secId);
   if (!sec) return;
   const subs = sec.subGroups[subName] || [];
   const sub = subs.find(s=>s.subId===subId);
   if (!sub) return;
-  const tstart = _getTimeVal(`edit-sub-tstart-${subId}`);
-  const tend   = _getTimeVal(`edit-sub-tend-${subId}`);
-  const tloc   = _getLocVal(`edit-sub-tloc-${subId}`);
-  const checkedDays = [...document.querySelectorAll(`#edit-sub-days-${subId} input:checked`)].map(cb=>parseInt(cb.value));
+  const tstart = _getTimeVal(pf+"edit-sub-tstart-"+subId);
+  const tend   = _getTimeVal(pf+"edit-sub-tend-"+subId);
+  const tloc   = _getLocVal(pf+"edit-sub-tloc-"+subId);
+  const checkedDays = [...document.querySelectorAll(`#${pf}edit-sub-days-${subId} input:checked`)].map(cb=>parseInt(cb.value));
   if (!checkedDays.length) { alert(T("alert.selectDay")); return; }
   if (!tstart || tstart==="--:--") { alert(T("alert.selectStart")); return; }
   if (!tend || tend==="--:--") { alert(T("alert.selectEnd")); return; }
@@ -4094,7 +4102,7 @@ function editSubSection(code, secId, subName, subId) {
   sub.startStr = _norm(tstart);
   sub.endStr   = _norm(tend);
   sub.location = tloc;
-  hideEditSubSection(subId);
+  hideEditSubSection(subId, pf);
   renderCourseList();
   saveCourses();
 }

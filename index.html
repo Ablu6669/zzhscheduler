@@ -4618,8 +4618,11 @@ function openTimePicker(btnId, title) {
 //  EXCEL 课表导出
 // ══════════════════════════════════════
 function exportScheduleExcel(suffix) {
+  console.log("[export] clicked, suffix=", suffix);
+  try {
   const s = suffix || "";
   const plans = _renderedPlans[s] || [];
+  console.log("[export] plans count=", plans.length);
   if (!plans.length) { alert(T("export.noResult")); return; }
 
   const numInput = document.getElementById("exportPlanNum" + s);
@@ -4894,8 +4897,12 @@ function exportScheduleExcel(suffix) {
     const blob = new Blob([wbout], { type: "application/octet-stream" });
     saveAs(blob, `Schedule_${planLabel}.xlsx`);
   } catch(e) {
-    console.error("[export]", e);
+    console.error("[export] inner error", e);
     alert((T("export.error") || "导出失败") + ": " + (e && e.message || e));
+  }
+  } catch(outerE) {
+    console.error("[export] outer error", outerE);
+    alert("导出异常: " + (outerE && outerE.message || outerE));
   }
 }
 

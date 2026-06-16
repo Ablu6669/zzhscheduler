@@ -3590,7 +3590,14 @@ function planWeightScore(plan) {
 // 打开权重设置弹窗
 function openWeightModal() {
   renderWeightModal();
-  document.getElementById("weightOverlay").style.display = "flex";
+  const overlay = document.getElementById("weightOverlay");
+  overlay.style.display = "flex";
+  // 确保弹窗内所有 data-i18n 元素都被翻译
+  overlay.querySelectorAll("[data-i18n]").forEach(function(el) {
+    var key = el.getAttribute("data-i18n");
+    var text = window.T(key);
+    if (text !== key) el.textContent = text;
+  });
 }
 function closeWeightModal() {
   document.getElementById("weightOverlay").style.display = "none";

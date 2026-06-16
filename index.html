@@ -3772,38 +3772,42 @@ function renderCourseList(){
   const el=document.getElementById("courseList");
   const el2=document.getElementById("courseList2");
   const codes=Object.keys(courses);
-  const html=codes.length?codes.map(code=>`
-    <div class="course-card">
+  // 用 pfx 区分两个容器的 DOM ID，避免重复 ID 导致 getElementById 取错元素
+  function cardHTML(code, pfx){
+    return `<div class="course-card">
       <div class="course-card-header">
         <span class="course-code">${code}</span>
         <div>
-          <button class="btn btn-outline btn-sm" onclick="showSectionInput('${code}')">+ ${T("btn.session")}</button>
+          <button class="btn btn-outline btn-sm" onclick="showSectionInput('${code}','${pfx}')">+ ${T("btn.session")}</button>
           <button class="btn btn-danger btn-sm" onclick="delCourse('${code}')">${T("btn.delete")}</button>
         </div>
       </div>
-      <div id="sec-inp-${code}" class="section-input-area hidden">
+      <div id="${pfx}sec-inp-${code}" class="section-input-area hidden">
         <h4>${T("dialog.addSession")} → ${code}</h4>
         <div class="section-row" style="flex-direction:column;align-items:stretch;gap:6px;">
           <div class="hint">${T("label.classDay")}</div>
-          <div class="days-group" id="days-${code}">
-            ${[1,2,3,4,5,6,7].map(d=>`<label class="day-check" id="dc-${code}-${d}"><input type="checkbox" value="${d}" class="day-cb" data-code="${code}" onchange="updateDayCheck('${code}',${d})">${DAY_NAMES[d]}</label>`).join("")}
+          <div class="days-group" id="${pfx}days-${code}">
+            ${[1,2,3,4,5,6,7].map(d=>`<label class="day-check" id="${pfx}dc-${code}-${d}"><input type="checkbox" value="${d}" class="day-cb" data-code="${code}" data-pfx="${pfx}" onchange="updateDayCheck('${code}',${d},'${pfx}')">${DAY_NAMES[d]}</label>`).join("")}
           </div>
         </div>
         <div class="section-row" style="margin-top:8px;align-items:flex-end;">
-          <div style="flex:1"><div class="hint">${T("label.start")}</div><button class="time-picker-btn" id="tstart-${code}" onclick="openTimePicker('tstart-${code}','${T("label.start")}')"><span class="clock-icon">🕐</span><span id="tstart-${code}-txt">--:--</span></button></div>
-          <div style="flex:1"><div class="hint">${T("label.end")}</div><button class="time-picker-btn" id="tend-${code}" onclick="openTimePicker('tend-${code}','${T("label.end")}')"><span class="clock-icon">🕑</span><span id="tend-${code}-txt">--:--</span></button></div>
-          <div style="flex:1"><div class="hint">${T("label.location")}</div><button class="loc-picker-btn" id="tloc-${code}" onclick="openLocPicker('tloc-${code}')">--</button></div>
+          <div style="flex:1"><div class="hint">${T("label.start")}</div><button class="time-picker-btn" id="${pfx}tstart-${code}" onclick="openTimePicker('${pfx}tstart-${code}','${T("label.start")}')"><span class="clock-icon">🕐</span><span id="${pfx}tstart-${code}-txt">--:--</span></button></div>
+          <div style="flex:1"><div class="hint">${T("label.end")}</div><button class="time-picker-btn" id="${pfx}tend-${code}" onclick="openTimePicker('${pfx}tend-${code}','${T("label.end")}')"><span class="clock-icon">🕑</span><span id="${pfx}tend-${code}-txt">--:--</span></button></div>
+          <div style="flex:1"><div class="hint">${T("label.location")}</div><button class="loc-picker-btn" id="${pfx}tloc-${code}" onclick="openLocPicker('${pfx}tloc-${code}')">--</button></div>
         </div>
         <div class="section-btn-group">
-          <button class="btn btn-primary btn-sm" onclick="addSection('${code}')">${T("dialog.confirm")}</button>
-          <button class="btn btn-outline btn-sm" onclick="hideSectionInput('${code}')">${T("dialog.cancel")}</button>
+          <button class="btn btn-primary btn-sm" onclick="addSection('${code}','${pfx}')">${T("dialog.confirm")}</button>
+          <button class="btn btn-outline btn-sm" onclick="hideSectionInput('${code}','${pfx}')">${T("dialog.cancel")}</button>
         </div>
       </div>
       <div>${courses[code].map(s=>s.toListHTML()).join("")}</div>
       ${!courses[code].length?"<div style='font-size:0.8rem;color:#94a3b8;padding:4px 0;'>"+T("weight.noSessions")+"</div>":""}
-    </div>`).join(""):`<div class="empty-state" id="courseEmpty"><div class="emoji">📋</div>${T("empty.noCourses")}<br><small>${T("empty.addAbove")}</small></div>`;
+    </div>`;
+  }
+  const html=codes.length?codes.map(code=>cardHTML(code,"")).join(""):`<div class="empty-state" id="courseEmpty"><div class="emoji">📋</div>${T("empty.noCourses")}<br><small>${T("empty.addAbove")}</small></div>`;
+  const html2=codes.length?codes.map(code=>cardHTML(code,"a2-")).join(""):`<div class="empty-state" id="courseEmpty2"><div class="emoji">📋</div>${T("empty.noCourses")}<br><small>${T("empty.addAbove")}</small></div>`;
   if(el) el.innerHTML=html;
-  if(el2) el2.innerHTML=html;
+  if(el2) el2.innerHTML=html2;
 }
 
 function addCourse2(){
@@ -3889,28 +3893,31 @@ function delCourse(code){
   saveCourses();
 }
 
-function showSectionInput(code){ document.getElementById("sec-inp-"+code).classList.remove("hidden"); }
+function showSectionInput(code, pfx){ document.getElementById((pfx||"")+"sec-inp-"+code).classList.remove("hidden"); }
 
-function hideSectionInput(code){
-  document.getElementById("sec-inp-"+code).classList.add("hidden");
-  _resetTimeBtn("tstart-"+code);
-  _resetTimeBtn("tend-"+code);
-  _resetLocBtn("tloc-"+code);
-  document.querySelectorAll(`#days-${code} input`).forEach(cb=>cb.checked=false);
-  document.querySelectorAll(`#days-${code} label`).forEach(lb=>lb.classList.remove("active"));
+function hideSectionInput(code, pfx){
+  const pf = pfx||"";
+  document.getElementById(pf+"sec-inp-"+code).classList.add("hidden");
+  _resetTimeBtn(pf+"tstart-"+code);
+  _resetTimeBtn(pf+"tend-"+code);
+  _resetLocBtn(pf+"tloc-"+code);
+  document.querySelectorAll(`#${pf}days-${code} input`).forEach(cb=>cb.checked=false);
+  document.querySelectorAll(`#${pf}days-${code} label`).forEach(lb=>lb.classList.remove("active"));
 }
 
-function updateDayCheck(code,day){
-  const label=document.getElementById("dc-"+code+"-"+day);
+function updateDayCheck(code, day, pfx){
+  const label=document.getElementById((pfx||"")+"dc-"+code+"-"+day);
+  if(!label) return;
   const cb=label.querySelector("input");
   label.classList.toggle("active",cb.checked);
 }
 
-function addSection(code){
-  const tstart=_getTimeVal("tstart-"+code);
-  const tend=_getTimeVal("tend-"+code);
-  const tloc=_getLocVal("tloc-"+code);
-  const checkedDays=[...document.querySelectorAll(`#days-${code} input:checked`)].map(cb=>parseInt(cb.value));
+function addSection(code, pfx){
+  const pf = pfx||"";
+  const tstart=_getTimeVal(pf+"tstart-"+code);
+  const tend=_getTimeVal(pf+"tend-"+code);
+  const tloc=_getLocVal(pf+"tloc-"+code);
+  const checkedDays=[...document.querySelectorAll(`#${pf}days-${code} input:checked`)].map(cb=>parseInt(cb.value));
   if(!checkedDays.length){ alert(T("alert.selectDay")); return; }
   if(!tstart||tstart==="--:--"){ alert(T("alert.selectStart")); return; }
   if(!tend||tend==="--:--"){ alert(T("alert.selectEnd")); return; }
@@ -3921,7 +3928,7 @@ function addSection(code){
   try{
     const sec=new Section(code,id,checkedDays,tstart,tend,tloc);
     courses[code].push(sec);
-    hideSectionInput(code);
+    hideSectionInput(code, pfx);
     renderCourseList();
     saveCourses();
     // 不自动计算，等用户点击"计算排课方案"按钮

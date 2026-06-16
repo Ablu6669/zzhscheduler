@@ -4999,6 +4999,18 @@ function tpConfirm() {
     const m = _getWheelVal(document.getElementById("tp-min-wheel"));
     timeStr = `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
   }
+  // 校验：如果是「结束时间」按钮，检查是否早于对应的「开始时间」
+  if (_tpTargetId) {
+    const isEnd = _tpTargetId.includes("tend");
+    if (isEnd) {
+      const startBtnId = _tpTargetId.replace("tend", "tstart");
+      const startVal = _getTimeVal(startBtnId);
+      if (startVal && startVal !== "--:--" && timeStr < startVal) {
+        alert(T("alert.endBeforeStart"));
+        return;  // 不关闭选择器，让用户重新选
+      }
+    }
+  }
   if (_tpTargetId) _setTimeBtn(_tpTargetId, timeStr);
   document.getElementById("timepickerOverlay").classList.remove("open");
   _tpTargetId = null;

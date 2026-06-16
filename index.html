@@ -1311,10 +1311,44 @@
     flex-direction: column; gap: 4px;
   }
 </style>
-<!-- SheetJS（xlsx-js-style 本地文件，支持单元格样式） -->
-<script src="xlsx.bundle.js"></script>
-<!-- FileSaver（本地文件） -->
-<script src="FileSaver.min.js"></script>
+<!-- SheetJS（xlsx-js-style：支持单元格样式）多源降级加载 -->
+<script>
+(function(){
+  var urls=[
+    "https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js",
+    "https://unpkg.com/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"
+  ];
+  var i=0;
+  function tryLoad(){
+    if(i>=urls.length){console.error("[xlsx] all CDN failed");window._xlsxFailed=true;return;}
+    var s=document.createElement("script");
+    s.src=urls[i];
+    s.onload=function(){console.log("[xlsx] loaded from",urls[i]);};
+    s.onerror=function(){i++;tryLoad();};
+    document.head.appendChild(s);
+  }
+  tryLoad();
+})();
+</script>
+<!-- FileSaver：导出需要用它保存文件，多源降级 -->
+<script>
+(function(){
+  var urls=[
+    "https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js",
+    "https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"
+  ];
+  var i=0;
+  function tryLoad(){
+    if(i>=urls.length){console.error("[file-saver] all CDN failed");return;}
+    var s=document.createElement("script");
+    s.src=urls[i];
+    s.onload=function(){console.log("[file-saver] loaded from",urls[i]);};
+    s.onerror=function(){i++;tryLoad();};
+    document.head.appendChild(s);
+  }
+  tryLoad();
+})();
+</script>
 </head>
 <body>
 

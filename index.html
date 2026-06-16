@@ -4762,12 +4762,17 @@ function exportScheduleExcel(suffix) {
   ];
 
   // ── 5. 使用 SheetJS 生成 workbook ───────────────────
-  if (!window.XLSX) { alert("SheetJS 未加载，请检查网络连接。"); return; }
+  if (!window.XLSX) { alert(T("export.noXLSX") || "SheetJS 未加载，请检查网络连接。"); return; }
+  if (typeof saveAs === "undefined") {
+    alert(T("export.noSaveAs") || "FileSaver 未加载，请检查网络连接后刷新重试。");
+    return;
+  }
   const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet(fullWsData);
+  try {
+    const ws = XLSX.utils.aoa_to_sheet(fullWsData);
 
-  // 列宽设置
-  ws["!cols"] = [
+    // 列宽设置
+    ws["!cols"] = [
     { wch: 7 },  // Time / 序号
     { wch: 10 }, // 课程代码 / Course
     { wch: 8 },  // 时段 / Section
@@ -4884,10 +4889,14 @@ function exportScheduleExcel(suffix) {
   XLSX.utils.book_append_sheet(wb, ws, langIsZh ? "课表" : "Schedule");
 
   const planLabel = (langIsZh ? "方案" : "Plan") + (planIdx + 1);
-  // xlsx-style：type:"array" 返回 Uint8Array，直接用于 Blob，最可靠
-  const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-  const blob = new Blob([wbout], { type: "application/octet-stream" });
-  saveAs(blob, `Schedule_${planLabel}.xlsx`);
+    // xlsx-style：type:"array" 返回 Uint8Array，直接用于 Blob，最可靠
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([wbout], { type: "application/octet-stream" });
+    saveAs(blob, `Schedule_${planLabel}.xlsx`);
+  } catch(e) {
+    console.error("[export]", e);
+    alert((T("export.error") || "导出失败") + ": " + (e && e.message || e));
+  }
 }
 
 // 滚动对齐（snap）
@@ -5086,6 +5095,8 @@ window.TRANSLATIONS = {
     "btn.setWeight": "设置权重",
     "btn.resetAll": "重置全部",
     "btn.done": "完成",
+    "btn.save": "保存",
+    "btn.cancel": "取消",
     "sortPriority.title": "🏆 排序优先级（拖动 ↑↓ 调整）",
     "label.maxDisplay": "最多显示",
     "label.plans": "个方案",
@@ -5104,6 +5115,9 @@ window.TRANSLATIONS = {
     "export.as": "为 Excel",
     "export.btn": "导出课表",
     "export.noResult": "暂无可导出的方案，请先计算排课。",
+    "export.noXLSX": "SheetJS 未加载，请检查网络连接后刷新重试。",
+    "export.noSaveAs": "FileSaver 未加载，请检查网络连接后刷新重试。",
+    "export.error": "导出失败",
     "results.weightLabel": "权重",
     "weight.modalTitle": "⚖️ 自定义时段权重",
     "editAccount.title": "✏️ 编辑账号",
@@ -5245,6 +5259,8 @@ window.TRANSLATIONS = {
     "btn.setWeight": "Set weights",
     "btn.resetAll": "Reset All",
     "btn.done": "Done",
+    "btn.save": "Save",
+    "btn.cancel": "Cancel",
     "sortPriority.title": "🏆 Sort Priority (drag to adjust)",
     "label.maxDisplay": "Show max",
     "label.plans": "plans",
@@ -5263,6 +5279,9 @@ window.TRANSLATIONS = {
     "export.as": "as Excel",
     "export.btn": "Export Schedule",
     "export.noResult": "No plans to export. Please calculate first.",
+    "export.noXLSX": "SheetJS failed to load. Check network and refresh.",
+    "export.noSaveAs": "FileSaver failed to load. Check network and refresh.",
+    "export.error": "Export failed",
     "results.weightLabel": "Weight",
     "weight.modalTitle": "⚖️ Custom Section Weights",
     "editAccount.title": "✏️ Edit Account",

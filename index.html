@@ -1311,10 +1311,10 @@
     flex-direction: column; gap: 4px;
   }
 </style>
-<!-- SheetJS（xlsx-style fork，支持单元格样式） -->
-<script src="https://unpkg.com/xlsx-style@0.8.13/dist/xlsx.full.min.js"></script>
+<!-- SheetJS（xlsx-style fork，支持单元格样式）—— jsdelivr 国内更稳定 -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx-style@0.8.13/dist/xlsx.full.min.js"></script>
 <!-- FileSaver：xlsx-style 需要用它保存文件 -->
-<script src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 </head>
 <body>
 
@@ -4765,7 +4765,10 @@ function exportScheduleExcel(suffix) {
   ];
 
   // ── 5. 使用 SheetJS 生成 workbook ───────────────────
-  if (!window.XLSX) { alert(T("export.noXLSX") || "SheetJS 未加载，请检查网络连接。"); return; }
+  if (!window.XLSX || !XLSX.utils || typeof XLSX.utils.book_new !== "function") {
+    alert(T("export.noXLSX") || "SheetJS 未正确加载（可能 CDN 不稳定），请刷新重试或检查网络。");
+    return;
+  }
   if (typeof saveAs === "undefined") {
     alert(T("export.noSaveAs") || "FileSaver 未加载，请检查网络连接后刷新重试。");
     return;

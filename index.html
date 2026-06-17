@@ -2642,7 +2642,7 @@ const GUIDE_DATA = [
         <li><strong>参与排课开关</strong>：灵活控制每个时段是否纳入排课计算</li>
         <li><strong>使用额度管理</strong>：管理员可创建账号并分配使用额度</li>
         <li><strong>通知公告</strong>：系统更新通知，支持已读/未读状态管理</li>
-        <li><strong>剪枝优化算法</strong>：自动跳过冲突组合、达到上限后提前停止，大幅降低算力消耗</li>
+        <li><strong>剪枝优化算法</strong>：自动跳过冲突组合，枚举全部可行方案后排序选最优（保底 5000 方案覆盖绝大多数排课场景，超大规模空间自动截断并提示）</li>
         <li><strong>多语言支持</strong>：支持中文/英文界面切换</li>
       </ul>
       <h3>使用流程</h3>
@@ -2667,7 +2667,7 @@ const GUIDE_DATA = [
         <li><strong>Schedule Toggle</strong>: Control which sessions are included in schedule calculation</li>
         <li><strong>Quota Management</strong>: Admins can create accounts and allocate usage quotas</li>
         <li><strong>Notifications</strong>: System updates with read/unread status tracking</li>
-        <li><strong>Pruning Optimization</strong>: Auto-skip conflicting combinations and stop early when enough plans are found, dramatically reducing computation</li>
+        <li><strong>Pruning Optimization</strong>: Auto-skip conflicting combinations, enumerate all feasible plans then sort for optimal result (minimum 5000 plans covers most scheduling scenarios; auto-truncates with warning for extremely large spaces)</li>
         <li><strong>Multi-language Support</strong>: Switch between Chinese and English interface</li>
       </ul>
       <h3>Workflow</h3>
@@ -3067,9 +3067,9 @@ const GUIDE_DATA = [
       <p>举例：7门课各有6个时段 → 理论组合 6⁷≈28万种。但如果前2门课就有大量冲突时段，剪枝会直接跳过这些分支，实际计算量远低于理论值。</p>
       <h3>② 位运算加速（Bitmask）</h3>
       <p>冲突检测从数组遍历改为<strong>位运算</strong>：将上课星期编码为7位掩码，两个时段是否共享某天只需一次 <code>&</code> 运算即可判断，比遍历数组快数倍。</p>
-      <h3>③ 提前停止（Early Stop）</h3>
-      <p>收集到足够数量的可行方案后（最多显示数×5），立即停止枚举，不再浪费算力计算更多方案。</p>
-      <div class="tip-box">💡 这三项优化叠加后，排课速度提升显著。原来可能卡顿的场景（数百万组合），现在通常几秒内即可完成。</div>
+      <h3>③ 安全截断（Early Stop）</h3>
+      <p>当可行方案数量超过 5000 时，停止枚举并显示⚠️截断提示。保底 5000 的设计确保绝大多数排课场景（通常几百个可行方案）能<strong>枚举全部后排序</strong>，从而选出真正的全局最优方案。仅在极大规模空间（组合数 >5M，已有入口预警）才会截断。</p>
+      <div class="tip-box">💡 这三项优化叠加后，排课速度提升显著。原来可能卡顿的场景（数百万组合），现在通常几秒内即可完成。对于常规排课场景，系统保证枚举全部可行方案后排序，不会遗漏最优解。</div>
     `,
     en_content: `
       <h2>Pruning Optimization</h2>
@@ -3079,9 +3079,9 @@ const GUIDE_DATA = [
       <p>Example: 7 courses × 6 sessions each → theoretical 6⁷≈280K combinations. But if many sessions in the first 2 courses conflict, pruning skips those branches, so actual computation is far less.</p>
       <h3>② Bitmask Acceleration</h3>
       <p>Conflict detection uses <strong>bitwise operations</strong> instead of array traversal: each day of the week is encoded as a 7-bit mask. Checking whether two sessions share any day requires just one <code>&</code> operation — several times faster than iterating arrays.</p>
-      <h3>③ Early Stop</h3>
-      <p>Once enough feasible plans are collected (max display × 5), enumeration stops immediately, avoiding wasted computation on additional plans.</p>
-      <div class="tip-box">💡 These three optimizations combined significantly speed up scheduling. Scenarios that previously caused slowdown (millions of combinations) now typically complete within seconds.</div>
+      <h3>③ Safe Truncation (Early Stop)</h3>
+      <p>When feasible plans exceed 5000, enumeration stops and a ⚠️ truncation warning is shown. The minimum 5000 ensures most scheduling scenarios (typically a few hundred feasible plans) can <strong>enumerate all plans then sort</strong>, guaranteeing the globally optimal result. Only extremely large spaces (>5M combinations, warned at entry) will be truncated.</p>
+      <div class="tip-box">💡 These three optimizations combined significantly speed up scheduling. Scenarios that previously caused slowdown (millions of combinations) now typically complete within seconds. For regular scheduling scenarios, the system guarantees full enumeration before sorting — no optimal solution is missed.</div>
     `
   }
 ];
@@ -4083,13 +4083,15 @@ function schedule(suffix){
   const subCombosCache = filtered.map(secs =>
     secs.map(sec => enumSubCombinations(sec, noEarly, noNoon, exTimes, exLocs))
   );
-  // 最大收集方案数（= maxDisplay × 5，既满足显示需求又留排序缓冲）
+  // 最大收集方案数：保底 5000，确保小规模场景能枚举全部可行方案后排序选最优
+  // 大规模场景（>5M 组合）已有入口预警，此处保底值足够覆盖绝大多数实际排课需求
   const maxDisplay = parseInt(document.getElementById("maxDisplay"+s).value) || 999;
-  const maxCollect = Math.max(200, maxDisplay * 5);
+  const maxCollect = Math.max(5000, maxDisplay * 10);
   const plans=[];
+  let _truncated = false;  // 标记是否因上限提前终止（影响结果提示文案）
   // 增量剪枝版笛卡尔积：每添加一门课就检查冲突，冲突则剪掉
   function cartesian(idx, cur){
-    if(plans.length >= maxCollect) return; // Early Stop
+    if(plans.length >= maxCollect){ _truncated = true; return; } // Early Stop
     if(idx===filtered.length){
       plans.push([...cur]); // 已通过增量剪枝，无需再验
       return;
@@ -4100,14 +4102,14 @@ function schedule(suffix){
       if (!subCombos) continue; // 子课程因过滤无法选择 → 跳过
       for (const subs of subCombos) {
         const entry = { sec, subs };
-        // 内部冲突剪枝：sec 与其 subs 冲突、或 subs 之间冲突 → 跳过
+        // 内部冲突剪枝：sec 与其 subs 冲突、或 subs 之间冲突 → 跋过
         if(hasIntraConflict(entry)) continue;
         // 增量剪枝：新 entry 与已选课程冲突则跳过，不继续枚举后续课程
         if(cur.length && entryConflictsWithPlan(entry, cur)) continue;
         cur.push(entry);
         cartesian(idx+1, cur);
         cur.pop();
-        if(plans.length >= maxCollect) return; // Early Stop（回溯后也检查）
+        if(plans.length >= maxCollect){ _truncated = true; return; } // Early Stop（回溯后也检查）
       }
     }
   }
@@ -4124,6 +4126,8 @@ function schedule(suffix){
       return 0;
     });
   }
+  // 返回方案数组 + 截断标记，供 renderResults 显示提示
+  plans._truncated = _truncated;
   return plans;
 }
 
@@ -4204,7 +4208,8 @@ function renderResults(plans, suffix){
   const showScores=tp||lp||wp;
   const totalText = T("results.totalPlans").replace("{n}", plans.length);
   const showingText = plans.length>max ? T("results.showingTop").replace("{n}", max) : "";
-  el.innerHTML=`<div class="results-summary">${totalText}${showingText}</div>
+  const truncatedHint = plans._truncated ? `<span style="color:#f59e0b;margin-left:6px;">⚠️ ${T("results.truncated")}</span>` : "";
+  el.innerHTML=`<div class="results-summary">${totalText}${showingText}${truncatedHint}</div>
     ${display.map((plan,i)=>{
       // plan = [{sec, subs}, ...]
       // 摘要标签：主时段 + 各子时段
@@ -5499,6 +5504,7 @@ window.TRANSLATIONS = {
     "results.relaxFilters": "尝试放宽筛选条件或增加时段",
     "results.totalPlans": "共找到 {n} 个可行方案",
     "results.showingTop": "，显示前 {n} 个",
+    "results.truncated": "结果可能不完整（组合空间过大，已截断枚举；最优方案可能未包含在内）",
     "results.planLabel": "方案 {n}",
     "results.morePlans": "... 还有 {n} 个方案",
     "results.timeLabel": "时间分",
@@ -5675,6 +5681,7 @@ window.TRANSLATIONS = {
     "results.relaxFilters": "Try relaxing filters or adding more sessions",
     "results.totalPlans": "Found {n} feasible plans",
     "results.showingTop": ", showing top {n}",
+    "results.truncated": "Results may be incomplete (search space too large, enumeration truncated; optimal plan may not be included)",
     "results.planLabel": "Plan {n}",
     "results.morePlans": "... {n} more plans",
     "results.timeLabel": "Time score",

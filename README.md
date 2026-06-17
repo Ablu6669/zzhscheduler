@@ -5,7 +5,7 @@
 **Auto Course Scheduler · 云端账号系统 · Serverless · 开箱即用**
 
 [![GitHub Pages](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-4f6ef7?style=for-the-badge&logo=github)](https://ablu6669.github.io/zzhscheduler/)
-[![Version](https://img.shields.io/badge/Version-3.0.1-f59e0b?style=for-the-badge)]()
+[![Version](https://img.shields.io/badge/Version-3.1.1-f59e0b?style=for-the-badge)]()
 [![CloudBase](https://img.shields.io/badge/Backend-Tencent%20CloudBase-4f6ef7?style=for-the-badge&logo=tencentqq)]()
 
 [🚀 立即体验 / Live Demo](https://ablu6669.github.io/zzhscheduler/) · [📮 反馈 / Feedback](#反馈--feedback)

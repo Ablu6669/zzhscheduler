@@ -814,6 +814,7 @@
     width: 100%;
     flex: none;
   }
+  #adminLeftContent { display:flex; flex-direction:column; gap:16px; }
 
   .accounts-header {
     display: flex;
@@ -1678,21 +1679,13 @@
         </div>
         <!-- 版本管理 -->
         <div class="panel" style="margin-top:16px;">
-          <div class="panel-title" style="margin-bottom:10px;"><span class="icon">🏷️</span><span data-i18n="panel.versionMgmt">版本管理</span></div>
-          <div class="admin-tools">
-            <h4 data-i18n="version.currentVersion">当前版本</h4>
-            <div class="form-row">
-              <div class="form-group">
-                <label data-i18n="version.versionNumber">版本号</label>
-                <input type="text" id="versionInput" placeholder="如 3.1.0" maxlength="20">
-              </div>
-              <div class="form-group" style="display:flex;align-items:flex-end;">
-                <button class="btn btn-primary btn-sm" onclick="saveVersion()" style="width:100%;margin:0;" data-i18n="version.save">保存</button>
-              </div>
-            </div>
-            <div class="auth-error" id="versionError" style="margin-top:4px;"></div>
-            <div class="tip-box" style="font-size:0.75rem;margin-top:8px;" id="versionTip" data-i18n="version.tip">💡 保存后版本号会实时更新到所有用户端。请同步更新 README.md 中的版本号 Badge 后推送 GitHub。</div>
+          <div class="panel-title" style="margin-bottom:12px;"><span class="icon">🏷️</span><span data-i18n="panel.versionMgmt">版本管理</span></div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <input type="text" id="versionInput" placeholder="如 3.1.0" maxlength="20" style="flex:1;padding:9px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:.92rem;font-weight:600;color:var(--primary);">
+            <button class="btn btn-primary btn-sm" onclick="saveVersion()" style="white-space:nowrap;" data-i18n="version.save">保存</button>
           </div>
+          <div id="versionError" style="margin-top:6px;font-size:.82rem;"></div>
+          <div class="tip-box" style="font-size:0.75rem;margin-top:8px;" id="versionTip" data-i18n="version.tip">💡 保存后版本号会实时更新到所有用户端。请同步更新 README.md 中的版本号 Badge 后推送 GitHub。</div>
         </div>
       </div>
       <!-- 用户左侧：课程管理+筛选排序（默认显示） -->
@@ -2167,6 +2160,7 @@ function enterMainApp() {
     document.getElementById("modeBadge").textContent = T("topbar.mode.admin");
     // 管理员三栏
     document.getElementById("adminLeftContent").style.display = "flex";
+    document.getElementById("adminLeftContent").style.flexDirection = "column";
     document.getElementById("userLeftContent").style.display = "none";
     document.getElementById("adminCenterContent").style.display = "flex";
     document.getElementById("userRightContent").style.display = "none";

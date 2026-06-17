@@ -3762,6 +3762,68 @@ function enumSubCombinations(sec, noEarly, noNoon, exTimes, exLocs) {
   return result;
 }
 
+function estimateCombos(suffix){
+  const s = suffix || "";
+  const noEarly=document.getElementById("noEarly"+s).checked;
+  const noNoon=document.getElementById("noNoon"+s).checked;
+  const exTimes = excludedTimes[s] || [];
+  const exLocs  = excludedLocations[s] || [];
+  const codes=Object.keys(courses);
+  let product = 1;
+  for(const c of codes){
+    const secs = courses[c].filter(sec=>
+      sec.enabled &&
+      !(noEarly&&sec.isEarlyMorning()) &&
+      !(noNoon&&sec.isAfternoonFirst()) &&
+      !exTimes.includes(sec.start) &&
+      !exLocs.includes(sec.location)
+    );
+    if(!secs.length) return 0;
+    // 计算该门课每个 sec 的子课程组合数（模拟 enumSubCombinations 逻辑）
+    let totalWithSubs = 0;
+    for(const sec of secs){
+      const names = Object.keys(sec.subGroups || {});
+      if(!names.length){ totalWithSubs += 1; continue; }
+      // 检查是否有子课程时段被定义但全被过滤
+      let infeasible = false;
+      for(const sn of names){
+        const allSubs = sec.subList(sn);
+        if(allSubs.length > 0){
+          const avail = allSubs.filter(ss=>
+            ss.enabled &&
+            !(noEarly&&ss.isEarlyMorning()) &&
+            !(noNoon&&ss.isAfternoonFirst()) &&
+            !exTimes.includes(ss.start) &&
+            !exLocs.includes(ss.location)
+          );
+          if(!avail.length){ infeasible = true; break; }
+        }
+      }
+      if(infeasible){ continue; }
+      // 计算该 sec 的子课程组合数（笛卡尔积）
+      let subCount = 1;
+      let hasValidSub = false;
+      for(const sn of names){
+        const avail = (sec.subGroups[sn]||[]).filter(ss=>
+          ss.enabled &&
+          !(noEarly&&ss.isEarlyMorning()) &&
+          !(noNoon&&ss.isAfternoonFirst()) &&
+          !exTimes.includes(ss.start) &&
+          !exLocs.includes(ss.location)
+        );
+        if(!avail.length) continue;
+        subCount *= avail.length;
+        hasValidSub = true;
+      }
+      if(!hasValidSub) subCount = 1; // 所有子课程都无有效时段 → 空组合（对应 enumSubCombinations 返回 [[]]）
+      totalWithSubs += subCount;
+    }
+    product *= totalWithSubs;
+    if(product > 1e12) return Infinity;
+  }
+  return Math.round(product);
+}
+
 function schedule(suffix){
   const s = suffix || "";
   const noEarly=document.getElementById("noEarly"+s).checked;
@@ -4174,6 +4236,12 @@ function toggleSubSectionSchedule(code, secId, subName, subId, enabled) {
 }
 
 async function runSchedule(){
+  // 组合数预警
+  const est = estimateCombos("");
+  if (est > 500000) {
+    const msg = T("alert.tooManyCombos").replace("{n}", est.toLocaleString());
+    if (!confirm(msg)) return;
+  }
   // 检查额度
   if (session && session.type === "user") {
     const q = await getAccountQuota(session.username);
@@ -4200,6 +4268,12 @@ async function runSchedule(){
 }
 
 async function runSchedule2(){
+  // 组合数预警
+  const est = estimateCombos("2");
+  if (est > 500000) {
+    const msg = T("alert.tooManyCombos").replace("{n}", est.toLocaleString());
+    if (!confirm(msg)) return;
+  }
   // 检查额度
   if (session && session.type === "user") {
     const q = await getAccountQuota(session.username);
@@ -5257,6 +5331,7 @@ window.TRANSLATIONS = {
     "alert.selectEnd": "请选择结束时间",
     "alert.fillLocation": "请填写上课地点",
     "alert.endBeforeStart": "结束时间不得早于开始时间",
+    "alert.tooManyCombos": "当前筛选条件下约有 {n} 种课程组合，计算量较大，可能导致浏览器卡顿。建议增加筛选条件（如开启「不上早八」）以减少计算量。\n\n是否仍要继续计算？",
     "alert.addFailed": "添加失败：",
     "confirm.deleteSubCourse": "子课程「{name}」时段已清空，是否同时删除该子课程？",
     "confirm.resetWeights": "确定要重置所有时段权重为 5 吗？",
@@ -5422,6 +5497,7 @@ window.TRANSLATIONS = {
     "alert.selectEnd": "Please select an end time",
     "alert.fillLocation": "Please fill in the location",
     "alert.endBeforeStart": "End time cannot be earlier than start time",
+    "alert.tooManyCombos": "The current filters produce approximately {n} course combinations. Computation may cause browser slowdown. Consider adding more filters (e.g. enable \"No early morning\") to reduce the load.\n\nDo you want to proceed anyway?",
     "alert.addFailed": "Failed to add: ",
     "confirm.deleteSubCourse": "Sub-course \"{name}\" has no sessions. Delete it too?",
     "confirm.resetWeights": "Reset all weights to 5?",

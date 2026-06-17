@@ -2183,8 +2183,12 @@ function enterMainApp() {
   document.getElementById("welcomeUser").textContent = session.username;
   // 更新并显示额度信息
   updateQuotaDisplay();
-  renderNotifBanner();
-  updateNotifBadge();
+  // 从云端拉取公告（管理员/用户都需要）
+  loadNotifsFromCloud().then(() => {
+    renderNotifBanner();
+    updateNotifBadge();
+    if (session && session.type === "admin") renderNotifAdmin();
+  });
   loadCourses();
   renderCourseList();
   // 加载版本号
@@ -2336,6 +2340,48 @@ function getNotifs() {
 
 // 保存所有通知
 function saveNotifs(list) { localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(list)); }
+
+// 从云端拉取公告并更新本地缓存（保留每用户的 read 状态，保留本地未同步的公告）
+async function loadNotifsFromCloud() {
+  try {
+    const cloudNotifs = await apiFetch("/api/announcements");
+    if (!cloudNotifs || !Array.isArray(cloudNotifs)) return;
+
+    // 保留本地 read 状态 & 本地未同步到云端的公告
+    const localList = getNotifs();
+    const readMap = {};
+    localList.forEach(n => { if (n.read) readMap[n.id] = true; });
+
+    // 映射云端数据 → 前端格式
+    const cloudMerged = cloudNotifs.map(cn => ({
+      id: cn._id,
+      title: cn.title || '',
+      content: cn.content || '',
+      enTitle: cn.enTitle || '',
+      enContent: cn.enContent || '',
+      type: cn.type || 'info',
+      enabled: cn.enabled !== false,
+      read: readMap[cn._id] || false,  // 保留本用户的已读状态
+      createdAt: cn.createdAt ? new Date(cn.createdAt).getTime() : 0,
+      _cloudId: cn._id,  // 标记来源为云端
+    }));
+
+    // 保留本地-only公告（POST 失败降级时创建的，id 格式为 n_xxx）
+    const cloudIds = new Set(cloudMerged.map(n => n.id));
+    // 同时按 content+createdAt 匹配，避免同一公告以不同 id 存在于两处
+    const cloudSignatures = new Set(cloudMerged.map(n => n.content + '|' + n.createdAt));
+    const localOnly = localList.filter(n =>
+      !cloudIds.has(n.id) && !cloudSignatures.has(n.content + '|' + n.createdAt)
+    );
+
+    // 合并：云端数据 + 本地未同步数据
+    const merged = [...cloudMerged, ...localOnly];
+    merged.sort((a, b) => b.createdAt - a.createdAt);
+    saveNotifs(merged);
+  } catch(e) {
+    console.warn("[loadNotifsFromCloud] 云端拉取失败，使用本地缓存:", e.message);
+  }
+}
 
 // 生成唯一ID
 function _genNotifId() { return "n_" + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
@@ -3206,9 +3252,31 @@ async function addNotif() {
   ]);
   btn.textContent = origText;
   btn.disabled = false;
-  const list = getNotifs();
-  list.unshift({ id: _genNotifId(), title, content, enTitle, enContent, enabled: true, read: false, createdAt: Date.now() });
-  saveNotifs(list);
+
+  // 同步到云端
+  try {
+    const data = await apiFetch("/api/announcements", {
+      method: "POST",
+      body: JSON.stringify({ title: title || '', content, enTitle, enContent, type: 'info' })
+    });
+    if (data && data.id) {
+      // 云端创建成功，本地也同步一份（用云端 id），然后拉取完整列表刷新
+      const list = getNotifs();
+      list.unshift({ id: data.id, title: title || '', content, enTitle, enContent, enabled: true, read: false, createdAt: Date.now(), _cloudId: data.id });
+      saveNotifs(list);
+      // 再从云端拉取完整列表（合并去重）
+      await loadNotifsFromCloud();
+    } else {
+      console.warn("[addNotif] 云端返回异常:", JSON.stringify(data));
+    }
+  } catch(e) {
+    // 云端失败 → 弹窗提示用户（不再静默降级）
+    alert("⚠️ 公告保存到云端失败：\n" + e.message + "\n\n公告仅保存在当前浏览器本地。");
+    console.error("[addNotif] 云端保存失败:", e.message);
+    const list = getNotifs();
+    list.unshift({ id: _genNotifId(), title: title || '', content, enTitle, enContent, enabled: true, read: false, createdAt: Date.now() });
+    saveNotifs(list);
+  }
   renderNotifAdmin();
   updateNotifBadge();
 }
@@ -3252,13 +3320,25 @@ async function autoTranslateEdit() {
 
 function saveNotifEdit() {
   if (!_editingNotifId) return;
+  const title = document.getElementById("editNotifTitle").value.trim();
+  const content = document.getElementById("editNotifContent").value.trim();
+  const enTitle = document.getElementById("editNotifEnTitle").value.trim();
+  const enContent = document.getElementById("editNotifEnContent").value.trim();
+  // 同步到云端
+  apiFetch("/api/announcements/" + _editingNotifId, {
+    method: "PUT",
+    body: JSON.stringify({ title, content, enTitle, enContent })
+  })
+    .then(() => { console.log("[saveNotifEdit] 云端更新成功"); })
+    .catch(e => { console.warn("[saveNotifEdit] 云端更新失败:", e.message); });
+  // 本地也更新（即时更新 UI）
   const list = getNotifs();
   const n = list.find(x => x.id === _editingNotifId);
   if (!n) return;
-  n.title = document.getElementById("editNotifTitle").value.trim();
-  n.content = document.getElementById("editNotifContent").value.trim();
-  n.enTitle = document.getElementById("editNotifEnTitle").value.trim();
-  n.enContent = document.getElementById("editNotifEnContent").value.trim();
+  n.title = title;
+  n.content = content;
+  n.enTitle = enTitle;
+  n.enContent = enContent;
   saveNotifs(list);
   closeNotifEditModal();
   renderNotifAdmin();
@@ -3267,6 +3347,11 @@ function saveNotifEdit() {
 // 删除通知
 function deleteNotif(id) {
   if (!confirm(T("confirm.withdrawNotif"))) return;
+  // 同步到云端
+  apiFetch("/api/announcements/" + id, { method: "DELETE" })
+    .then(() => { console.log("[deleteNotif] 云端删除成功"); })
+    .catch(e => { console.warn("[deleteNotif] 云端删除失败:", e.message); });
+  // 本地也删除（即时更新 UI）
   let list = getNotifs();
   list = list.filter(n => n.id !== id);
   saveNotifs(list);

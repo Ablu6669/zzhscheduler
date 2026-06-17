@@ -637,6 +637,16 @@
   }
 
   .topbar-title { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
+  .version-badge {
+    display: inline-flex; align-items: center;
+    background: linear-gradient(135deg, var(--primary), #6366f1);
+    color: #fff; font-size: 0.68rem; font-weight: 600;
+    padding: 2px 8px; border-radius: 10px; margin-left: 6px;
+    letter-spacing: 0.02em; vertical-align: middle;
+    cursor: default; user-select: none;
+  }
+  .version-badge.editable { cursor: pointer; }
+  .version-badge.editable:hover { background: linear-gradient(135deg, #4f46e5, #7c3aed); }
   .topbar-info { font-size: 0.82rem; color: var(--text-muted); }
   .topbar-info span { font-weight: 600; color: var(--primary); }
 
@@ -1485,7 +1495,7 @@
 ════════════════════════════════════════ -->
 <div id="mainApp">
   <div class="topbar">
-    <div class="topbar-title" data-i18n="topbar.title">📚 自动排课系统</div>
+    <div class="topbar-title" data-i18n="topbar.title">📚 自动排课系统<span class="version-badge" id="versionBadge">v3.0.1</span></div>
     <div class="topbar-info">
       <span id="quotaDisplay"></span>
       <button class="notif-btn" id="notifBtn" onclick="toggleNotifPage()">
@@ -1664,6 +1674,24 @@
               <span id="accountCount2"></span>
             </div>
             <div class="accounts-list" id="accountsList2" style="max-height:200px;"></div>
+          </div>
+        </div>
+        <!-- 版本管理 -->
+        <div class="panel" style="margin-top:16px;">
+          <div class="panel-title" style="margin-bottom:10px;"><span class="icon">🏷️</span><span data-i18n="panel.versionMgmt">版本管理</span></div>
+          <div class="admin-tools">
+            <h4 data-i18n="version.currentVersion">当前版本</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label data-i18n="version.versionNumber">版本号</label>
+                <input type="text" id="versionInput" placeholder="如 3.1.0" maxlength="20">
+              </div>
+              <div class="form-group" style="display:flex;align-items:flex-end;">
+                <button class="btn btn-primary btn-sm" onclick="saveVersion()" style="width:100%;margin:0;" data-i18n="version.save">保存</button>
+              </div>
+            </div>
+            <div class="auth-error" id="versionError" style="margin-top:4px;"></div>
+            <div class="tip-box" style="font-size:0.75rem;margin-top:8px;" id="versionTip" data-i18n="version.tip">💡 保存后版本号会实时更新到所有用户端。请同步更新 README.md 中的版本号 Badge 后推送 GitHub。</div>
           </div>
         </div>
       </div>
@@ -1900,6 +1928,8 @@
 const ADMIN_KEY = "ZZH6669ABLU";  // 保留备用（管理员本地快捷入口）
 const SESSION_KEY  = "wb_scheduler_session";
 const COURSES_KEY  = "wb_scheduler_courses";
+const VERSION_KEY  = "wb_scheduler_version";
+const DEFAULT_VERSION = "3.0.1";
 
 // ══ API 配置 ══════════════════════════════
 const API_BASE = "https://1443353382-7jgrci9mpr.ap-guangzhou.tencentscf.com";
@@ -2163,6 +2193,80 @@ function enterMainApp() {
   updateNotifBadge();
   loadCourses();
   renderCourseList();
+  // 加载版本号
+  loadVersion();
+}
+
+// ══ 版本号管理 ══════════════════════════════
+
+// 更新导航栏版本号徽标
+function updateVersionBadge(ver) {
+  const badge = document.getElementById("versionBadge");
+  if (badge) badge.textContent = "v" + ver;
+  // 管理员模式：徽标可点击跳转到版本管理区域
+  if (session && session.type === "admin" && badge) {
+    badge.classList.add("editable");
+    badge.onclick = function() { document.getElementById("versionInput").focus(); };
+  }
+}
+
+// 从云端加载版本号（失败时用 localStorage 缓存或默认值）
+async function loadVersion() {
+  // 优先用 localStorage 缓存（即时显示）
+  const cached = localStorage.getItem(VERSION_KEY);
+  if (cached) updateVersionBadge(cached);
+
+  // 异步从 API 获取最新版本
+  try {
+    const data = await apiFetch("/api/version");
+    if (data && data.version) {
+      localStorage.setItem(VERSION_KEY, data.version);
+      updateVersionBadge(data.version);
+      // 管理员：填充输入框
+      if (session && session.type === "admin") {
+        const inp = document.getElementById("versionInput");
+        if (inp) inp.value = data.version;
+      }
+    }
+  } catch(e) {
+    console.warn("[loadVersion] API 失败，使用缓存:", e.message);
+    // API 失败：用缓存或默认值
+    if (!cached) updateVersionBadge(DEFAULT_VERSION);
+    if (session && session.type === "admin") {
+      const inp = document.getElementById("versionInput");
+      if (inp) inp.value = cached || DEFAULT_VERSION;
+    }
+  }
+}
+
+// 管理员保存版本号
+async function saveVersion() {
+  const inp = document.getElementById("versionInput");
+  const errEl = document.getElementById("versionError");
+  if (!inp) return;
+  const ver = inp.value.trim();
+  if (!ver) { errEl.textContent = T("version.errorEmpty"); return; }
+  if (!/^[\d]+\.[\d]+\.[\d]+$/.test(ver)) { errEl.textContent = T("version.errorFormat"); return; }
+
+  errEl.textContent = "";
+  try {
+    const data = await apiFetch("/api/version", {
+      method: "PUT",
+      body: JSON.stringify({ version: ver })
+    });
+    if (data && data.version) {
+      localStorage.setItem(VERSION_KEY, data.version);
+      updateVersionBadge(data.version);
+      errEl.style.color = "var(--success)";
+      errEl.textContent = T("version.saveSuccess").replace("{ver}", data.version);
+      // 提醒同步 README
+      alert(T("version.readmeReminder").replace("{ver}", data.version));
+      setTimeout(() => { errEl.textContent = ""; errEl.style.color = ""; }, 3000);
+    }
+  } catch(e) {
+    errEl.style.color = "var(--danger)";
+    errEl.textContent = T("version.saveFailed") + " (" + e.message + ")";
+  }
 }
 
 // 管理员中间栏同步课程和筛选
@@ -5365,6 +5469,16 @@ window.TRANSLATIONS = {
     "dialog.cancel": "取消",
     "panel.notifMgmt": "通知管理",
     "panel.accMgmt": "账号管理",
+    "panel.versionMgmt": "版本管理",
+    "version.currentVersion": "当前版本",
+    "version.versionNumber": "版本号",
+    "version.save": "保存",
+    "version.errorEmpty": "请输入版本号",
+    "version.errorFormat": "版本号格式应为 X.Y.Z（如 3.1.0）",
+    "version.saveSuccess": "版本号已更新为 {ver}",
+    "version.saveFailed": "保存失败",
+    "version.readmeReminder": "版本号已更新为 {ver}！请同步更新 README.md 中的版本号 Badge（Version-X.X.X）后推送 GitHub。",
+    "version.tip": "💡 保存后版本号会实时更新到所有用户端。请同步更新 README.md 中的版本号 Badge 后推送 GitHub。",
     "notif.sendNew": "+ 发送新通知",
     "notif.titlePlaceholder": "通知标题（可选）",
     "notif.contentPlaceholder": "通知内容（必填）",
@@ -5531,6 +5645,16 @@ window.TRANSLATIONS = {
     "dialog.cancel": "Cancel",
     "panel.notifMgmt": "Notification Management",
     "panel.accMgmt": "Account Management",
+    "panel.versionMgmt": "Version Management",
+    "version.currentVersion": "Current Version",
+    "version.versionNumber": "Version Number",
+    "version.save": "Save",
+    "version.errorEmpty": "Please enter a version number",
+    "version.errorFormat": "Version format should be X.Y.Z (e.g. 3.1.0)",
+    "version.saveSuccess": "Version updated to {ver}",
+    "version.saveFailed": "Save failed",
+    "version.readmeReminder": "Version updated to {ver}! Please also update the version badge (Version-X.X.X) in README.md and push to GitHub.",
+    "version.tip": "💡 After saving, the version will be updated for all users in real-time. Please also update the version badge in README.md and push to GitHub.",
     "notif.sendNew": "+ Send New Notification",
     "notif.titlePlaceholder": "Title (optional)",
     "notif.contentPlaceholder": "Content (required)",

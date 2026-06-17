@@ -2400,10 +2400,12 @@ function getNotifContent(n) {
 }
 
 // ── 通知页面（用户入口）────────────────
-function toggleNotifPage() {
+async function toggleNotifPage() {
   const page = document.getElementById("notifPage");
   const overlay = document.getElementById("notifPageOverlay");
   if (page.style.display === "none") {
+    // 打开页面前先从云端刷新，确保同步管理员撤回等操作
+    await loadNotifsFromCloud();
     // 打开页面时自动标记全部已读（红点消失）
     const list = getNotifs();
     let changed = false;
@@ -3348,7 +3350,7 @@ function deleteNotif(id) {
   // 同步到云端
   apiFetch("/api/announcements/" + id, { method: "DELETE" })
     .then(() => { console.log("[deleteNotif] 云端删除成功"); })
-    .catch(e => { console.warn("[deleteNotif] 云端删除失败:", e.message); });
+    .catch(e => { alert("⚠️ 云端撤回失败：\n" + e.message + "\n\n公告仅在本地删除，其他用户可能仍能看到。"); });
   // 本地也删除（即时更新 UI）
   let list = getNotifs();
   list = list.filter(n => n.id !== id);

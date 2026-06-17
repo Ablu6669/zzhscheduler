@@ -1505,6 +1505,9 @@
       <button class="notif-btn guide-btn" id="guideBtn" onclick="openGuide()">
         <span data-i18n-html="topbar.guideBtn">📖 使用说明</span>
       </button>
+      <button class="notif-btn" id="contactBtn" onclick="openContact()">
+        <span data-i18n-html="topbar.contactBtn">📧 联系我们</span>
+      </button>
       <select id="langSelect" onchange="applyLanguage(this.value)" class="lang-select">
         <option value="zh">🇨🇳 简体中文</option>
         <option value="en">🇬🇧 English</option>
@@ -1631,6 +1634,19 @@
       <div class="guide-body">
         <div class="guide-toc" id="guideToc"></div>
         <div class="guide-content" id="guideContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 联系我们弹窗 -->
+  <div id="contactOverlay" class="guide-overlay" style="display:none;" onclick="closeContact()">
+    <div class="guide-modal" onclick="event.stopPropagation()" style="max-width:400px;">
+      <div class="guide-header">
+        <div class="guide-title" data-i18n="topbar.contactBtn">📧 联系我们</div>
+        <button class="guide-close" onclick="closeContact()">✕</button>
+      </div>
+      <div class="guide-body" style="padding:24px;text-align:center;font-size:1.05rem;">
+        <p data-i18n="contact.info" style="margin:0;">联系方式：abluzz@outlook.com</p>
       </div>
     </div>
   </div>
@@ -3106,6 +3122,14 @@ function openGuide() {
 
 function closeGuide() {
   document.getElementById("guideOverlay").style.display = "none";
+}
+
+function openContact() {
+  document.getElementById("contactOverlay").style.display = "flex";
+}
+
+function closeContact() {
+  document.getElementById("contactOverlay").style.display = "none";
 }
 
 function renderGuideToc() {
@@ -5545,6 +5569,8 @@ window.TRANSLATIONS = {
     "topbar.title": "📚 自动排课系统",
     "topbar.notifBtn": "🔔 公告栏",
     "topbar.guideBtn": "📖 使用说明",
+    "topbar.contactBtn": "📧 联系我们",
+    "contact.info": "联系方式：abluzz@outlook.com",
     "topbar.welcome": "欢迎，",
     "topbar.logout": "退出登录",
     "topbar.mode.admin": "管理员",
@@ -5722,6 +5748,8 @@ window.TRANSLATIONS = {
     "topbar.title": "📚 Auto Scheduling System",
     "topbar.notifBtn": "🔔 Notifications",
     "topbar.guideBtn": "📖 User Guide",
+    "topbar.contactBtn": "📧 Contact Us",
+    "contact.info": "Contact: abluzz@outlook.com",
     "topbar.welcome": "Welcome, ",
     "topbar.logout": "Logout",
     "topbar.mode.admin": "Admin",

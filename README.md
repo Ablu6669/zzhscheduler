@@ -44,9 +44,13 @@
 
 ## 🚀 快速开始 / Quick Start
 
-**方式一：直接在线使用（推荐）**
+**方式一：直接在线体验（推荐）**
 
-→ 打开 [https://ablu6669.github.io/zzhscheduler/](https://ablu6669.github.io/zzhscheduler/)，无需安装，即开即用。
+→ 打开 [https://ablu6669.github.io/zzhscheduler/](https://ablu6669.github.io/zzhscheduler/)
+
+> 🎉 **GitHub 体验账号**：`githubers` / `githubers`（无限额度，欢迎随便玩！）
+> 
+> 登录后即可体验完整功能，无需注册。体验后欢迎提 Issue 或邮件反馈！
 
 **方式二：本地部署**
 

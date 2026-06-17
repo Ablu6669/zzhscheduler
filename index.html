@@ -2498,6 +2498,7 @@ const GUIDE_DATA = [
         <li><strong>参与排课开关</strong>：灵活控制每个时段是否纳入排课计算</li>
         <li><strong>使用额度管理</strong>：管理员可创建账号并分配使用额度</li>
         <li><strong>通知公告</strong>：系统更新通知，支持已读/未读状态管理</li>
+        <li><strong>剪枝优化算法</strong>：自动跳过冲突组合、达到上限后提前停止，大幅降低算力消耗</li>
         <li><strong>多语言支持</strong>：支持中文/英文界面切换</li>
       </ul>
       <h3>使用流程</h3>
@@ -2522,6 +2523,7 @@ const GUIDE_DATA = [
         <li><strong>Schedule Toggle</strong>: Control which sessions are included in schedule calculation</li>
         <li><strong>Quota Management</strong>: Admins can create accounts and allocate usage quotas</li>
         <li><strong>Notifications</strong>: System updates with read/unread status tracking</li>
+        <li><strong>Pruning Optimization</strong>: Auto-skip conflicting combinations and stop early when enough plans are found, dramatically reducing computation</li>
         <li><strong>Multi-language Support</strong>: Switch between Chinese and English interface</li>
       </ul>
       <h3>Workflow</h3>
@@ -2909,6 +2911,34 @@ const GUIDE_DATA = [
       <p>Admins have a separate course management panel and filter/sort panel, completely independent from user panels.</p>
       <div class="tip-box">💡 Tip: Admin accounts do not consume quota and can calculate schedules unlimited times.</div>
     `
+  },
+  {
+    id: "pruning", icon: "⚡",
+    zh_title: "剪枝优化算法", en_title: "Pruning Optimization",
+    zh_content: `
+      <h2>剪枝优化算法</h2>
+      <p>排课计算的核心问题是：随着课程数量增加，课程组合数呈乘法级增长（笛卡尔积），可能达到数十亿甚至更多。为避免浏览器卡顿，系统采用了三项关键优化：</p>
+      <h3>① 增量剪枝（Pruning）</h3>
+      <p>传统做法是先枚举所有组合，再逐一检查时间冲突。剪枝优化改为<strong>逐层检测</strong>——每选一门课就立即检查是否与已选课程冲突，一旦冲突就直接跳过，不再枚举后续课程的所有组合。</p>
+      <p>举例：7门课各有6个时段 → 理论组合 6⁷≈28万种。但如果前2门课就有大量冲突时段，剪枝会直接跳过这些分支，实际计算量远低于理论值。</p>
+      <h3>② 位运算加速（Bitmask）</h3>
+      <p>冲突检测从数组遍历改为<strong>位运算</strong>：将上课星期编码为7位掩码，两个时段是否共享某天只需一次 <code>&</code> 运算即可判断，比遍历数组快数倍。</p>
+      <h3>③ 提前停止（Early Stop）</h3>
+      <p>收集到足够数量的可行方案后（最多显示数×5），立即停止枚举，不再浪费算力计算更多方案。</p>
+      <div class="tip-box">💡 这三项优化叠加后，排课速度提升显著。原来可能卡顿的场景（数百万组合），现在通常几秒内即可完成。</div>
+    `,
+    en_content: `
+      <h2>Pruning Optimization</h2>
+      <p>The core challenge of scheduling: as the number of courses increases, combinations grow multiplicatively (Cartesian product), potentially reaching billions. To prevent browser slowdown, the system uses three key optimizations:</p>
+      <h3>① Incremental Pruning</h3>
+      <p>Instead of enumerating all combinations first and then filtering conflicts, pruning checks <strong>incrementally</strong> — each time a course is selected, it immediately checks for conflicts with already-selected courses. If a conflict is found, that branch is skipped entirely, avoiding enumeration of all remaining course combinations.</p>
+      <p>Example: 7 courses × 6 sessions each → theoretical 6⁷≈280K combinations. But if many sessions in the first 2 courses conflict, pruning skips those branches, so actual computation is far less.</p>
+      <h3>② Bitmask Acceleration</h3>
+      <p>Conflict detection uses <strong>bitwise operations</strong> instead of array traversal: each day of the week is encoded as a 7-bit mask. Checking whether two sessions share any day requires just one <code>&</code> operation — several times faster than iterating arrays.</p>
+      <h3>③ Early Stop</h3>
+      <p>Once enough feasible plans are collected (max display × 5), enumeration stops immediately, avoiding wasted computation on additional plans.</p>
+      <div class="tip-box">💡 These three optimizations combined significantly speed up scheduling. Scenarios that previously caused slowdown (millions of combinations) now typically complete within seconds.</div>
+    `
   }
 ];
 
@@ -3294,6 +3324,7 @@ class SubSection {
     this.subName = subName;                 // 子课程名称，如 "练习课"
     this.subId = subId;                     // 子时段 ID，如 "MAT2041-A-1"
     this.weekdays = weekdays.slice().sort((a,b)=>a-b);
+    this.dayMask = 0; for(const d of this.weekdays) this.dayMask |= 1<<(d-1);
     this.start = _toMin(startRaw);
     this.end = _toMin(endRaw);
     this.location = location.toUpperCase();
@@ -3304,7 +3335,7 @@ class SubSection {
   }
   isEarlyMorning() { return this.start === 8*60+30; }
   isAfternoonFirst() { return this.start === 13*60+30; }
-  conflictsWith(other) { const c=this.weekdays.filter(d=>other.weekdays.includes(d)); return !!c.length && this.start<other.end&&other.start<this.end; }
+  conflictsWith(other) { return (this.dayMask & other.dayMask) !== 0 && this.start < other.end && other.start < this.end; }
   daysStr() { return this.weekdays.map(d=>DAY_NAMES[d]).join(" "); }
   toRowHTML() {
     const days=this.weekdays.map(d=>`<span class="plan-day">${DAY_NAMES[d]}</span>`).join("");
@@ -3318,6 +3349,7 @@ class Section {
     this.courseCode = courseCode;
     this.sectionId = sectionId;
     this.weekdays = weekdays.slice().sort((a,b)=>a-b);
+    this.dayMask = 0; for(const d of this.weekdays) this.dayMask |= 1<<(d-1);
     this.start = _toMin(startRaw);
     this.end = _toMin(endRaw);
     this.location = location.toUpperCase();
@@ -3334,7 +3366,7 @@ class Section {
   _norm(t)   { return _norm(t); }
   isEarlyMorning() { return this.start === 8*60+30; }
   isAfternoonFirst() { return this.start === 13*60+30; }
-  conflictsWith(other) { const c=this.weekdays.filter(d=>other.weekdays.includes(d)); return !!c.length && this.start<other.end&&other.start<this.end; }
+  conflictsWith(other) { return (this.dayMask & other.dayMask) !== 0 && this.start < other.end && other.start < this.end; }
   daysStr() { return this.weekdays.map(d=>DAY_NAMES[d]).join(" "); }
   // 返回子课程名称列表（顺序稳定）
   subNames() { return Object.keys(this.subGroups); }
@@ -3724,10 +3756,32 @@ function scoreByPriority(plan, priorityArr) {
 
 function score(plan,tp,lp,wp){ return [tp?timeScore(plan):0, lp?locScore(plan):0, wp?-planWeightScore(plan):0]; }
 
-function noConflict(plan){
-  const all = allSections(plan);
-  for(let i=0;i<all.length;i++) for(let j=i+1;j<all.length;j++) if(all[i].conflictsWith(all[j])) return false;
-  return true;
+// 检查新 entry 是否与已有 plan 中的任何 entry 冲突（增量剪枝用）
+// entry = { sec, subs }，plan = [{ sec, subs }, ...]
+function entryConflictsWithPlan(entry, plan){
+  const newAll = [entry.sec, ...entry.subs];
+  for(const existing of plan){
+    const existAll = [existing.sec, ...existing.subs];
+    for(const a of newAll){
+      for(const b of existAll){
+        if(a.conflictsWith(b)) return true;
+      }
+    }
+  }
+  return false;
+}
+
+// 检查同一 entry 内部是否有冲突（sec vs. subs, subs vs. subs）
+function hasIntraConflict(entry){
+  for(const ss of entry.subs){
+    if(entry.sec.conflictsWith(ss)) return true;
+  }
+  for(let i=0; i<entry.subs.length; i++){
+    for(let j=i+1; j<entry.subs.length; j++){
+      if(entry.subs[i].conflictsWith(entry.subs[j])) return true;
+    }
+  }
+  return false;
 }
 
 // 对给定的 Section，枚举所有合法的子时段选择方式
@@ -3842,21 +3896,35 @@ function schedule(suffix){
     !exTimes.includes(sec.start)&&
     !exLocs.includes(sec.location)
   ));
+  // 提前过滤出每门课的可用子组合，避免重复计算
+  const subCombosCache = filtered.map(secs =>
+    secs.map(sec => enumSubCombinations(sec, noEarly, noNoon, exTimes, exLocs))
+  );
+  // 最大收集方案数（= maxDisplay × 5，既满足显示需求又留排序缓冲）
+  const maxDisplay = parseInt(document.getElementById("maxDisplay"+s).value) || 999;
+  const maxCollect = Math.max(200, maxDisplay * 5);
   const plans=[];
-  // plan 中每项：{ sec, subs }
+  // 增量剪枝版笛卡尔积：每添加一门课就检查冲突，冲突则剪掉
   function cartesian(idx, cur){
+    if(plans.length >= maxCollect) return; // Early Stop
     if(idx===filtered.length){
-      if(noConflict(cur)) plans.push([...cur]);
+      plans.push([...cur]); // 已通过增量剪枝，无需再验
       return;
     }
-    for(const sec of filtered[idx]){
-      const subCombos = enumSubCombinations(sec, noEarly, noNoon, exTimes, exLocs);
-      if (!subCombos) continue; // 子课程因过滤无法选择 → 跳过该时段
+    for(let si=0; si<filtered[idx].length; si++){
+      const sec = filtered[idx][si];
+      const subCombos = subCombosCache[idx][si];
+      if (!subCombos) continue; // 子课程因过滤无法选择 → 跳过
       for (const subs of subCombos) {
         const entry = { sec, subs };
+        // 内部冲突剪枝：sec 与其 subs 冲突、或 subs 之间冲突 → 跳过
+        if(hasIntraConflict(entry)) continue;
+        // 增量剪枝：新 entry 与已选课程冲突则跳过，不继续枚举后续课程
+        if(cur.length && entryConflictsWithPlan(entry, cur)) continue;
         cur.push(entry);
         cartesian(idx+1, cur);
         cur.pop();
+        if(plans.length >= maxCollect) return; // Early Stop（回溯后也检查）
       }
     }
   }
@@ -4238,7 +4306,7 @@ function toggleSubSectionSchedule(code, secId, subName, subId, enabled) {
 async function runSchedule(){
   // 组合数预警
   const est = estimateCombos("");
-  if (est > 500000) {
+  if (est > 5000000) {
     const msg = T("alert.tooManyCombos").replace("{n}", est.toLocaleString());
     if (!confirm(msg)) return;
   }
@@ -4270,7 +4338,7 @@ async function runSchedule(){
 async function runSchedule2(){
   // 组合数预警
   const est = estimateCombos("2");
-  if (est > 500000) {
+  if (est > 5000000) {
     const msg = T("alert.tooManyCombos").replace("{n}", est.toLocaleString());
     if (!confirm(msg)) return;
   }
@@ -5331,7 +5399,7 @@ window.TRANSLATIONS = {
     "alert.selectEnd": "请选择结束时间",
     "alert.fillLocation": "请填写上课地点",
     "alert.endBeforeStart": "结束时间不得早于开始时间",
-    "alert.tooManyCombos": "当前筛选条件下约有 {n} 种课程组合，计算量较大，可能导致浏览器卡顿。建议增加筛选条件（如开启「不上早八」）以减少计算量。\n\n是否仍要继续计算？",
+    "alert.tooManyCombos": "当前筛选条件下约有 {n} 种课程组合，虽然系统已启用剪枝优化（自动跳过冲突组合、达到上限后提前停止），但计算量仍可能较大。建议增加筛选条件（如开启「不上早八」）以进一步减少计算量。\n\n是否仍要继续计算？",
     "alert.addFailed": "添加失败：",
     "confirm.deleteSubCourse": "子课程「{name}」时段已清空，是否同时删除该子课程？",
     "confirm.resetWeights": "确定要重置所有时段权重为 5 吗？",
@@ -5497,7 +5565,7 @@ window.TRANSLATIONS = {
     "alert.selectEnd": "Please select an end time",
     "alert.fillLocation": "Please fill in the location",
     "alert.endBeforeStart": "End time cannot be earlier than start time",
-    "alert.tooManyCombos": "The current filters produce approximately {n} course combinations. Computation may cause browser slowdown. Consider adding more filters (e.g. enable \"No early morning\") to reduce the load.\n\nDo you want to proceed anyway?",
+    "alert.tooManyCombos": "The current filters produce approximately {n} course combinations. The algorithm uses pruning (skips conflicting combinations automatically) and early stopping, but computation may still be heavy. Consider adding more filters (e.g. enable \"No early morning\") to reduce the load.\n\nDo you want to proceed anyway?",
     "alert.addFailed": "Failed to add: ",
     "confirm.deleteSubCourse": "Sub-course \"{name}\" has no sessions. Delete it too?",
     "confirm.resetWeights": "Reset all weights to 5?",

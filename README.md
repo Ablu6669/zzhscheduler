@@ -45,6 +45,8 @@ Enter available time slots → set filters → generate all feasible schedules, 
 | ✏️ **时段直接编辑 / Edit Sessions** | 直接编辑已有时段，无需删除重建 / Edit existing sessions directly, no need to delete and re-add |
 | ☑️ **参与排课开关 / Schedule Toggle** | 灵活勾选哪些时段参与计算 / Control which sessions are included in schedule calculation |
 | 🔒 **时间校验 / Time Validation** | 结束时间不得早于开始时间 / End time cannot be earlier than start time |
+| ⚡ **剪枝优化 / Pruning Optimization** | 逐层检测冲突自动剪枝 + 位运算加速 + 提前停止，大幅降低算力消耗 / Incremental pruning + bitmask acceleration + early stop |
+| ⚠️ **组合数预警 / Combo Warning** | 超大数据量时自动提醒用户 / Auto-warn when combinations are too large |
 
 ---
 
@@ -138,6 +140,8 @@ open index.html
 - [x] 管理员公告一键翻译 / Admin one-click announcement translation
 - [x] 时段时间校验（结束 ≥ 开始）/ Time validation (end ≥ start)
 - [x] 多筛选项优先级排序 / Multi-filter priority sorting
+- [x] 剪枝优化（逐层检测 + 位运算 + 提前停止）/ Pruning optimization (incremental + bitmask + early stop)
+- [x] 组合数预警提示 / Combination count warning
 
 ### 🔲 计划中 / Planned
 

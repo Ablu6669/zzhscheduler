@@ -109,7 +109,7 @@ open Index.html
 
 使用中遇到 bug、有功能建议？欢迎：
 
-- 📮 发邮件：[15562886669@163.com](mailto:15562886669@163.com)
+- 📮 发邮件：[abluzz@outlook.com](mailto:abluzz@outlook.com)
 - 🐛 提 Issue：[GitHub Issues](https://github.com/asuskurumi/zzhscheduler/issues)
 
 内测期间，所有被采纳的反馈将获赠高额度公测账号奖励！

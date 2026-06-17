@@ -5,7 +5,6 @@
 **Auto Course Scheduler · 云端账号系统 · 纯网页 · 开箱即用**
 
 [![GitHub Pages](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-4f6ef7?style=for-the-badge&logo=github)](https://ablu6669.github.io/zzhscheduler/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-2.2.0-f59e0b?style=for-the-badge)]()
 [![CloudBase](https://img.shields.io/badge/Backend-Tencent%20CloudBase-4f6ef7?style=for-the-badge&logo=tencentqq)]()
 
@@ -115,10 +114,6 @@ open index.html
 内测期间，所有被采纳的反馈将获赠高额度公测账号奖励！
 
 ---
-
-## 📄 License
-
-MIT License © 2026 asuskurumi
 
 ---
 

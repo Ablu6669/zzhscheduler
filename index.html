@@ -2366,12 +2366,10 @@ async function loadNotifsFromCloud() {
       _cloudId: cn._id,  // 标记来源为云端
     }));
 
-    // 保留本地-only公告（POST 失败降级时创建的，id 格式为 n_xxx）
-    const cloudIds = new Set(cloudMerged.map(n => n.id));
-    // 同时按 content+createdAt 匹配，避免同一公告以不同 id 存在于两处
-    const cloudSignatures = new Set(cloudMerged.map(n => n.content + '|' + n.createdAt));
+    // 保留本地-only公告（仅保留 POST 失败降级时创建的，id 格式为 n_xxx 且无 _cloudId）
+    // 注意：有 _cloudId 或非 n_xxx 格式 id 的本地公告 = 曾经从云端同步过但现在不在云端 = 已被管理员撤回 → 应删除
     const localOnly = localList.filter(n =>
-      !cloudIds.has(n.id) && !cloudSignatures.has(n.content + '|' + n.createdAt)
+      !n._cloudId && n.id.startsWith('n_')  // 仅保留纯本地降级公告
     );
 
     // 合并：云端数据 + 本地未同步数据

@@ -5,7 +5,7 @@
 **Auto Course Scheduler · 云端账号系统 · 纯网页 · 开箱即用**
 
 [![GitHub Pages](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-4f6ef7?style=for-the-badge&logo=github)](https://ablu6669.github.io/zzhscheduler/)
-[![Version](https://img.shields.io/badge/Version-2.2.0-f59e0b?style=for-the-badge)]()
+[![Version](https://img.shields.io/badge/Version-3.0.1-f59e0b?style=for-the-badge)]()
 [![CloudBase](https://img.shields.io/badge/Backend-Tencent%20CloudBase-4f6ef7?style=for-the-badge&logo=tencentqq)]()
 
 [🚀 立即体验 / Live Demo](https://ablu6669.github.io/zzhscheduler/) · [📮 反馈建议](#反馈--feedback)
@@ -93,14 +93,34 @@ open index.html
 
 ## 🗺️ Roadmap
 
-- [x] 多维排序 + 权重自定义
-- [x] Excel 一键导出
-- [x] 中英双语支持
-- [x] 子课程 (Tutorial/Lab) 联排
-- [x] 时段直接编辑
-- [ ] 移动端布局优化
-- [ ] 课表截图导出（PNG）
-- [ ] 更多高校地图支持
+### ✅ 已完成 / Done
+
+- [x] 子课程链接（Lec & Tut 联排）
+- [x] 滚轮 + 手动输入时间选择
+- [x] 使用说明模块
+- [x] 时间 / 地点优先权重个性化
+- [x] ABE 地点支持
+- [x] 用户分级与使用额度限制
+- [x] 消息通知窗口（公告栏）
+- [x] 自定义权重排序（如教授偏好）
+- [x] 一键导出 Excel 课表
+- [x] 中英双语切换
+- [x] 参与排课开关（定向选择）
+- [x] 已有时段直接编辑
+- [x] 时间选择灵敏度优化 + 箭头步进
+- [x] 地点排序逻辑优化（只算 2 小时内间隔）
+- [x] 腾讯云开发（CloudBase）后端
+- [x] 云端额度同步（跨浏览器）
+- [x] 管理员后端直连管理（账号 / 通知）
+- [x] 管理员公告一键翻译
+- [x] 时段时间校验（结束 ≥ 开始）
+- [x] 多筛选项优先级排序
+
+### 🔲 计划中 / Planned
+
+- [ ] 微信小程序版本
+- [ ] 学分计算
+- [ ] 课程数据源对接
 
 ---
 

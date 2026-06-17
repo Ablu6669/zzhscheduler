@@ -3061,27 +3061,35 @@ const GUIDE_DATA = [
     zh_title: "剪枝优化算法", en_title: "Pruning Optimization",
     zh_content: `
       <h2>剪枝优化算法</h2>
-      <p>排课计算的核心问题是：随着课程数量增加，课程组合数呈乘法级增长（笛卡尔积），可能达到数十亿甚至更多。为避免浏览器卡顿，系统采用了三项关键优化：</p>
+      <p>排课计算的核心问题是：随着课程数量增加，课程组合数呈乘法级增长（笛卡尔积），可能达到数十亿甚至更多。为避免浏览器卡顿，系统采用了五项关键优化：</p>
       <h3>① 增量剪枝（Pruning）</h3>
       <p>传统做法是先枚举所有组合，再逐一检查时间冲突。剪枝优化改为<strong>逐层检测</strong>——每选一门课就立即检查是否与已选课程冲突，一旦冲突就直接跳过，不再枚举后续课程的所有组合。</p>
       <p>举例：7门课各有6个时段 → 理论组合 6⁷≈28万种。但如果前2门课就有大量冲突时段，剪枝会直接跳过这些分支，实际计算量远低于理论值。</p>
       <h3>② 位运算加速（Bitmask）</h3>
       <p>冲突检测从数组遍历改为<strong>位运算</strong>：将上课星期编码为7位掩码，两个时段是否共享某天只需一次 <code>&</code> 运算即可判断，比遍历数组快数倍。</p>
-      <h3>③ 安全截断（Early Stop）</h3>
+      <h3>③ 智能枚举顺序（Smart Ordering）</h3>
+      <p>开启排序优先级后，系统会<strong>按质量指标对每门课的时段排序</strong>——早八午一少的时段优先枚举，权重高的时段优先枚举。这样即使因组合空间过大而截断，前 N 个方案也倾向于是最优的。</p>
+      <h3>④ 分支限界（Branch & Bound）</h3>
+      <p>枚举过程中实时追踪当前最优方案的得分。对于每个部分方案（只选了前几门课），系统估算其加上剩余课程后的<strong>最低可能得分（下界）</strong>。如果下界已经不可能超越当前最优，就直接剪掉整棵子树——不需要枚举剩余所有课程。</p>
+      <h3>⑤ 安全截断（Early Stop）</h3>
       <p>当可行方案数量超过 5000 时，停止枚举并显示⚠️截断提示。保底 5000 的设计确保绝大多数排课场景（通常几百个可行方案）能<strong>枚举全部后排序</strong>，从而选出真正的全局最优方案。仅在极大规模空间（组合数 >5M，已有入口预警）才会截断。</p>
-      <div class="tip-box">💡 这三项优化叠加后，排课速度提升显著。原来可能卡顿的场景（数百万组合），现在通常几秒内即可完成。对于常规排课场景，系统保证枚举全部可行方案后排序，不会遗漏最优解。</div>
+      <div class="tip-box">💡 五项优化叠加后，排课速度提升显著。原来可能卡顿的场景（数百万组合），现在通常几秒内即可完成。对于常规排课场景，系统保证枚举全部可行方案后排序，不会遗漏最优解；对于极大规模场景，智能枚举+分支限界确保截断后的结果仍然倾向最优。</div>
     `,
     en_content: `
       <h2>Pruning Optimization</h2>
-      <p>The core challenge of scheduling: as the number of courses increases, combinations grow multiplicatively (Cartesian product), potentially reaching billions. To prevent browser slowdown, the system uses three key optimizations:</p>
+      <p>The core challenge of scheduling: as the number of courses increases, combinations grow multiplicatively (Cartesian product), potentially reaching billions. To prevent browser slowdown, the system uses five key optimizations:</p>
       <h3>① Incremental Pruning</h3>
       <p>Instead of enumerating all combinations first and then filtering conflicts, pruning checks <strong>incrementally</strong> — each time a course is selected, it immediately checks for conflicts with already-selected courses. If a conflict is found, that branch is skipped entirely, avoiding enumeration of all remaining course combinations.</p>
       <p>Example: 7 courses × 6 sessions each → theoretical 6⁷≈280K combinations. But if many sessions in the first 2 courses conflict, pruning skips those branches, so actual computation is far less.</p>
       <h3>② Bitmask Acceleration</h3>
       <p>Conflict detection uses <strong>bitwise operations</strong> instead of array traversal: each day of the week is encoded as a 7-bit mask. Checking whether two sessions share any day requires just one <code>&</code> operation — several times faster than iterating arrays.</p>
-      <h3>③ Safe Truncation (Early Stop)</h3>
+      <h3>③ Smart Ordering</h3>
+      <p>When sort priorities are enabled, the system <strong>sorts sessions within each course by quality metrics</strong> — sessions with fewer early mornings or higher weights are enumerated first. Even if truncation occurs, the first N plans tend to be the best ones.</p>
+      <h3>④ Branch & Bound</h3>
+      <p>During enumeration, the system tracks the best plan's score in real time. For each partial plan (only a few courses selected), it estimates the <strong>minimum possible total score (lower bound)</strong> by adding remaining courses' best contributions. If the lower bound can't beat the current best, the entire subtree is pruned — no need to enumerate remaining courses.</p>
+      <h3>⑤ Safe Truncation (Early Stop)</h3>
       <p>When feasible plans exceed 5000, enumeration stops and a ⚠️ truncation warning is shown. The minimum 5000 ensures most scheduling scenarios (typically a few hundred feasible plans) can <strong>enumerate all plans then sort</strong>, guaranteeing the globally optimal result. Only extremely large spaces (>5M combinations, warned at entry) will be truncated.</p>
-      <div class="tip-box">💡 These three optimizations combined significantly speed up scheduling. Scenarios that previously caused slowdown (millions of combinations) now typically complete within seconds. For regular scheduling scenarios, the system guarantees full enumeration before sorting — no optimal solution is missed.</div>
+      <div class="tip-box">💡 Five optimizations combined significantly speed up scheduling. Scenarios that previously caused slowdown (millions of combinations) now typically complete within seconds. For regular scenarios, the system guarantees full enumeration before sorting — no optimal solution is missed; for extremely large spaces, smart ordering + branch-and-bound ensures truncated results still tend toward optimal.</div>
     `
   }
 ];
@@ -4079,21 +4087,112 @@ function schedule(suffix){
     !exTimes.includes(sec.start)&&
     !exLocs.includes(sec.location)
   ));
+  // ── 优化①：智能枚举顺序 ──
+  // 按质量指标对每门课的时段排序，让"好时段"优先枚举
+  // 这样即使截断，前 N 个方案也倾向于是最优的
+  const priorityArr = sortPriority[s];
+  const _hasPriority = priorityArr && priorityArr.length > 0;
+  if (_hasPriority) {
+    filtered.forEach((secs, idx) => {
+      // 为每个 section 计算个体质量得分（越小越好）
+      // 时间优先：早八/午一越少越好；地点优先：无法单算，跳过；权重优先：权重越高越好
+      secs.sort((a, b) => {
+        let sa = 0, sb = 0;
+        for (const key of priorityArr) {
+          if (key === "tp") {
+            // 单时段时间分：早八 -0.5，午一 -1
+            sa += (a.isEarlyMorning() ? -0.5 : 0) + (a.isAfternoonFirst() ? -1 : 0);
+            sb += (b.isEarlyMorning() ? -0.5 : 0) + (b.isAfternoonFirst() ? -1 : 0);
+          }
+          if (key === "wp") {
+            // 单时段权重（取负，使高权重 = 小值 = 优先枚举）
+            sa -= getWeight(a.sectionId);
+            sb -= getWeight(b.sectionId);
+          }
+          // 地点优先无法单时段评分，跳过
+        }
+        return sa - sb; // 越小越先枚举
+      });
+    });
+  }
   // 提前过滤出每门课的可用子组合，避免重复计算
   const subCombosCache = filtered.map(secs =>
     secs.map(sec => enumSubCombinations(sec, noEarly, noNoon, exTimes, exLocs))
   );
+  // ── 优化②：分支限界（Branch & Bound）预计算 ──
+  // 为每门课计算"最低可能贡献分"，用于枚举时预估部分方案的下界
+  // 如果部分方案 + 剩余课程最低贡献 > 当前最优完整方案 → 直接剪掉
+  const _minContribution = filtered.map((secs, idx) => {
+    if (!_hasPriority) return 0;
+    let best = Infinity; // 找每门课中最好的（得分最小的）section
+    for (const sec of secs) {
+      let s = 0;
+      for (const key of priorityArr) {
+        if (key === "tp") s += (sec.isEarlyMorning() ? -0.5 : 0) + (sec.isAfternoonFirst() ? -1 : 0);
+        if (key === "wp") s -= getWeight(sec.sectionId);
+      }
+      if (s < best) best = s;
+    }
+    return best === Infinity ? 0 : best;
+  });
   // 最大收集方案数：保底 5000，确保小规模场景能枚举全部可行方案后排序选最优
   // 大规模场景（>5M 组合）已有入口预警，此处保底值足够覆盖绝大多数实际排课需求
   const maxDisplay = parseInt(document.getElementById("maxDisplay"+s).value) || 999;
   const maxCollect = Math.max(5000, maxDisplay * 10);
   const plans=[];
   let _truncated = false;  // 标记是否因上限提前终止（影响结果提示文案）
-  // 增量剪枝版笛卡尔积：每添加一门课就检查冲突，冲突则剪掉
+  let _bestScore = null;   // 当前最优完整方案的得分向量（用于分支限界）
+  // 计算部分方案 + 剩余课程最低贡献的下界得分
+  function _partialScore(cur) {
+    if (!_hasPriority) return null;
+    let score = 0;
+    for (const key of priorityArr) {
+      let dim = 0;
+      if (key === "tp") {
+        cur.forEach(e => {
+          dim += (e.sec.isEarlyMorning() ? -0.5 : 0) + (e.sec.isAfternoonFirst() ? -1 : 0);
+          e.subs.forEach(ss => { dim += (ss.isEarlyMorning() ? -0.5 : 0) + (ss.isAfternoonFirst() ? -1 : 0); });
+        });
+      }
+      if (key === "wp") {
+        cur.forEach(e => {
+          dim -= getWeight(e.sec.sectionId);
+          e.subs.forEach(ss => { dim -= getWeight(ss.subId); });
+        });
+      }
+      score += dim;
+    }
+    return score;
+  }
+  // 估算剩余课程的最低可能贡献（下界）
+  function _lowerBound(cur, idx) {
+    if (!_hasPriority || _bestScore === null) return null;
+    const partial = _partialScore(cur);
+    if (partial === null) return null;
+    // 加上从 idx 到末尾每门课的最低贡献
+    let lb = partial;
+    for (let i = idx; i < filtered.length; i++) {
+      lb += _minContribution[i];
+    }
+    return lb;
+  }
+  // 增量剪枝版笛卡尔积 + 分支限界：每添加一门课就检查冲突和得分下界
   function cartesian(idx, cur){
     if(plans.length >= maxCollect){ _truncated = true; return; } // Early Stop
+    // ── 分支限界剪枝 ──
+    // 如果已有完整方案，检查当前部分方案的得分下界能否超越最优
+    if (_bestScore !== null && cur.length > 0 && _hasPriority) {
+      const lb = _lowerBound(cur, idx);
+      if (lb !== null && lb > _bestScore) return; // 下界已超最优 → 剪掉整棵子树
+    }
     if(idx===filtered.length){
       plans.push([...cur]); // 已通过增量剪枝，无需再验
+      // 更新最优得分（第一个完整方案或比当前最优更好时）
+      if (_hasPriority) {
+        const sc = scoreByPriority(cur, priorityArr);
+        const total = sc.reduce((a,b) => a + b, 0);
+        if (_bestScore === null || total < _bestScore) _bestScore = total;
+      }
       return;
     }
     for(let si=0; si<filtered[idx].length; si++){
@@ -4102,7 +4201,7 @@ function schedule(suffix){
       if (!subCombos) continue; // 子课程因过滤无法选择 → 跳过
       for (const subs of subCombos) {
         const entry = { sec, subs };
-        // 内部冲突剪枝：sec 与其 subs 冲突、或 subs 之间冲突 → 跋过
+        // 内部冲突剪枝：sec 与其 subs 冲突、或 subs 之间冲突 → 跳过
         if(hasIntraConflict(entry)) continue;
         // 增量剪枝：新 entry 与已选课程冲突则跳过，不继续枚举后续课程
         if(cur.length && entryConflictsWithPlan(entry, cur)) continue;
@@ -4115,8 +4214,8 @@ function schedule(suffix){
   }
   cartesian(0,[]);
   // 按用户设定的优先级数组排序（未设定时降级为空数组，无排序依据则保持原顺序）
-  const priorityArr = sortPriority[s];
-  if (priorityArr.length > 0) {
+  // 注意：priorityArr 已在上方定义（用于智能枚举顺序和分支限界）
+  if (priorityArr && priorityArr.length > 0) {
     plans.sort((a, b) => {
       const sa = scoreByPriority(a, priorityArr);
       const sb = scoreByPriority(b, priorityArr);

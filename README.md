@@ -4,12 +4,12 @@
 
 **Auto Course Scheduler · 云端账号系统 · 纯网页 · 开箱即用**
 
-[![GitHub Pages](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-4f6ef7?style=for-the-badge&logo=github)](https://ablu6669.github.io/zzhscheduler/Index.html)
+[![GitHub Pages](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-4f6ef7?style=for-the-badge&logo=github)](https://ablu6669.github.io/zzhscheduler/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-2.2.0-f59e0b?style=for-the-badge)]()
 [![CloudBase](https://img.shields.io/badge/Backend-Tencent%20CloudBase-4f6ef7?style=for-the-badge&logo=tencentqq)]()
 
-[🚀 立即体验 / Live Demo](https://ablu6669.github.io/zzhscheduler/Index.html) · [📮 反馈建议](#反馈--feedback)
+[🚀 立即体验 / Live Demo](https://ablu6669.github.io/zzhscheduler/) · [📮 反馈建议](#反馈--feedback)
 
 ---
 
@@ -47,15 +47,15 @@
 
 **方式一：直接在线使用（推荐）**
 
-→ 打开 [https://ablu6669.github.io/zzhscheduler/Index.html](https://ablu6669.github.io/zzhscheduler/Index.html)，无需安装，即开即用。
+→ 打开 [https://ablu6669.github.io/zzhscheduler/](https://ablu6669.github.io/zzhscheduler/)，无需安装，即开即用。
 
 **方式二：本地部署**
 
 ```bash
 git clone https://github.com/asuskurumi/zzhscheduler.git
 cd zzhscheduler
-# 直接用浏览器打开 Index.html 即可体验前端功能
-open Index.html
+# 直接用浏览器打开 index.html 即可体验前端功能
+open index.html
 ```
 
 整个项目只有一个 `index.html` 文件。

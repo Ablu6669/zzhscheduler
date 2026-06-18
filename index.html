@@ -1622,6 +1622,27 @@
     </div>
   </div>
 
+  <!-- 地点权重弹窗 -->
+  <div id="locationWeightOverlay" class="weight-overlay" style="display:none;" onclick="closeLocationWeightModal()">
+    <div class="weight-modal" onclick="event.stopPropagation()">
+      <div class="weight-modal-header">
+        <div class="weight-modal-title" data-i18n="locationWeight.modalTitle">📌 自定义地点权重</div>
+        <button class="weight-modal-close" onclick="closeLocationWeightModal()">✕</button>
+      </div>
+      <div class="weight-modal-body">
+        <div class="weight-modal-hint" data-i18n-html="locationWeight.hint">
+          为每个地点设置喜好权重（1–10）。排课时，将优先展示<strong>总权重最高</strong>的方案。<br>
+          <span data-i18n="locationWeight.stars">⭐ 越多星代表越喜欢这个地点，默认为 5。</span>
+        </div>
+        <div id="locationWeightList"></div>
+      </div>
+      <div class="weight-modal-footer">
+        <button class="btn btn-outline btn-sm" onclick="resetAllLocationWeights()" data-i18n="btn.resetAll">重置全部</button>
+        <button class="btn btn-primary btn-sm" onclick="closeLocationWeightModal()" data-i18n="btn.done">完成</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 编辑账号弹窗 -->
   <div id="editAccountModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;justify-content:center;align-items:center;">
     <div style="background:#fff;border-radius:12px;padding:24px;width:340px;max-width:90%;">
@@ -1768,7 +1789,14 @@
                 <input type="checkbox" id="locPriority" onchange="onSortToggle('','lp',this.checked)">
                 <span class="slider"></span>
               </label>
-              <div class="filter-label"><span data-i18n="filter.locPriority">地点优先排序</span><span data-i18n="filter.locHint">相邻课程地点越近越靠前</span></div>
+              <div class="filter-label"><span data-i18n="filter.locAdjacent">地点相邻排序</span><span data-i18n="filter.locAdjacentHint">相邻课程地点越近越靠前</span></div>
+            </div>
+            <div class="filter-row">
+              <label class="toggle">
+                <input type="checkbox" id="locWeight" onchange="onSortToggle('','lw',this.checked)">
+                <span class="slider"></span>
+              </label>
+              <div class="filter-label"><span data-i18n="filter.locWeight">地点优先排序</span><span data-i18n="filter.locWeightHint">按自定义地点权重排序</span><button class="weight-set-btn" onclick="openLocationWeightModal()">📌 <span data-i18n="btn.setLocationWeight">设置地点权重</span></button></div>
             </div>
             <div class="filter-row">
               <label class="toggle">
@@ -1861,7 +1889,14 @@
                 <input type="checkbox" id="locPriority2" onchange="onSortToggle('2','lp',this.checked)">
                 <span class="slider"></span>
               </label>
-              <div class="filter-label"><span data-i18n="filter.locPriority">地点优先排序</span><span data-i18n="filter.locHint">相邻课程地点越近越靠前</span></div>
+              <div class="filter-label"><span data-i18n="filter.locAdjacent">地点相邻排序</span><span data-i18n="filter.locAdjacentHint">相邻课程地点越近越靠前</span></div>
+            </div>
+            <div class="filter-row">
+              <label class="toggle">
+                <input type="checkbox" id="locWeight2" onchange="onSortToggle('2','lw',this.checked)">
+                <span class="slider"></span>
+              </label>
+              <div class="filter-label"><span data-i18n="filter.locWeight">地点优先排序</span><span data-i18n="filter.locWeightHint">按自定义地点权重排序</span><button class="weight-set-btn" onclick="openLocationWeightModal()">📌 <span data-i18n="btn.setLocationWeight">设置地点权重</span></button></div>
             </div>
             <div class="filter-row">
               <label class="toggle">
@@ -2756,7 +2791,7 @@ const GUIDE_DATA = [
       <ul>
         <li><strong>课程管理</strong>：添加/删除课程，为每门课程配置多个时段（支持子课程），可直接编辑时段、控制参与排课</li>
         <li><strong>智能筛选</strong>：不上早八、不上午一、自定义排除时间及地点</li>
-        <li><strong>多维排序</strong>：按时间（支持自定义时段权重）、地点、自定义权重多维度排序</li>
+        <li><strong>多维排序</strong>：按时间（支持自定义时段权重）、地点相邻、地点（支持自定义地点权重）、自定义权重多维度排序</li>
         <li><strong>Excel 导出</strong>：一键将排课结果导出为 Excel 文件，含完整课表和课程列表</li>
         <li><strong>优先级自定义</strong>：多排序项同时开启时，自由调整优先级顺序</li>
         <li><strong>参与排课开关</strong>：灵活控制每个时段是否纳入排课计算</li>
@@ -2782,7 +2817,7 @@ const GUIDE_DATA = [
       <ul>
         <li><strong>Course Management</strong>: Add/delete courses, configure multiple sessions (including sub-courses), edit sessions directly, toggle scheduling participation</li>
         <li><strong>Smart Filtering</strong>: Exclude early morning, noon classes, custom time/location exclusions</li>
-        <li><strong>Multi-dimensional Sorting</strong>: Sort by time (with custom time weights), location, or custom weights</li>
+        <li><strong>Multi-dimensional Sorting</strong>: Sort by time (with custom time weights), location adjacent, location (with custom location weights), or custom weights</li>
         <li><strong>Excel Export</strong>: One-click export of schedule results to Excel, with complete schedule table and course list</li>
         <li><strong>Priority Customization</strong>: Adjust sort priority order when multiple options are enabled</li>
         <li><strong>Schedule Toggle</strong>: Control which sessions are included in schedule calculation</li>
@@ -2980,8 +3015,12 @@ const GUIDE_DATA = [
       <p>开启后，排课方案会按照时间权重排序。系统会计算每个方案的总时间权重，总权重越高排名越靠前。</p>
       <p>点击「⏰ 设置时间权重」按钮，可以为每个开始时间设置权重（1-10）。权重越高表示您越喜欢该时间段。</p>
       <div class="tip-box">💡 提示：时间权重使用星星交互，点击星星或输入数字均可设置，默认权重为 5。留空或删除权重可恢复默认。</div>
-      <h3>地点优先排序</h3>
+      <h3>地点相邻排序</h3>
       <p>开启后，排课方案会按照「相邻课程地点越近越好」的原则排序。系统根据预设的地点顺序计算相邻课程的距离得分，得分越低（距离越近）排名越靠前。</p>
+      <h3>地点优先排序</h3>
+      <p>开启后，排课方案会按照地点权重排序。系统会计算每个方案的总地点权重，总权重越高排名越靠前。</p>
+      <p>点击「📌 设置地点权重」按钮，可以为每个地点设置权重（1-10）。权重越高表示您越喜欢该地点。</p>
+      <div class="tip-box">💡 提示：地点权重使用星星交互，点击星星或输入数字均可设置，默认权重为 5。留空或删除权重可恢复默认。</div>
       <h3>自定义权重排序</h3>
       <p>开启后，系统会根据您为每个时段设置的权重（1-10）对方案排序，总权重越高的方案排名越靠前。</p>
       <p>点击「⚖️ 设置权重」按钮，可以为每门课程的每个时段（包括子课程）设置权重。权重越高表示您越希望选中该时段。</p>
@@ -2994,8 +3033,12 @@ const GUIDE_DATA = [
       <p>When enabled, schedules are ranked by time weights. The system calculates the total time weight for each schedule — higher total weight ranks higher.</p>
       <p>Click the "⏰ Set Time Weights" button to set weights (1-10) for each start time. Higher weights indicate stronger preference.</p>
       <div class="tip-box">💡 Tip: Time weights use a star interaction. Click stars or enter a number to set weights. Default is 5. Clear or delete a weight to restore default.</div>
-      <h3>Location Priority</h3>
+      <h3>Location Adjacent</h3>
       <p>When enabled, schedules with closer consecutive class locations are ranked higher. The system calculates distance scores based on a predefined location order.</p>
+      <h3>Location Priority</h3>
+      <p>When enabled, schedules are ranked by location weights. The system calculates the total location weight for each schedule — higher total weight ranks higher.</p>
+      <p>Click the "📌 Set Location Weights" button to set weights (1-10) for each location. Higher weights indicate stronger preference.</p>
+      <div class="tip-box">💡 Tip: Location weights use a star interaction. Click stars or enter a number to set weights. Default is 5. Clear or delete a weight to restore default.</div>
       <h3>Custom Weight Sorting</h3>
       <p>When enabled, schedules are ranked by total weight. Set weights (1-10) for each session — higher weights indicate stronger preference.</p>
       <p>Click the "⚖️ Set weights" button to configure weights for every session (including sub-courses).</p>
@@ -3864,8 +3907,9 @@ function delSubSection(code, secId, subName, subId) {
 const sortPriority = { "": [], "2": [] };
 
 const SORT_META = {
-  tp: { label: "时间优先排序", desc: "早八/午一越少越靠前", icon: "🕐" },
-  lp: { label: "地点优先排序", desc: "相邻课程距离越近越靠前", icon: "📍" },
+  tp: { label: "时间优先排序", desc: "按自定义时间权重排序", icon: "🕐" },
+  lp: { label: "地点相邻排序", desc: "相邻课程地点越近越靠前", icon: "📍" },
+  lw: { label: "地点优先排序", desc: "按自定义地点权重排序", icon: "📌" },
   wp: { label: "自定义权重排序", desc: "总权重越高越靠前", icon: "⚖️" }
 };
 
@@ -4139,6 +4183,94 @@ function onTimeWeightInput(el) {
   const starsEl = document.getElementById(`time-stars-${id}`);
   if (starsEl) starsEl.innerHTML = _renderTimeStars(getTimeWeight(id), id);
 }
+// ─── 地点权重管理 ─────────────────────────────
+const LOC_WEIGHT_KEY = "scheduler_location_weights";
+let locationWeightMap = {};
+
+function loadLocationWeights() {
+  try { locationWeightMap = JSON.parse(localStorage.getItem(LOC_WEIGHT_KEY)) || {}; } catch(e) { locationWeightMap = {}; }
+}
+function saveLocationWeights() {
+  localStorage.setItem(LOC_WEIGHT_KEY, JSON.stringify(locationWeightMap));
+}
+function getLocationWeight(loc) {
+  const v = locationWeightMap[loc];
+  return (v !== undefined && v >= 1 && v <= 10) ? v : 5;
+}
+function setLocationWeight(loc, v) {
+  const n = Math.min(10, Math.max(1, Math.round(Number(v))));
+  if (!isNaN(n)) { locationWeightMap[loc] = n; saveLocationWeights(); }
+}
+function removeLocationWeight(loc) {
+  delete locationWeightMap[loc];
+  saveLocationWeights();
+}
+
+// ─── 地点权重弹窗 ─────────────────────────────
+function openLocationWeightModal() {
+  document.getElementById("locationWeightOverlay").style.display = "flex";
+  renderLocationWeightModal();
+}
+function closeLocationWeightModal() {
+  document.getElementById("locationWeightOverlay").style.display = "none";
+}
+function resetAllLocationWeights() {
+  if (!confirm(T("confirm.resetLocationWeights"))) return;
+  locationWeightMap = {};
+  saveLocationWeights();
+  renderLocationWeightModal();
+}
+function renderLocationWeightModal() {
+  const el = document.getElementById("locationWeightList");
+  const locations = new Set();
+  for (const code of Object.keys(courses || {})) {
+    for (const sec of (courses[code] || [])) {
+      if (sec.location) locations.add(sec.location);
+      for (const ss of (sec.subs || [])) if (ss.location) locations.add(ss.location);
+    }
+  }
+  const sorted = Array.from(locations).sort();
+  if (!sorted.length) {
+    el.innerHTML = `<div style="color:var(--text-muted);font-size:.88rem;text-align:center;padding:24px 0;">${T("locationWeight.empty")}</div>`;
+    return;
+  }
+  el.innerHTML = sorted.map(loc => {
+    const w = getLocationWeight(loc);
+    return `<div class="weight-row">
+        <div class="weight-row-label"><b>${loc}</b></div>
+        <div class="weight-input-wrap">
+          <div class="weight-stars" id="loc-stars-${loc}">${_renderLocationStars(w, loc)}</div>
+          <input class="weight-input" type="number" min="1" max="10" value="${w}" data-loc="${loc}" oninput="onLocationWeightInput(this)">
+        </div>
+      </div>`;
+  }).join('');
+}
+function _renderLocationStars(w, loc) {
+  return [...Array(10)].map((_, i) =>
+    `<span class="weight-star${i < w ? " on" : ""}" onclick="onLocationStarClick('${loc}',${i + 1})">★</span>`
+  ).join('');
+}
+function onLocationStarClick(loc, w) {
+  setLocationWeight(loc, w);
+  const el = document.getElementById(`loc-stars-${loc}`);
+  if (el) el.innerHTML = _renderLocationStars(getLocationWeight(loc), loc);
+  const inp = document.querySelector(`.weight-input[data-loc="${loc}"]`);
+  if (inp) inp.value = getLocationWeight(loc);
+}
+function onLocationWeightInput(el) {
+  const loc = el.dataset.loc;
+  setLocationWeight(loc, el.value);
+  const starsEl = document.getElementById(`loc-stars-${loc}`);
+  if (starsEl) starsEl.innerHTML = _renderLocationStars(getLocationWeight(loc), loc);
+}
+
+// 计算方案的总地点权重（越高越好）
+function locWeightScore(plan) {
+  let s = 0;
+  allSections(plan).forEach(x => { s += getLocationWeight(x.location); });
+  return s;
+}
+
 function timeScore(plan){
   let s = 0;
   allSections(plan).forEach(x => { s -= getTimeWeight(x.start); });
@@ -4169,12 +4301,13 @@ function scoreByPriority(plan, priorityArr) {
   return priorityArr.map(key => {
     if (key === "tp") return timeScore(plan);   // 越小越好（负值代表少早八）
     if (key === "lp") return locScore(plan);    // 越小越好
+    if (key === "lw") return -locWeightScore(plan); // 越小越好（取负后高权重=小值）
     if (key === "wp") return -planWeightScore(plan); // 越小越好（取负后高权重=小值）
     return 0;
   });
 }
 
-function score(plan,tp,lp,wp){ return [tp?timeScore(plan):0, lp?locScore(plan):0, wp?-planWeightScore(plan):0]; }
+function score(plan,tp,lp,lw,wp){ return [tp?timeScore(plan):0, lp?locScore(plan):0, lw?-locWeightScore(plan):0, wp?-planWeightScore(plan):0]; }
 
 // 检查新 entry 是否与已有 plan 中的任何 entry 冲突（增量剪枝用）
 // entry = { sec, subs }，plan = [{ sec, subs }, ...]
@@ -4333,6 +4466,11 @@ function schedule(suffix){
             sa -= getTimeWeight(a.start);
             sb -= getTimeWeight(b.start);
           }
+          if (key === "lw") {
+            // 地点权重：越高分（权重越大）越靠前（负值越小）
+            sa -= getLocationWeight(a.location);
+            sb -= getLocationWeight(b.location);
+          }
           if (key === "wp") {
             // 单时段权重（取负，使高权重 = 小值 = 优先枚举）
             sa -= getWeight(a.sectionId);
@@ -4358,6 +4496,7 @@ function schedule(suffix){
       let s = 0;
       for (const key of priorityArr) {
         if (key === "tp") s -= getTimeWeight(sec.start);
+        if (key === "lw") s -= getLocationWeight(sec.location);
         if (key === "wp") s -= getWeight(sec.sectionId);
       }
       if (s < best) best = s;
@@ -4381,6 +4520,12 @@ function schedule(suffix){
         cur.forEach(e => {
           dim -= getTimeWeight(e.sec.start);
           e.subs.forEach(ss => { dim -= getTimeWeight(ss.start); });
+        });
+      }
+      if (key === "lw") {
+        cur.forEach(e => {
+          dim -= getLocationWeight(e.sec.location);
+          e.subs.forEach(ss => { dim -= getLocationWeight(ss.location); });
         });
       }
       if (key === "wp") {
@@ -4556,6 +4701,7 @@ function renderResults(plans, suffix){
         const rankTag = priorityArr.length > 1 ? `<sup style="color:var(--primary);font-size:.65rem">P${rank+1}</sup>` : "";
         if (key === "tp") scoreParts.push(`${T("results.timeLabel")}${rankTag}=${timeScore(plan).toFixed(1)}`);
         if (key === "lp") scoreParts.push(`${T("results.locLabel")}${rankTag}=${locScore(plan)}`);
+        if (key === "lw") scoreParts.push(`📌${T("results.locWeightLabel")}${rankTag}=${locWeightScore(plan)}`);
         if (key === "wp") scoreParts.push(`<span class="plan-weight-score">⚖️${T("results.weightLabel")}${rankTag}=${planWeightScore(plan)}</span>`);
       });
       const scoreHtml = showScores ? `<span class="plan-scores">${scoreParts.join(" | ")}</span>` : "";
@@ -4943,6 +5089,7 @@ function loadCourses(){
 (async function init(){
   loadWeights();
   loadTimeWeights();
+  loadLocationWeights();
   // 账号数据已迁移到服务端，不再预设本地账号
   // 管理员账号列表通过 API 加载（loadAccounts 会调 /api/accounts）
   const raw=localStorage.getItem(SESSION_KEY);
@@ -5805,8 +5952,11 @@ window.TRANSLATIONS = {
     "filter.noEarlyHint": "排除 08:30 开始的课程",
     "filter.timePriority": "时间优先排序",
     "filter.timeHint": "按自定义时间权重排序",
-    "filter.locPriority": "地点优先排序",
-    "filter.locHint": "2小时内相邻课程地点越近越靠前",
+    "filter.locAdjacent": "地点相邻排序",
+    "filter.locAdjacentHint": "相邻课程地点越近越靠前",
+    "filter.locWeight": "地点优先排序",
+    "filter.locWeightHint": "按自定义地点权重排序",
+    "btn.setLocationWeight": "设置地点权重",
     "btn.calcSchedule": "🚀 计算排课方案",
     "empty.clickToView": "点击「计算排课方案」查看结果",
     "filter.noNoon": "不上下午一",
@@ -5835,6 +5985,11 @@ window.TRANSLATIONS = {
     "timeWeight.empty": "暂无时段",
     "btn.setTimeWeight": "设置时间权重",
     "confirm.resetTimeWeights": "确定要重置所有时间权重为 5 吗？",
+    "locationWeight.modalTitle": "📌 自定义地点权重",
+    "locationWeight.hint": "为每个地点设置喜好权重（1–10）。排课时，将优先展示<strong>总权重最高</strong>的方案。<br>",
+    "locationWeight.stars": "⭐ 越多星代表越喜欢这个地点，默认为 5。",
+    "locationWeight.empty": "暂无地点",
+    "confirm.resetLocationWeights": "确定要重置所有地点权重为 5 吗？",
     "weight.empty": "暂无课程，请先添加课程和时段",
     "filter.weightSort": "自定义权重排序",
     "filter.weightHint": "总权重越高越靠前",
@@ -5858,6 +6013,7 @@ window.TRANSLATIONS = {
     "results.morePlans": "... 还有 {n} 个方案",
     "results.timeLabel": "时间分",
     "results.locLabel": "地点分",
+    "results.locWeightLabel": "地点权重分",
     "export.label": "导出方案",
     "export.as": "为 Excel",
     "export.btn": "导出课表",
@@ -5990,8 +6146,11 @@ window.TRANSLATIONS = {
     "filter.noEarlyHint": "Exclude courses starting at 08:30",
     "filter.timePriority": "Time priority",
     "filter.timeHint": "Sort by custom time weights",
-    "filter.locPriority": "Location priority",
-    "filter.locHint": "Closer locations for classes within 2 hrs",
+    "filter.locAdjacent": "Location adjacent",
+    "filter.locAdjacentHint": "Closer locations for consecutive classes",
+    "filter.locWeight": "Location priority",
+    "filter.locWeightHint": "Sort by custom location weights",
+    "btn.setLocationWeight": "Set location weights",
     "btn.calcSchedule": "🚀 Calculate Schedule",
     "empty.clickToView": "Click \"Calculate Schedule\" to view results",
     "filter.noNoon": "No noon classes",
@@ -6020,6 +6179,11 @@ window.TRANSLATIONS = {
     "timeWeight.empty": "No time slots yet.",
     "btn.setTimeWeight": "Set time weights",
     "confirm.resetTimeWeights": "Reset all time weights to 5?",
+    "locationWeight.modalTitle": "📌 Custom Location Weights",
+    "locationWeight.hint": "Set preference weights (1–10) for each location. Higher total weights appear first.",
+    "locationWeight.stars": "More stars = stronger preference. Default is 5.",
+    "locationWeight.empty": "No locations yet.",
+    "confirm.resetLocationWeights": "Reset all location weights to 5?",
     "weight.empty": "No courses yet. Add courses and sessions first.",
     "filter.weightSort": "Custom weight sort",
     "filter.weightHint": "Higher total weight first",
@@ -6043,6 +6207,7 @@ window.TRANSLATIONS = {
     "results.morePlans": "... {n} more plans",
     "results.timeLabel": "Time score",
     "results.locLabel": "Loc score",
+    "results.locWeightLabel": "Loc weight score",
     "export.label": "Export Plan",
     "export.as": "as Excel",
     "export.btn": "Export Schedule",

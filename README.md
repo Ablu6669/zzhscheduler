@@ -1,117 +1,184 @@
-# 智链简历 (SmartChain Resume)
-
 <div align="center">
 
-**AI 驱动的智能简历系统与云端招聘解决方案**
+# 📚 zzhscheduler — 自动排课系统
 
-[在线演示](https://Ablu6669.github.io/zzh_resume-system) · [问题反馈](https://github.com/Ablu6669/zzh_resume-system/issues)
+**Auto Course Scheduler · 云端账号系统 · Serverless · 开箱即用**
+
+[![GitHub Pages](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-4f6ef7?style=for-the-badge&logo=github)](https://ablu6669.github.io/zzhscheduler/)
+[![Version](https://img.shields.io/badge/Version-3.2.0-f59e0b?style=for-the-badge)]()
+[![License](https://img.shields.io/badge/License-Apache%202.0-4f6ef7?style=for-the-badge&logo=apache)](LICENSE)
+[![CloudBase](https://img.shields.io/badge/Backend-Tencent%20CloudBase-4f6ef7?style=for-the-badge&logo=tencentqq)]()
+
+[🚀 立即体验 / Live Demo](https://ablu6669.github.io/zzhscheduler/) · [📮 反馈 / Feedback](#反馈--feedback)
+
+---
 
 </div>
 
----
+## 🌟 这是什么？/ What is this?
 
-## 📖 项目简介
+**自动排课系统**帮助大学生在选课时，从**成百上千甚至数万种**可能的组合中快速筛选出最优课表方案。
 
-**智链简历**是一款面向线下招聘会场景的智能简历系统，致力于解决招聘会现场简历格式混乱、数据难以结构化的痛点。
+**Auto Course Scheduler** helps university students quickly find the optimal timetable from all possible course combinations.
 
-求职者通过标准化模板填写简历并生成唯一识别码；企业端扫码或输入识别码即可快速查询、预览、导出简历，实现招聘数据的高效流转。
+> 5 门课各 3 个时段 → **243 种组合**；8 门课各 4 个时段 → **65,536 种组合**。几秒内帮你找到最优方案。
+> 5 courses × 3 slots each = 243 combinations; 8 × 4 = 65,536 combinations. Finds the best in seconds.
 
-> 💡 本项目为 **腾讯学堂 AI-HR 线上实战营** 自定义赛道作业 Demo。
+输入每门课的可用时段 → 设置筛选条件 → 一键生成所有可行方案，按你的偏好排序。前端纯 HTML 单文件 + 腾讯云开发后端，轻量但完整。
 
----
-
-## ✨ 功能特性
-
-### 👤 求职者端
-- 📝 **标准化简历编辑** — 多步骤表单引导，结构化管理个人信息、教育经历、工作经历、项目经历、技能特长
-- 🎨 **实时预览** — 编辑同时实时渲染简历效果，所见即所得
-- 📄 **PDF 导出** — 一键生成高质量 PDF 简历文件
-- ☁️ **云端保存** — 简历数据加密存储至 GitHub Gist，生成唯一识别码便于分享
-
-### 🏢 企业端
-- 🔍 **识别码查询** — 输入求职者分享的识别码，秒级调出简历
-- 👁️ **在线预览** — 直接在浏览器中查看完整简历内容
-- 📊 **Excel 批量导出** — 支持将简历数据导出为 Excel 格式，便于企业 HR 统一管理
-- 📱 **移动端适配** — 响应式设计，支持手机 / 平板 / 电脑多端访问
+Enter available time slots → set filters → generate all feasible schedules, sorted by your preferences. Single HTML file frontend + Tencent CloudBase backend — lightweight yet complete.
 
 ---
 
-## 🏗️ 系统架构
+## ✨ 核心功能 / Features
+
+| 功能 / Feature | 说明 / Description |
+|------|------|
+| 🗓️ **智能枚举 / Smart Enumeration** | 自动枚举所有课程时段的可行组合，无遗漏 / Automatically enumerate all feasible combinations, no omissions |
+| 🚫 **智能筛选 / Smart Filtering** | 一键排除早八、午一；自定义排除时间段和地点 / One-click exclude early morning / noon classes; custom time & location exclusions |
+| ⚖️ **多维排序 / Multi-dimensional Sorting** | 按时间（支持自定义时段权重）、地点相邻距离（支持自定义地点权重）、自定义权重多维度排序 / Sort by time (custom time weights), location adjacency (custom location weights), or custom weights |
+| 🔗 **子课程支持 / Sub-course Support** | 主课 + 子课（Lec + Tut）联排，排课更合理 / Link Lecture & Tutorial sessions for more reasonable scheduling |
+| 📊 **Excel 一键导出 / One-click Excel Export** | 导出完整课表 Excel，含课程列表和时间表 / Export full schedule with course list and timetable |
+| 🌐 **中英双语 / Bilingual UI** | 界面支持中文 / English 切换 / Switch between Chinese and English interface |
+| 🔐 **云端账号 / Cloud Account** | 基于 Tencent CloudBase，账号系统 + 使用额度管理 / Account system with usage quota management via CloudBase |
+| 📢 **公告推送 / Announcements** | 管理员发布公告，用户端实时查看 / Admin-published announcements with real-time user notifications |
+| 💾 **本地缓存 / Local Cache** | 课程数据存 localStorage，刷新不丢失 / Course data saved in localStorage, survives refresh |
+| ✏️ **时段直接编辑 / Edit Sessions** | 直接编辑已有时段，无需删除重建 / Edit existing sessions directly, no need to delete and re-add |
+| ☑️ **参与排课开关 / Schedule Toggle** | 灵活勾选哪些时段参与计算 / Control which sessions are included in schedule calculation |
+| 🔒 **时间校验 / Time Validation** | 结束时间不得早于开始时间 / End time cannot be earlier than start time |
+| ⚡ **剪枝优化 / Pruning Optimization** | 增量剪枝 + 位运算加速 + 智能枚举顺序 + 分支限界 + 安全截断，枚举全部可行方案后排序选最优 / Incremental pruning + bitmask + smart ordering + branch-and-bound + safe truncation (min 5000 plans) |
+| ⚠️ **组合数预警 / Combo Warning** | 超大数据量时自动提醒用户 / Auto-warn when combinations are too large |
+
+---
+
+## 🚀 快速开始 / Quick Start
+
+**方式一：直接在线体验（推荐）/ Option 1: Try Online (Recommended)**
+
+→ 打开 / Open [https://ablu6669.github.io/zzhscheduler/](https://ablu6669.github.io/zzhscheduler/)
+
+> 🎉 **GitHub 体验账号 / Trial Account**：`githubers` / `githubers`（无限额度，欢迎随便玩！/ Unlimited quota, feel free to explore!）
+>
+> 登录后即可体验完整功能，无需注册。体验后欢迎提 Issue 或邮件反馈！
+> Login to experience all features — no registration needed. Feedback via Issue or email welcome!
+
+**方式二：本地部署 / Option 2: Local Deploy**
+
+```bash
+git clone https://github.com/asuskurumi/zzhscheduler.git
+cd zzhscheduler
+# 直接用浏览器打开 index.html 即可体验前端功能
+# Open index.html in your browser to try the frontend
+open index.html
+```
+
+整个项目只有一个 `index.html` 文件。/ The entire project is a single `index.html` file.
+
+---
+
+## 📖 使用流程 / How to Use
 
 ```
-┌─────────────────┐     HTTPS      ┌──────────────────────┐     GitHub API     ┌─────────────────┐
-│   浏览器前端     │ ────────────>  │  腾讯云 SCF 云函数   │ ────────────>  │  GitHub Gist    │
-│  (Single File) │ <────────────   │  (服务端代理)        │ <────────────   │  (云端存储)      │
-└─────────────────┘     JSON       └──────────────────────┘     JSON          └─────────────────┘
-        │                                                      │
-        │                                                      │
-        v                                                      v
-┌─────────────────┐                                  ┌─────────────────┐
-│  localStorage   │                                  │  GitHub Token   │
-│  (本地缓存)     │                                  │  (仅服务端持有)  │
-└─────────────────┘                                  └─────────────────┘
+1. 添加课程   → 输入课程代号（如 MAT1001），添加各时段信息
+2. 配置筛选   → 选择不上早八、不上午一，或自定义排除条件
+3. 选择排序   → 按时间紧凑 / 地点临近 / 自定义权重排序
+4. 计算方案   → 点击「计算排课方案」，查看所有可行排课
+5. 导出课表   → 选择喜欢的方案，一键导出 Excel
 ```
 
-### 架构亮点
-
-| 设计点 | 说明 |
-|--------|------|
-| **Token 安全** | GitHub Token 仅存在于 SCF 服务端，前端代码零敏感信息 |
-| **国内访问** | 腾讯云 SCF 国内节点，避免 Cloudflare Workers 国内无法访问问题 |
-| **零成本运行** | SCF 按调用计费 + GitHub Gist 免费存储，个人使用近乎免费 |
-| **单文件部署** | Vite 打包为单个 HTML 文件，通过 GitHub Pages 免费托管 |
-
----
-
-## 🛠️ 技术栈
-
-### 前端
-- **框架**：React 19 + TypeScript
-- **构建工具**：Vite 8 + vite-plugin-singlefile
-- **样式**：Tailwind CSS 3 + Lucide React 图标库
-- **路由**：React Router DOM 7
-- **导出**：jsPDF (PDF) + SheetJS xlsx (Excel)
-- **二维码**：qrcode.react
-
-### 后端
-- **云服务**：腾讯云 SCF (Serverless Cloud Function)
-- **存储**：GitHub Gist API
-- **安全代理**：SCF 函数作为前端与 GitHub API 之间的代理层，Token 仅存在于服务端
-
-### 部署
-- **静态托管**：GitHub Pages
-- **单文件输出**：`dist-single/index.html`
+```
+1. Add Courses    → Enter course codes (e.g. MAT1001), add session details
+2. Set Filters    → Exclude early morning / noon, or set custom exclusions
+3. Choose Sorting → Sort by time compactness / location proximity / custom weights
+4. Calculate      → Click "Calculate Schedule" to see all feasible options
+5. Export         → Pick your favorite plan, one-click export to Excel
+```
 
 ---
 
-## 📌 已知问题与改进方向
+## 🖼️ 界面预览 / Screenshots
 
-- [ ] 增加用户账号体系，支持多份简历管理
-- [ ] 企业端支持批量导入识别码、批量导出 PDF
-- [ ] 简历模板多样化，支持更多排版风格
-- [ ] 接入 AI 能力，实现简历内容智能优化建议
+> 登录界面 → 课程管理 → 筛选排序 → 排课结果 → 导出 Excel
+> Login → Course Management → Filters & Sorting → Results → Excel Export
 
----
-
-## 📄 License
-
-本项目采用 [Apache License 2.0](./LICENSE) 开源。
-
-允许商用、修改和分发，但须保留原作者版权声明。详见 [LICENSE](./LICENSE) 文件。
+（欢迎 star 后截图分享你的课表 👇 / Share your schedule screenshot after starring! 👇）
 
 ---
 
-## 🙏 致谢
+## 🔧 技术栈 / Tech Stack
 
-- 腾讯学堂 AI-HR 线上实战营提供的项目方向指导
-- [React](https://react.dev/)、[Vite](https://vitejs.dev/)、[Tailwind CSS](https://tailwindcss.com/) 等开源项目
-- [GitHub Gist](https://gist.github.com/) 提供的免费存储服务
-- [腾讯云 SCF](https://cloud.tencent.com/product/scf) 提供的 Serverless 计算能力
+| 技术 / Tech | 说明 / Description |
+|------|------|
+| **前端 / Frontend** | HTML + CSS + Vanilla JavaScript，零框架依赖 / Zero framework dependency |
+| **后端 / Backend** | [腾讯云开发 CloudBase](https://tcb.cloud.tencent.com/)（账号系统、使用额度、公告管理）/ Account, quota & announcement management |
+| **数据持久化 / Persistence** | 课程数据存 `localStorage`，账号与公告走云端 / Course data in localStorage, accounts & announcements in cloud |
+| **Excel 导出 / Excel Export** | [xlsx-js-style](https://github.com/gitbrent/xlsx-js-style)（支持单元格样式）/ With cell styling support |
+| **部署 / Deployment** | GitHub Pages（前端）+ 腾讯云 SCF（后端接口），推送即上线 / Push to deploy |
+
+---
+
+## 🗺️ Roadmap
+
+### ✅ 已完成 / Done
+
+- [x] 子课程链接（Lec & Tut 联排）/ Sub-course linking (Lec & Tut)
+- [x] 滚轮 + 手动输入时间选择 / Scroll wheel + manual input time picker
+- [x] 使用说明模块 / User guide module
+- [x] 时间 / 地点优先权重个性化 / Custom time & location priority weights
+- [x] ABE 地点支持 / ABE location support
+- [x] 用户分级与使用额度限制 / User tier & usage quota system
+- [x] 消息通知窗口（公告栏）/ Announcement panel
+- [x] 自定义权重排序（如教授偏好）/ Custom weight sorting (e.g. professor preference)
+- [x] 一键导出 Excel 课表 / One-click Excel schedule export
+- [x] 中英双语切换 / Bilingual UI (Chinese / English)
+- [x] 参与排课开关（定向选择）/ Schedule toggle per session
+- [x] 已有时段直接编辑 / Direct session editing
+- [x] 时间选择灵敏度优化 + 箭头步进 / Reduced scroll sensitivity + arrow step buttons
+- [x] 地点排序逻辑优化（只算 2 小时内间隔）/ Location sorting: only sessions within 2h
+- [x] 腾讯云开发（CloudBase）后端 / Tencent CloudBase backend
+- [x] 云端额度同步（跨浏览器）/ Cloud quota sync across browsers
+- [x] 管理员后端直连管理（账号 / 通知）/ Admin direct DB management
+- [x] 管理员公告一键翻译 / Admin one-click announcement translation
+- [x] 时段时间校验（结束 ≥ 开始）/ Time validation (end ≥ start)
+- [x] 多筛选项优先级排序 / Multi-filter priority sorting
+- [x] 剪枝优化（增量剪枝 + 位运算 + 智能枚举 + 分支限界 + 安全截断）/ Pruning optimization (incremental pruning + bitmask + smart ordering + branch-and-bound + safe truncation)
+- [x] 组合数预警提示 / Combination count warning
+- [x] 降本增效优化（合并额度 API 为单次调用 + 公告/版本号 24h 前端缓存）/ Cost reduction (merge quota API to single call + 24h frontend cache for announcements/version)
+
+### 🔲 计划中 / Planned
+
+- [ ] 微信小程序版本 / WeChat Mini Program version
+- [ ] 学分计算 / Credit calculation
+- [ ] 课程数据源对接 / Course data source integration
+
+---
+
+## 反馈 / Feedback
+
+使用中遇到 bug、有功能建议？欢迎：/ Found a bug or have a suggestion? Reach out:
+
+- 📮 发邮件 / Email：[abluzz@outlook.com](mailto:abluzz@outlook.com)
+- 🐛 提 Issue / Open Issue：[GitHub Issues](https://github.com/asuskurumi/zzhscheduler/issues)
+
+内测期间，所有被采纳的反馈将获赠高额度公测账号奖励！/ All adopted feedback earns a premium account reward during beta!
+
+---
+
+## 📄 开源协议 / License
+
+本项目采用 **Apache License 2.0** 开源协议。
+
+This project is licensed under the **Apache License 2.0**.
+
+- 查看完整协议：[LICENSE](LICENSE) 文件
+- View full license: [LICENSE](LICENSE) file
+- Apache 2.0 官方文本：https://www.apache.org/licenses/LICENSE-2.0
 
 ---
 
 <div align="center">
 
-**⭐ 如果这个项目对你有帮助，欢迎 Star！**
+如果这个项目对你有帮助，欢迎点个 ⭐ Star！
+If this project helps you, please consider giving it a ⭐ Star!
 
 </div>

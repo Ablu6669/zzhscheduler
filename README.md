@@ -6,6 +6,7 @@
 
 [![GitHub Pages](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-4f6ef7?style=for-the-badge&logo=github)](https://ablu6669.github.io/zzhscheduler/)
 [![Version](https://img.shields.io/badge/Version-3.2.0-f59e0b?style=for-the-badge)]()
+[![License](https://img.shields.io/badge/License-Apache%202.0-4f6ef7?style=for-the-badge&logo=apache)](LICENSE)
 [![CloudBase](https://img.shields.io/badge/Backend-Tencent%20CloudBase-4f6ef7?style=for-the-badge&logo=tencentqq)]()
 
 [🚀 立即体验 / Live Demo](https://ablu6669.github.io/zzhscheduler/) · [📮 反馈 / Feedback](#反馈--feedback)
@@ -160,6 +161,18 @@ open index.html
 - 🐛 提 Issue / Open Issue：[GitHub Issues](https://github.com/asuskurumi/zzhscheduler/issues)
 
 内测期间，所有被采纳的反馈将获赠高额度公测账号奖励！/ All adopted feedback earns a premium account reward during beta!
+
+---
+
+## 📄 开源协议 / License
+
+本项目采用 **Apache License 2.0** 开源协议。
+
+This project is licensed under the **Apache License 2.0**.
+
+- 查看完整协议：[LICENSE](LICENSE) 文件
+- View full license: [LICENSE](LICENSE) file
+- Apache 2.0 官方文本：https://www.apache.org/licenses/LICENSE-2.0
 
 ---
 

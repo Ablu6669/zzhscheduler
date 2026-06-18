@@ -1835,8 +1835,8 @@
             </div>
           </div>
           <div class="loc-ref">
-            <strong>地点顺序：</strong>TXA — TXB — TXC — TA — ABE — TB — TC — TD — ZX<br>
-            相邻距离 = 1，每多隔一个 +1
+            <strong data-i18n="filter.locOrder">地点顺序：</strong>TXA — TXB — TXC — TA = ABE — TB — TC — TD — ZX<br>
+            <span data-i18n="filter.locDistHint">相邻距离 = 1，同=号地点距离=0</span>
           </div>
           <div class="actions">
             <button class="btn btn-primary" onclick="runSchedule()" style="flex:1" data-i18n="btn.calcSchedule">🚀 计算排课方案</button>
@@ -1935,8 +1935,8 @@
             </div>
           </div>
           <div class="loc-ref">
-            <strong>地点顺序：</strong>TXA — TXB — TXC — TA — ABE — TB — TC — TD — ZX<br>
-            相邻距离 = 1，每多隔一个 +1
+            <strong data-i18n="filter.locOrder">地点顺序：</strong>TXA — TXB — TXC — TA = ABE — TB — TC — TD — ZX<br>
+            <span data-i18n="filter.locDistHint">相邻距离 = 1，同=号地点距离=0</span>
           </div>
           <div class="actions">
             <button class="btn btn-primary" onclick="runSchedule2()" style="flex:1" data-i18n="btn.calcSchedule">🚀 计算排课方案</button>
@@ -4086,7 +4086,17 @@ function onWeightInput(el) {
 }
 
 // ─── 评分与冲突 ──────────────────────────
-function locDist(a,b){ const i=LOC_INDEX[a],j=LOC_INDEX[b]; return (i==null||j==null)?0:Math.abs(i-j); }
+// 地点分组：同组地点距离为0（TA 与 ABE 视为同一地点）
+const LOC_GROUP = {};
+(function(){
+  const groups = [["TXA"],["TXB"],["TXC"],["TA","ABE"],["TB"],["TC"],["TD"],["ZX"]];
+  groups.forEach((g,i) => g.forEach(l => LOC_GROUP[l] = i));
+})();
+function locGroupDist(a,b){
+  const i=LOC_GROUP[a], j=LOC_GROUP[b];
+  return (i==null||j==null)?0:Math.abs(i-j);
+}
+function locDist(a,b){ return locGroupDist(a,b); }
 
 // plan 是 PlanEntry[] 数组，每个 PlanEntry = { sec: Section, subs: SubSection[] }
 function allSections(plan) {
@@ -5956,6 +5966,8 @@ window.TRANSLATIONS = {
     "filter.locAdjacentHint": "相邻课程地点越近越靠前",
     "filter.locWeight": "地点优先排序",
     "filter.locWeightHint": "按自定义地点权重排序",
+    "filter.locOrder": "地点顺序：",
+    "filter.locDistHint": "相邻距离 = 1，每多隔一个 +1",
     "btn.setLocationWeight": "设置地点权重",
     "btn.calcSchedule": "🚀 计算排课方案",
     "empty.clickToView": "点击「计算排课方案」查看结果",
@@ -6150,6 +6162,8 @@ window.TRANSLATIONS = {
     "filter.locAdjacentHint": "Closer locations for consecutive classes",
     "filter.locWeight": "Location priority",
     "filter.locWeightHint": "Sort by custom location weights",
+    "filter.locOrder": "Location order:",
+    "filter.locDistHint": "Adj dist = 1; same =group means dist 0",
     "btn.setLocationWeight": "Set location weights",
     "btn.calcSchedule": "🚀 Calculate Schedule",
     "empty.clickToView": "Click \"Calculate Schedule\" to view results",

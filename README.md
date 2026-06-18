@@ -5,7 +5,7 @@
 **Auto Course Scheduler · 云端账号系统 · Serverless · 开箱即用**
 
 [![GitHub Pages](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-4f6ef7?style=for-the-badge&logo=github)](https://ablu6669.github.io/zzhscheduler/)
-[![Version](https://img.shields.io/badge/Version-3.1.1-f59e0b?style=for-the-badge)]()
+[![Version](https://img.shields.io/badge/Version-3.2.0-f59e0b?style=for-the-badge)]()
 [![CloudBase](https://img.shields.io/badge/Backend-Tencent%20CloudBase-4f6ef7?style=for-the-badge&logo=tencentqq)]()
 
 [🚀 立即体验 / Live Demo](https://ablu6669.github.io/zzhscheduler/) · [📮 反馈 / Feedback](#反馈--feedback)
@@ -35,7 +35,7 @@ Enter available time slots → set filters → generate all feasible schedules, 
 |------|------|
 | 🗓️ **智能枚举 / Smart Enumeration** | 自动枚举所有课程时段的可行组合，无遗漏 / Automatically enumerate all feasible combinations, no omissions |
 | 🚫 **智能筛选 / Smart Filtering** | 一键排除早八、午一；自定义排除时间段和地点 / One-click exclude early morning / noon classes; custom time & location exclusions |
-| ⚖️ **多维排序 / Multi-dimensional Sorting** | 按时间紧凑度、地点远近、自定义权重排序 / Sort by time compactness, location proximity, or custom weights |
+| ⚖️ **多维排序 / Multi-dimensional Sorting** | 按时间（支持自定义时段权重）、地点相邻距离（支持自定义地点权重）、自定义权重多维度排序 / Sort by time (custom time weights), location adjacency (custom location weights), or custom weights |
 | 🔗 **子课程支持 / Sub-course Support** | 主课 + 子课（Lec + Tut）联排，排课更合理 / Link Lecture & Tutorial sessions for more reasonable scheduling |
 | 📊 **Excel 一键导出 / One-click Excel Export** | 导出完整课表 Excel，含课程列表和时间表 / Export full schedule with course list and timetable |
 | 🌐 **中英双语 / Bilingual UI** | 界面支持中文 / English 切换 / Switch between Chinese and English interface |
@@ -142,6 +142,7 @@ open index.html
 - [x] 多筛选项优先级排序 / Multi-filter priority sorting
 - [x] 剪枝优化（增量剪枝 + 位运算 + 智能枚举 + 分支限界 + 安全截断）/ Pruning optimization (incremental pruning + bitmask + smart ordering + branch-and-bound + safe truncation)
 - [x] 组合数预警提示 / Combination count warning
+- [x] 降本增效优化（合并额度 API 为单次调用 + 公告/版本号 24h 前端缓存）/ Cost reduction (merge quota API to single call + 24h frontend cache for announcements/version)
 
 ### 🔲 计划中 / Planned
 

@@ -1939,6 +1939,10 @@ const SESSION_KEY  = "wb_scheduler_session";
 const COURSES_KEY  = "wb_scheduler_courses";
 const VERSION_KEY  = "wb_scheduler_version";
 const DEFAULT_VERSION = "3.0.1";
+// ══ 前端缓存键（降本增效：减少 DB 调用）══════════════
+const NOTIF_CACHE_KEY  = "wb_scheduler_notif_cache";   // { data: [...], ts: timestamp }
+const VERSION_CACHE_KEY = "wb_scheduler_ver_cache";     // { version: "...", ts: timestamp }
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;  // 缓存有效期：24小时
 
 // ══ API 配置 ══════════════════════════════
 const API_BASE = "https://1443353382-7jgrci9mpr.ap-guangzhou.tencentscf.com";
@@ -1953,7 +1957,16 @@ async function apiFetch(path, options = {}) {
   try {
     const resp = await fetch(API_BASE + path, { ...options, headers, signal: controller.signal });
     const data = await resp.json();
-    if (!resp.ok) throw new Error(data.error || "请求失败");
+    if (!resp.ok) {
+      // 将 HTTP 状态码和额外字段（如 quotaTotal/quotaUsed 等）附加到 Error 对象上
+      const err = new Error(data.error || "请求失败");
+      err.status = resp.status;
+      // 429 响应中可能包含额度信息（方便前端显示）
+      if (resp.status === 429 && (data.quotaTotal || data.quotaUsed)) {
+        err.quotaInfo = { quotaTotal: data.quotaTotal || 0, quotaUsed: data.quotaUsed || 0, quotaRemaining: data.quotaRemaining || 0 };
+      }
+      throw err;
+    }
     return data;
   } finally {
     clearTimeout(timeout);
@@ -2024,20 +2037,31 @@ async function getAccountQuota(username) {
   }
 }
 
-// 消耗一次额度（调用后端 API，原子扣减）
+// 消耗一次额度（合并接口：查额度 + 原子扣减，一次请求完成）
+// 返回 { success, consumed, quotaTotal, quotaUsed, quotaRemaining, expiresAt, isAdmin }
+// 如果额度不足(429)，apiFetch 会抛含 quotaInfo 的错误——runSchedule 会 catch 并处理
 async function consumeQuota(username) {
   try {
-    const data = await apiFetch("/api/quota/deduct", { method: "POST" });
+    const data = await apiFetch("/api/quota/consume", { method: "POST" });
     console.log("[consumeQuota] 成功:", JSON.stringify(data));
     // 更新 session 中的额度缓存（用服务端返回的精确值）
     if (session && data) {
+      session.quotaTotal = data.quotaTotal || session.quotaTotal;
       session.quotaUsed = data.quotaUsed || (session.quotaUsed || 0) + 1;
       session.quotaRemaining = data.quotaRemaining !== undefined ? data.quotaRemaining : Math.max(0, (session.quotaTotal || 0) - (session.quotaUsed || 0));
+      if (data.expiresAt) session.expiresAt = data.expiresAt;
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     }
-    return data && data.success;
+    return data;
   } catch(e) {
-    console.error("[consumeQuota] 失败:", e.message);
+    // 429 = 额度已用完，尝试从错误响应中提取额度信息更新本地缓存
+    if (e.quotaInfo && session) {
+      session.quotaTotal = e.quotaInfo.quotaTotal || 0;
+      session.quotaUsed = e.quotaInfo.quotaUsed || 0;
+      session.quotaRemaining = 0;
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    }
+    console.error("[consumeQuota] 失败:", e.message, e.status);
     throw e;
   }
 }
@@ -2225,17 +2249,42 @@ function updateVersionBadge(ver) {
 }
 
 // 从云端加载版本号（失败时用 localStorage 缓存或默认值）
+// 优化：24小时缓存，避免每次登录都调 API（降本增效）
 async function loadVersion() {
   // 优先用 localStorage 缓存（即时显示）
   const cached = localStorage.getItem(VERSION_KEY);
   if (cached) updateVersionBadge(cached);
 
-  // 异步从 API 获取最新版本
+  // 检查24h缓存是否有效
+  const verCacheRaw = localStorage.getItem(VERSION_CACHE_KEY);
+  if (verCacheRaw) {
+    try {
+      const verCache = JSON.parse(verCacheRaw);
+      if (verCache.ts && (Date.now() - verCache.ts < CACHE_TTL_MS) && verCache.version) {
+        // 缓存有效：不调 API，直接用缓存
+        localStorage.setItem(VERSION_KEY, verCache.version);
+        updateVersionBadge(verCache.version);
+        if (session && session.type === "admin") {
+          const inp = document.getElementById("versionInput");
+          if (inp) inp.value = verCache.version;
+        }
+        console.log("[loadVersion] 使用24h缓存，跳过API调用");
+        return;
+      }
+    } catch(e) { /* 缓存损坏，继续走 API */ }
+  }
+
+  // 缓存过期或不存在：从 API 获取最新版本
   try {
     const data = await apiFetch("/api/version");
     if (data && data.version) {
       localStorage.setItem(VERSION_KEY, data.version);
       updateVersionBadge(data.version);
+      // 写入24h缓存
+      localStorage.setItem(VERSION_CACHE_KEY, JSON.stringify({
+        version: data.version,
+        ts: Date.now(),
+      }));
       // 管理员：填充输入框
       if (session && session.type === "admin") {
         const inp = document.getElementById("versionInput");
@@ -2263,6 +2312,8 @@ async function saveVersion() {
   if (!/^[\d]+\.[\d]+\.[\d]+$/.test(ver)) { errEl.textContent = T("version.errorFormat"); return; }
 
   errEl.textContent = "";
+  // 清除版本缓存（管理员更新了版本号，下次用户刷新时要能看到）
+  localStorage.removeItem(VERSION_CACHE_KEY);
   try {
     const data = await apiFetch("/api/version", {
       method: "PUT",
@@ -2358,7 +2409,33 @@ function getNotifs() {
 function saveNotifs(list) { localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(list)); }
 
 // 从云端拉取公告并更新本地缓存（保留每用户的 read 状态，保留本地未同步的公告）
+// 优化：24小时缓存，避免每次登录都调 API（降本增效）
 async function loadNotifsFromCloud() {
+  // 检查缓存是否有效（24小时内不重复调 API）
+  const cacheRaw = localStorage.getItem(NOTIF_CACHE_KEY);
+  if (cacheRaw) {
+    try {
+      const cache = JSON.parse(cacheRaw);
+      if (cache.ts && (Date.now() - cache.ts < CACHE_TTL_MS) && Array.isArray(cache.data)) {
+        // 缓存有效：直接用缓存数据，不调 API
+        const cachedNotifs = cache.data;
+        const localList = getNotifs();
+        const readMap = {};
+        localList.forEach(n => { if (n.read) readMap[n.id] = true; });
+        const merged = cachedNotifs.map(cn => ({
+          ...cn,
+          read: readMap[cn.id] || cn.read || false,
+        }));
+        const localOnly = localList.filter(n => !n._cloudId && n.id.startsWith('n_'));
+        const finalMerged = [...merged, ...localOnly];
+        finalMerged.sort((a, b) => b.createdAt - a.createdAt);
+        saveNotifs(finalMerged);
+        console.log("[loadNotifsFromCloud] 使用24h缓存，跳过API调用");
+        return;
+      }
+    } catch(e) { /* 缓存损坏，继续走 API */ }
+  }
+
   try {
     const cloudNotifs = await apiFetch("/api/announcements");
     if (!cloudNotifs || !Array.isArray(cloudNotifs)) return;
@@ -2392,6 +2469,12 @@ async function loadNotifsFromCloud() {
     const merged = [...cloudMerged, ...localOnly];
     merged.sort((a, b) => b.createdAt - a.createdAt);
     saveNotifs(merged);
+
+    // 写入24h缓存（仅缓存云端数据，不含 read 状态——read 是用户私有的）
+    localStorage.setItem(NOTIF_CACHE_KEY, JSON.stringify({
+      data: cloudMerged,
+      ts: Date.now(),
+    }));
   } catch(e) {
     console.warn("[loadNotifsFromCloud] 云端拉取失败，使用本地缓存:", e.message);
   }
@@ -2660,6 +2743,7 @@ const GUIDE_DATA = [
         <li><strong>通知公告</strong>：系统更新通知，支持已读/未读状态管理</li>
         <li><strong>剪枝优化算法</strong>：自动跳过冲突组合，枚举全部可行方案后排序选最优（保底 5000 方案覆盖绝大多数排课场景，超大规模空间自动截断并提示）</li>
         <li><strong>多语言支持</strong>：支持中文/英文界面切换</li>
+        <li><strong>降本增效</strong>：合并API调用减少后端负载，公告/版本号24小时智能缓存</li>
       </ul>
       <h3>使用流程</h3>
       <ol>
@@ -2685,6 +2769,7 @@ const GUIDE_DATA = [
         <li><strong>Notifications</strong>: System updates with read/unread status tracking</li>
         <li><strong>Pruning Optimization</strong>: Auto-skip conflicting combinations, enumerate all feasible plans then sort for optimal result (minimum 5000 plans covers most scheduling scenarios; auto-truncates with warning for extremely large spaces)</li>
         <li><strong>Multi-language Support</strong>: Switch between Chinese and English interface</li>
+        <li><strong>Efficiency Optimization</strong>: Merged API calls reduce backend load, smart 24h cache for announcements & version</li>
       </ul>
       <h3>Workflow</h3>
       <ol>
@@ -3285,6 +3370,9 @@ async function addNotif() {
   btn.textContent = origText;
   btn.disabled = false;
 
+  // 清除公告缓存（管理员发了新公告，下次用户刷新时要能看到）
+  localStorage.removeItem(NOTIF_CACHE_KEY);
+
   // 同步到云端
   try {
     const data = await apiFetch("/api/announcements", {
@@ -3356,6 +3444,8 @@ function saveNotifEdit() {
   const content = document.getElementById("editNotifContent").value.trim();
   const enTitle = document.getElementById("editNotifEnTitle").value.trim();
   const enContent = document.getElementById("editNotifEnContent").value.trim();
+  // 清除公告缓存（管理员编辑了公告，下次用户刷新时要更新）
+  localStorage.removeItem(NOTIF_CACHE_KEY);
   // 同步到云端
   apiFetch("/api/announcements/" + _editingNotifId, {
     method: "PUT",
@@ -3379,6 +3469,8 @@ function saveNotifEdit() {
 // 删除通知
 function deleteNotif(id) {
   if (!confirm(T("confirm.withdrawNotif"))) return;
+  // 清除公告缓存（管理员撤回了公告，下次用户刷新时要更新）
+  localStorage.removeItem(NOTIF_CACHE_KEY);
   // 同步到云端
   apiFetch("/api/announcements/" + id, { method: "DELETE" })
     .then(() => { console.log("[deleteNotif] 云端删除成功"); })
@@ -4621,26 +4713,33 @@ async function runSchedule(){
     const msg = T("alert.tooManyCombos").replace("{n}", est.toLocaleString());
     if (!confirm(msg)) return;
   }
-  // 检查额度
+  // 额度检查 + 扣减（合并为一次 API 调用）
   if (session && session.type === "user") {
-    const q = await getAccountQuota(session.username);
-    // 真正用完了才阻止
-    if (q && q.quota < 999 && q.remaining <= 0) {
-      document.getElementById("resultsContent").innerHTML = `<div class="empty-state"><div class="emoji">😔</div>${T("alert.quotaExhausted")}<br><small>${T("alert.contactAdmin")}</small></div>`;
-      return;
-    }
-    // 先乐观扣减本地计数（立即更新显示）
-    session.quotaUsed = (session.quotaUsed || 0) + 1;
-    session.quotaRemaining = Math.max(0, (session.quotaTotal || 0) - (session.quotaUsed || 0));
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-    // 再异步调后端扣减（失败不回滚，预检查已确认有余额）
     try {
-      await consumeQuota(session.username);
+      const data = await consumeQuota(session.username);
+      // 管理员或不限额度账号：无需进一步检查
+      if (data && data.consumed === false) {
+        // 管理员 / 无限额，直接继续
+      } else if (data && data.quotaTotal < 999 && data.quotaRemaining <= 0) {
+        // 额度刚好用完（consume 返回 remaining=0 但仍成功扣减了）
+        refreshQuotaUI();
+        // 不阻止本次排课（已经扣了额度）
+      }
+      refreshQuotaUI();
     } catch(e) {
-      console.warn("[runSchedule] 后端额度扣减失败（已使用本地乐观计数）:", e.message);
+      // 429 = 额度已用完，阻止排课
+      if (e.message && (e.message.includes('额度已用完') || e.message.includes('429'))) {
+        document.getElementById("resultsContent").innerHTML = `<div class="empty-state"><div class="emoji">😔</div>${T("alert.quotaExhausted")}<br><small>${T("alert.contactAdmin")}</small></div>`;
+        refreshQuotaUI();
+        return;
+      }
+      // 其他错误（网络/冲突等）：乐观扣减本地计数，继续排课
+      console.warn("[runSchedule] 后端额度扣减失败，使用本地乐观计数:", e.message);
+      session.quotaUsed = (session.quotaUsed || 0) + 1;
+      session.quotaRemaining = Math.max(0, (session.quotaTotal || 0) - (session.quotaUsed || 0));
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      refreshQuotaUI();
     }
-    // 刷新显示（优先用本地缓存）
-    refreshQuotaUI();
   }
   currentPlans=schedule();
   renderResults(currentPlans);
@@ -4653,23 +4752,28 @@ async function runSchedule2(){
     const msg = T("alert.tooManyCombos").replace("{n}", est.toLocaleString());
     if (!confirm(msg)) return;
   }
-  // 检查额度
+  // 额度检查 + 扣减（合并为一次 API 调用）
   if (session && session.type === "user") {
-    const q = await getAccountQuota(session.username);
-    if (q && q.quota < 999 && q.remaining <= 0) {
-      document.getElementById("resultsContent2").innerHTML = `<div class="empty-state"><div class="emoji">😔</div>${T("alert.quotaExhausted")}<br><small>${T("alert.contactAdmin")}</small></div>`;
-      return;
-    }
-    // 先乐观扣减本地计数
-    session.quotaUsed = (session.quotaUsed || 0) + 1;
-    session.quotaRemaining = Math.max(0, (session.quotaTotal || 0) - (session.quotaUsed || 0));
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     try {
-      await consumeQuota(session.username);
+      const data = await consumeQuota(session.username);
+      if (data && data.consumed === false) {
+        // 管理员 / 无限额
+      } else if (data && data.quotaTotal < 999 && data.quotaRemaining <= 0) {
+        refreshQuotaUI();
+      }
+      refreshQuotaUI();
     } catch(e) {
-      console.warn("[runSchedule2] 后端额度扣减失败（已使用本地乐观计数）:", e.message);
+      if (e.message && (e.message.includes('额度已用完') || e.message.includes('429'))) {
+        document.getElementById("resultsContent2").innerHTML = `<div class="empty-state"><div class="emoji">😔</div>${T("alert.quotaExhausted")}<br><small>${T("alert.contactAdmin")}</small></div>`;
+        refreshQuotaUI();
+        return;
+      }
+      console.warn("[runSchedule2] 后端额度扣减失败，使用本地乐观计数:", e.message);
+      session.quotaUsed = (session.quotaUsed || 0) + 1;
+      session.quotaRemaining = Math.max(0, (session.quotaTotal || 0) - (session.quotaUsed || 0));
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      refreshQuotaUI();
     }
-    refreshQuotaUI();
   }
   const plans=schedule("2");
   renderResults(plans,"2");

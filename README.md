@@ -16,12 +16,12 @@
 
 ## 🌟 这是什么？/ What is this?
 
-**自动排课系统**帮助大学生在选课时，从数十种可能的组合中快速筛选出最优课表方案。
+**自动排课系统**帮助大学生在选课时，从**成百上千甚至数万种**可能的组合中快速筛选出最优课表方案。
 
 **Auto Course Scheduler** helps university students quickly find the optimal timetable from all possible course combinations.
 
-> 5 门课各 3 个时段 → 243 种组合。这个工具几秒内帮你找到最优方案。
-> 5 courses × 3 slots each = 243 combinations. This tool finds the best one in seconds.
+> 5 门课各 3 个时段 → **243 种组合**；8 门课各 4 个时段 → **65,536 种组合**。几秒内帮你找到最优方案。
+> 5 courses × 3 slots each = 243 combinations; 8 × 4 = 65,536 combinations. Finds the best in seconds.
 
 输入每门课的可用时段 → 设置筛选条件 → 一键生成所有可行方案，按你的偏好排序。前端纯 HTML 单文件 + 腾讯云开发后端，轻量但完整。
 

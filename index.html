@@ -139,32 +139,27 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* ── Transition overlay (dark → light crossfade) ── */
+  /* ── Transition overlay (dark→light color morph) ──
+     Instead of a crossfade, the overlay's background-color smoothly
+     morphs from the dark auth bg (#0a0a1a) to the light app bg (#f0f2f5),
+     giving a "sunrise" gradient effect. Opacity fades out with a delay
+     so the color morph is visible first, then content reveals. */
   #transitionOverlay {
     position: fixed;
     inset: 0;
     z-index: 9999;
     pointer-events: none;
     opacity: 0;
-    background: #0a0a1a;
-    transition: opacity 0.7s cubic-bezier(0.32, 0.72, 0, 1);
-  }
-  #transitionOverlay.active {
-    opacity: 1;
-    pointer-events: all;
-  }
-  #transitionOverlay.fading {
-    opacity: 0;
-    transition: opacity 0.9s cubic-bezier(0.32, 0.72, 0, 1);
+    background-color: #0a0a1a;
   }
 
-  /* Main app entrance: crossfade with overlay fade-out */
+  /* Main app entrance: stays hidden during color morph, then fades in as overlay clears */
   #mainApp.app-entering {
-    animation: appEnter 0.9s cubic-bezier(0.32, 0.72, 0, 1) both;
+    animation: appEnter 1.5s cubic-bezier(0.32, 0.72, 0, 1) both;
   }
   @keyframes appEnter {
     0%   { opacity: 0; transform: scale(0.97); filter: blur(10px); }
-    40%  { opacity: 0.4; transform: scale(0.985); filter: blur(5px); }
+    40%  { opacity: 0; transform: scale(0.975); filter: blur(8px); }
     100% { opacity: 1; transform: scale(1); filter: blur(0); }
   }
 
@@ -179,7 +174,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     #authScreen::before, #authScreen::after, .aurora-orb-3, .auth-box { animation: none; }
-    #transitionOverlay { transition: none; }
+    #transitionOverlay { transition: none !important; }
     #mainApp.app-entering { animation: none; }
     .screen-leaving { animation: none; }
   }
@@ -2381,14 +2376,18 @@ async function doAdminLogin() {
 function doLogout() {
   session = null;
   localStorage.removeItem(SESSION_KEY);
-  // Reverse transition: app shrinks → dark overlay → auth crossfades in
+  // Reverse color-morph transition: light → dark gradient effect
   const overlay = document.getElementById("transitionOverlay");
   const authScreen = document.getElementById("authScreen");
   const mainApp = document.getElementById("mainApp");
   if (overlay && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    // Phase 1: main app shrinks & blurs while dark overlay fades in
+    // Phase 1 (0.6s): main app shrinks & blurs; light overlay (matching app bg) fades in
     mainApp.classList.add("screen-leaving");
-    overlay.classList.add("active");
+    overlay.style.backgroundColor = "#f0f2f5"; // match app bg for seamless fade-in
+    overlay.style.transition = "opacity 0.6s cubic-bezier(0.32, 0.72, 0, 1)";
+    overlay.style.opacity = "1";
+    overlay.style.pointerEvents = "all";
+
     setTimeout(() => {
       // Phase 2: swap content behind overlay
       mainApp.style.display = "none";
@@ -2404,13 +2403,21 @@ function doLogout() {
         void authBox.offsetWidth;
         authBox.style.animation = "";
       }
-      // Phase 3: crossfade — overlay fades out while auth screen fades in
+
+      // Phase 3 (1.4s): bg color morphs light→dark; opacity fades out after 0.6s delay
       requestAnimationFrame(() => {
-        overlay.classList.remove("active");
-        overlay.classList.add("fading");
-        setTimeout(() => { overlay.classList.remove("fading"); }, 900);
+        void overlay.offsetWidth; // force reflow so new transition takes effect
+        overlay.style.transition =
+          "background-color 1.4s cubic-bezier(0.4, 0, 0.4, 1), " +
+          "opacity 0.8s cubic-bezier(0.32, 0.72, 0, 1) 0.6s";
+        overlay.style.backgroundColor = "#0a0a1a";
+        overlay.style.opacity = "0";
+
+        setTimeout(() => {
+          overlay.style.cssText = "";
+        }, 1500);
       });
-    }, 700);
+    }, 600);
   } else {
     document.getElementById("authScreen").style.display = "flex";
     document.getElementById("mainApp").style.display = "none";
@@ -2421,14 +2428,18 @@ function doLogout() {
 }
 
 function enterMainApp() {
-  // Cinematic transition: auth shrinks → dark overlay → app crossfades in
+  // Color-morph transition: dark → light gradient effect
   const overlay = document.getElementById("transitionOverlay");
   const authScreen = document.getElementById("authScreen");
   const mainApp = document.getElementById("mainApp");
   if (overlay && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    // Phase 1: auth screen shrinks & blurs while dark overlay fades in (parallel)
+    // Phase 1 (0.6s): auth screen shrinks & blurs; dark overlay fades in
     authScreen.classList.add("screen-leaving");
-    overlay.classList.add("active");
+    overlay.style.backgroundColor = "#0a0a1a";
+    overlay.style.transition = "opacity 0.6s cubic-bezier(0.32, 0.72, 0, 1)";
+    overlay.style.opacity = "1";
+    overlay.style.pointerEvents = "all";
+
     setTimeout(() => {
       // Phase 2: swap content behind overlay
       authScreen.style.display = "none";
@@ -2436,16 +2447,22 @@ function enterMainApp() {
       mainApp.style.display = "block";
       mainApp.classList.add("app-entering");
       _postEnterMainApp();
-      // Phase 3: crossfade — overlay fades out while app content fades in simultaneously
+
+      // Phase 3 (1.4s): bg color morphs dark→light; opacity fades out after 0.6s delay
       requestAnimationFrame(() => {
-        overlay.classList.remove("active");
-        overlay.classList.add("fading");
+        void overlay.offsetWidth; // force reflow so new transition takes effect
+        overlay.style.transition =
+          "background-color 1.4s cubic-bezier(0.4, 0, 0.4, 1), " +
+          "opacity 0.8s cubic-bezier(0.32, 0.72, 0, 1) 0.6s";
+        overlay.style.backgroundColor = "#f0f2f5";
+        overlay.style.opacity = "0";
+
         setTimeout(() => {
-          overlay.classList.remove("fading");
+          overlay.style.cssText = "";
           mainApp.classList.remove("app-entering");
-        }, 900);
+        }, 1500);
       });
-    }, 700);
+    }, 600);
   } else {
     document.getElementById("authScreen").style.display = "none";
     document.getElementById("mainApp").style.display = "block";

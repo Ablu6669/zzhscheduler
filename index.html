@@ -35,7 +35,7 @@
     justify-content: center;
   }
 
-  /* ── Auth screen (Aurora + Glassmorphism) ── */
+  /* ── Auth screen (Dark Aurora + Glassmorphism) ── */
   #authScreen {
     --card: rgba(255, 255, 255, 0.06);
     --bg: rgba(255, 255, 255, 0.04);
@@ -139,8 +139,28 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
+  /* ── Transition overlay (dark → light fade) ── */
+  #transitionOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0;
+    background: #0a0a1a;
+    transition: opacity 0.5s ease-in-out;
+  }
+  #transitionOverlay.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+  #transitionOverlay.fading {
+    opacity: 0;
+    transition: opacity 0.6s ease-in-out 0.1s;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     #authScreen::before, #authScreen::after, .aurora-orb-3, .auth-box { animation: none; }
+    #transitionOverlay { transition: none; }
   }
 
   .auth-logo {
@@ -1461,6 +1481,9 @@
 </head>
 <body>
 
+<!-- ══ 过渡遮罩层（深色→浅色淡入淡出） ══ -->
+<div id="transitionOverlay"></div>
+
 <!-- ══ 时间选择器弹窗 ══════════════════════ -->
 <div id="timepickerOverlay">
   <div class="tp-modal">
@@ -2337,17 +2360,57 @@ async function doAdminLogin() {
 function doLogout() {
   session = null;
   localStorage.removeItem(SESSION_KEY);
-  document.getElementById("authScreen").style.display = "flex";
-  document.getElementById("mainApp").style.display = "none";
-  switchTab("user");
-  // clear credentials
-  document.getElementById("loginUsername").value = "";
-  document.getElementById("loginPassword").value = "";
+  // Reverse transition: fade to dark, then show auth screen
+  const overlay = document.getElementById("transitionOverlay");
+  if (overlay && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    overlay.classList.add("active");
+    setTimeout(() => {
+      document.getElementById("authScreen").style.display = "flex";
+      document.getElementById("mainApp").style.display = "none";
+      switchTab("user");
+      document.getElementById("loginUsername").value = "";
+      document.getElementById("loginPassword").value = "";
+      requestAnimationFrame(() => {
+        overlay.classList.remove("active");
+        overlay.classList.add("fading");
+        setTimeout(() => { overlay.classList.remove("fading"); }, 700);
+      });
+    }, 500);
+  } else {
+    document.getElementById("authScreen").style.display = "flex";
+    document.getElementById("mainApp").style.display = "none";
+    switchTab("user");
+    document.getElementById("loginUsername").value = "";
+    document.getElementById("loginPassword").value = "";
+  }
 }
 
 function enterMainApp() {
-  document.getElementById("authScreen").style.display = "none";
-  document.getElementById("mainApp").style.display = "block";
+  // Transition: dark overlay fades in, then fades out to reveal light app
+  const overlay = document.getElementById("transitionOverlay");
+  if (overlay && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    overlay.classList.add("active");
+    setTimeout(() => {
+      document.getElementById("authScreen").style.display = "none";
+      document.getElementById("mainApp").style.display = "block";
+      _postEnterMainApp();
+      // Fade out overlay to reveal the light app
+      requestAnimationFrame(() => {
+        overlay.classList.remove("active");
+        overlay.classList.add("fading");
+        setTimeout(() => {
+          overlay.classList.remove("fading");
+        }, 700);
+      });
+    }, 500);
+  } else {
+    document.getElementById("authScreen").style.display = "none";
+    document.getElementById("mainApp").style.display = "block";
+    _postEnterMainApp();
+  }
+}
+
+function _postEnterMainApp() {
   const layout = document.getElementById("mainLayout");
   if (session.type === "admin") {
     layout.classList.add("admin-mode");

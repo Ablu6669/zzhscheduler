@@ -139,7 +139,7 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* ── Transition overlay (dark → light fade) ── */
+  /* ── Transition overlay (dark → light crossfade) ── */
   #transitionOverlay {
     position: fixed;
     inset: 0;
@@ -147,7 +147,7 @@
     pointer-events: none;
     opacity: 0;
     background: #0a0a1a;
-    transition: opacity 0.5s ease-in-out;
+    transition: opacity 0.7s cubic-bezier(0.32, 0.72, 0, 1);
   }
   #transitionOverlay.active {
     opacity: 1;
@@ -155,12 +155,33 @@
   }
   #transitionOverlay.fading {
     opacity: 0;
-    transition: opacity 0.6s ease-in-out 0.1s;
+    transition: opacity 0.9s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  /* Main app entrance: crossfade with overlay fade-out */
+  #mainApp.app-entering {
+    animation: appEnter 0.9s cubic-bezier(0.32, 0.72, 0, 1) both;
+  }
+  @keyframes appEnter {
+    0%   { opacity: 0; transform: scale(0.97); filter: blur(10px); }
+    40%  { opacity: 0.4; transform: scale(0.985); filter: blur(5px); }
+    100% { opacity: 1; transform: scale(1); filter: blur(0); }
+  }
+
+  /* Screen exit: subtle shrink + fade for cinematic feel */
+  .screen-leaving {
+    animation: screenLeave 0.5s cubic-bezier(0.4, 0, 1, 1) both;
+  }
+  @keyframes screenLeave {
+    from { opacity: 1; transform: scale(1); filter: blur(0); }
+    to   { opacity: 0.3; transform: scale(0.96); filter: blur(6px); }
   }
 
   @media (prefers-reduced-motion: reduce) {
     #authScreen::before, #authScreen::after, .aurora-orb-3, .auth-box { animation: none; }
     #transitionOverlay { transition: none; }
+    #mainApp.app-entering { animation: none; }
+    .screen-leaving { animation: none; }
   }
 
   .auth-logo {
@@ -2360,22 +2381,36 @@ async function doAdminLogin() {
 function doLogout() {
   session = null;
   localStorage.removeItem(SESSION_KEY);
-  // Reverse transition: fade to dark, then show auth screen
+  // Reverse transition: app shrinks → dark overlay → auth crossfades in
   const overlay = document.getElementById("transitionOverlay");
+  const authScreen = document.getElementById("authScreen");
+  const mainApp = document.getElementById("mainApp");
   if (overlay && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    // Phase 1: main app shrinks & blurs while dark overlay fades in
+    mainApp.classList.add("screen-leaving");
     overlay.classList.add("active");
     setTimeout(() => {
-      document.getElementById("authScreen").style.display = "flex";
-      document.getElementById("mainApp").style.display = "none";
+      // Phase 2: swap content behind overlay
+      mainApp.style.display = "none";
+      mainApp.classList.remove("screen-leaving");
+      authScreen.style.display = "flex";
       switchTab("user");
       document.getElementById("loginUsername").value = "";
       document.getElementById("loginPassword").value = "";
+      // Restart auth card animation
+      const authBox = authScreen.querySelector(".auth-box");
+      if (authBox) {
+        authBox.style.animation = "none";
+        void authBox.offsetWidth;
+        authBox.style.animation = "";
+      }
+      // Phase 3: crossfade — overlay fades out while auth screen fades in
       requestAnimationFrame(() => {
         overlay.classList.remove("active");
         overlay.classList.add("fading");
-        setTimeout(() => { overlay.classList.remove("fading"); }, 700);
+        setTimeout(() => { overlay.classList.remove("fading"); }, 900);
       });
-    }, 500);
+    }, 700);
   } else {
     document.getElementById("authScreen").style.display = "flex";
     document.getElementById("mainApp").style.display = "none";
@@ -2386,23 +2421,31 @@ function doLogout() {
 }
 
 function enterMainApp() {
-  // Transition: dark overlay fades in, then fades out to reveal light app
+  // Cinematic transition: auth shrinks → dark overlay → app crossfades in
   const overlay = document.getElementById("transitionOverlay");
+  const authScreen = document.getElementById("authScreen");
+  const mainApp = document.getElementById("mainApp");
   if (overlay && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    // Phase 1: auth screen shrinks & blurs while dark overlay fades in (parallel)
+    authScreen.classList.add("screen-leaving");
     overlay.classList.add("active");
     setTimeout(() => {
-      document.getElementById("authScreen").style.display = "none";
-      document.getElementById("mainApp").style.display = "block";
+      // Phase 2: swap content behind overlay
+      authScreen.style.display = "none";
+      authScreen.classList.remove("screen-leaving");
+      mainApp.style.display = "block";
+      mainApp.classList.add("app-entering");
       _postEnterMainApp();
-      // Fade out overlay to reveal the light app
+      // Phase 3: crossfade — overlay fades out while app content fades in simultaneously
       requestAnimationFrame(() => {
         overlay.classList.remove("active");
         overlay.classList.add("fading");
         setTimeout(() => {
           overlay.classList.remove("fading");
-        }, 700);
+          mainApp.classList.remove("app-entering");
+        }, 900);
       });
-    }, 500);
+    }, 700);
   } else {
     document.getElementById("authScreen").style.display = "none";
     document.getElementById("mainApp").style.display = "block";

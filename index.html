@@ -35,30 +35,118 @@
     justify-content: center;
   }
 
-  /* ── Auth screen ── */
+  /* ── Auth screen (Aurora + Glassmorphism) ── */
   #authScreen {
+    --card: rgba(255, 255, 255, 0.06);
+    --bg: rgba(255, 255, 255, 0.04);
+    --text: #f1f5f9;
+    --text-muted: rgba(241, 245, 249, 0.5);
+    --border: rgba(255, 255, 255, 0.1);
+    --primary: #818cf8;
+    --primary-light: rgba(129, 140, 248, 0.15);
+    --danger: #f87171;
+    --success: #4ade80;
+
     width: 100%;
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #4f6ef7 0%, #6c63ff 100%);
+    background: #0a0a1a;
     padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #authScreen::before,
+  #authScreen::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #authScreen::before {
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.45), transparent 70%);
+    top: -150px;
+    left: -100px;
+    animation: auroraFloat1 18s ease-in-out infinite;
+  }
+
+  #authScreen::after {
+    width: 450px;
+    height: 450px;
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.35), transparent 70%);
+    bottom: -100px;
+    right: -80px;
+    animation: auroraFloat2 22s ease-in-out infinite;
+  }
+
+  .aurora-orb-3 {
+    position: absolute;
+    width: 350px;
+    height: 350px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.3), transparent 70%);
+    filter: blur(90px);
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: auroraFloat3 20s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  @keyframes auroraFloat1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(100px, 50px) scale(1.15); }
+    66% { transform: translate(-50px, 80px) scale(0.9); }
+  }
+
+  @keyframes auroraFloat2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(-80px, -60px) scale(1.1); }
+    66% { transform: translate(60px, -30px) scale(0.95); }
+  }
+
+  @keyframes auroraFloat3 {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-40%, -60%) scale(1.2); }
   }
 
   .auth-box {
-    background: var(--card);
-    border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-    padding: 40px 36px;
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    padding: 44px 36px;
     width: 100%;
     max-width: 400px;
     text-align: center;
+    position: relative;
+    z-index: 1;
+    animation: cardFadeIn 0.6s ease-out;
+  }
+
+  @keyframes cardFadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #authScreen::before, #authScreen::after, .aurora-orb-3, .auth-box { animation: none; }
   }
 
   .auth-logo {
     font-size: 3rem;
     margin-bottom: 8px;
+    filter: drop-shadow(0 0 20px rgba(129, 140, 248, 0.4));
   }
 
   .auth-title {
@@ -96,9 +184,9 @@
   }
 
   .auth-tab.active {
-    background: var(--card);
+    background: rgba(255, 255, 255, 0.1);
     color: var(--primary);
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
   }
 
   .auth-panel { display: none; }
@@ -124,11 +212,20 @@
     border-radius: 9px;
     font-size: 0.9rem;
     outline: none;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, background 0.2s;
     text-align: left;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
   }
 
-  .form-group input:focus { border-color: var(--primary); }
+  .form-group input::placeholder {
+    color: rgba(241, 245, 249, 0.3);
+  }
+
+  .form-group input:focus {
+    border-color: var(--primary);
+    background: rgba(255, 255, 255, 0.06);
+  }
 
   .btn {
     padding: 10px 20px;
@@ -143,7 +240,7 @@
   }
 
   .btn-primary { background: var(--primary); color: #fff; }
-  .btn-primary:hover { background: #3a57e0; }
+  .btn-primary:hover { background: #6366f1; filter: brightness(1.1); }
 
   .btn-outline { background: transparent; color: var(--primary); border: 1.5px solid var(--primary); }
   .btn-outline:hover { background: var(--primary-light); }
@@ -179,6 +276,7 @@
     border: 1.5px solid var(--border);
     border-radius: 9px;
     margin-bottom: 12px;
+    background: rgba(255, 255, 255, 0.03);
   }
 
   .account-item {
@@ -1415,6 +1513,7 @@
      AUTH SCREEN
 ════════════════════════════════════════ -->
 <div id="authScreen">
+  <div class="aurora-orb-3"></div>
   <div class="auth-box">
     <div class="auth-logo">📚</div>
     <div class="auth-title" data-i18n="auth.title">自动排课系统</div>

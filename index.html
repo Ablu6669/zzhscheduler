@@ -5266,8 +5266,8 @@ async function runSchedule2(){
       refreshQuotaUI();
     }
   }
-  const plans=schedule("2");
-  renderResults(plans,"2");
+  currentPlans2=schedule("2");
+  renderResults(currentPlans2,"2");
 }
 
 function saveCourses(){
@@ -6595,6 +6595,9 @@ function applyLanguage(lang) {
   }
   // 刷新课程列表（按钮标签等动态内容需重新渲染）
   renderCourseList();
+  // 刷新排课结果（方案标签、统计文案等动态内容需重新渲染）
+  if (currentPlans && currentPlans.length) renderResults(currentPlans);
+  if (currentPlans2 && currentPlans2.length) renderResults(currentPlans2, "2");
 }
 
 // 应用保存的语言偏好

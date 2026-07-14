@@ -3897,6 +3897,7 @@ let courses = {};
 let sectionCounter = {};
 let currentPlans = [];
 let currentPlans2 = [];
+let currentLang = localStorage.getItem("wb_lang") || "zh";
 // 存储最近一次 renderResults 的 display 列表，供导出使用
 const _renderedPlans = { "": [], "2": [] };
 function _toMin(t) {
@@ -6557,11 +6558,12 @@ window.TRANSLATIONS = {
 };
 
 window.T = function(key) {
-  var lang = localStorage.getItem("wb_lang") || "zh";
+  var lang = (typeof currentLang !== "undefined" ? currentLang : null) || localStorage.getItem("wb_lang") || "zh";
   return (window.TRANSLATIONS[lang] && window.TRANSLATIONS[lang][key]) || key;
 };
 
 function applyLanguage(lang) {
+  currentLang = lang;
   localStorage.setItem("wb_lang", lang);
   document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
   var sel = document.getElementById("langSelect");
